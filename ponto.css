@@ -197,11 +197,16 @@
 .timesheet-table {
     border-collapse: collapse;
     width: 100%;
+    table-layout: fixed; /* colunas com largura fixa — mesmo tamanho em todas as tabelas/meses */
     font-family: var(--ts-mono);
     font-size: 11px;
     user-select: none;
     -webkit-user-select: none;
 }
+
+/* Com table-layout:fixed, a largura das colunas é decidida pelas células da
+   primeira linha (thead) — por isso as regras de largura ficam nos <th>. */
+.timesheet-table thead th { width: 44px; }
 
 .timesheet-table th, .timesheet-table td { border: none; text-align: center; vertical-align: middle; }
 
@@ -216,11 +221,19 @@
     line-height: 1;
     white-space: nowrap;
 }
-.timesheet-table thead th:first-child,
+.timesheet-table thead th:first-child {
+    background: linear-gradient(180deg, #0f1c3f 0%, #122050 100%);
+    width: 140px;
+    font-family: var(--ts-display);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
 .timesheet-table thead th.th-saldo-anterior,
 .timesheet-table thead th.th-saldo-acumulado {
     background: linear-gradient(180deg, #0f1c3f 0%, #122050 100%);
-    min-width: 80px;
+    width: 60px;
     font-family: var(--ts-display);
     font-size: 9px;
     font-weight: 800;
@@ -307,15 +320,18 @@
 .timesheet-table td.ts-clickable { color: #1e40af; font-weight: 600; cursor: pointer; }
 .timesheet-table td.ts-clickable:hover { color: #1d4ed8; text-decoration: underline; }
 
-/* Células verticais de evento e das colunas de saldo */
+/* Células de evento (feriado/férias/afastamento etc.). Texto vertical, como
+   antes — mas agora a largura da coluna é fixa (table-layout:fixed acima),
+   então uma palavra longa não alarga mais o dia inteiro: ela só quebra em
+   mais linhas verticais dentro da mesma largura de 44px, com overflow:hidden
+   cortando o que ainda assim não couber. */
 .timesheet-table td.evento-vertical {
     writing-mode: vertical-rl;
     text-orientation: upright;
     font-weight: 700;
-    font-size: 10px;
-    min-width: 28px;
+    font-size: 9px;
     line-height: 1;
-    letter-spacing: .12em;
+    letter-spacing: .08em;
     white-space: normal;
     overflow: hidden;
     border-right: 1px solid rgba(0, 0, 0, .08);

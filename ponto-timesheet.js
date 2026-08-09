@@ -316,7 +316,8 @@
                         }
                     }
 
-                    // Atestado/abono pintam apenas as linhas do período coberto, sem texto na célula.
+                    // Atestado/abono pintam apenas as linhas do período coberto (sem texto).
+                    // Abono/Pagar Hora mostram abreviação como conteúdo.
                     if (r && r.tipoAtestado) {
                         var ehMat = r.tipoAtestado === 'comparecimento_matutino' || r.tipoAtestado === 'abono_matutino';
                         var ehVes = r.tipoAtestado === 'comparecimento_vespertino' || r.tipoAtestado === 'abono_vespertino';
@@ -325,6 +326,11 @@
                         if (cobertas.indexOf(rowIndex) !== -1) {
                             classes.push(r.tipoAtestado.indexOf('abono_') === 0 ? 'ts-abono' : 'ts-atestado-comparecimento');
                             titulo = r.tipoAtestado.replace(/_/g, ' ');
+                            // Mostrar abreviação só para abono e pagar_hora, não para atestado médico
+                            if (r.tipoAtestado.indexOf('abono_') === 0 || r.tipoAtestado.indexOf('pagar_hora_') === 0) {
+                                var just = PontoUI._justificativas && PontoUI._justificativas[r.tipoAtestado];
+                                if (just) conteudo = just.abrev || just.texto;
+                            }
                         }
                     }
 

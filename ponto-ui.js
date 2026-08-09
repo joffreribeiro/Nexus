@@ -680,6 +680,13 @@
 
     // Mesmos 4 grupos e rótulos do select "Tipo" do modalRegistro original (index-refatorado.html).
     var TIPOS_ATESTADO_MEDICO = ['afastamento', 'comparecimento_matutino', 'comparecimento_vespertino'];
+    // Abono (sem acordo) também é um período sem batida real — preenche horário padrão como
+    // o atestado, pra não ficar com Retorno Almoço/Saída em branco. Abono Acordo e Pagar Hora
+    // Acordo ficam de fora: são descontados de uma cota do acordo e usam os horários reais
+    // batidos no dia, não um horário padrão preenchido automaticamente.
+    var TIPOS_COM_HORARIO_PADRAO = TIPOS_ATESTADO_MEDICO.concat([
+        'abono_matutino', 'abono_vespertino', 'abono_dia_todo'
+    ]);
     var GRUPOS_ATESTADO = [
         { rotulo: 'Atestado Médico', opcoes: [
             ['afastamento', 'Atestado de Afastamento (dia todo)'],
@@ -705,18 +712,18 @@
 
     // Texto explicativo abaixo do select, por tipo — porte de _atualizarInfoAtestado() do Ponto.
     var INFO_ATESTADO = {
-        afastamento: { icone: '🏥', texto: 'Horários reais preservados. Dia inteiro considerado trabalhado — <strong>saldo zero</strong>.' },
-        comparecimento_matutino: { icone: '🌅', texto: 'Horários reais preservados. No cálculo, a <strong>entrada é tratada como 07:45</strong>.' },
-        comparecimento_vespertino: { icone: '🌇', texto: 'Horários reais preservados. <strong>Jornada completa considerada</strong> — saldo zero.' },
-        abono_matutino: { icone: '🟢', texto: 'Período da manhã <strong>abonado</strong> — saldo zero.' },
-        abono_vespertino: { icone: '🟢', texto: 'Período da tarde <strong>abonado</strong> — saldo zero.' },
-        abono_dia_todo: { icone: '🟢', texto: 'Dia inteiro <strong>abonado</strong> — saldo zero.' },
-        abono_acordo_matutino: { icone: '🤝', texto: 'Período da manhã <strong>abonado pelo acordo</strong> — desconta um meio-período da cota de abonos.' },
-        abono_acordo_vespertino: { icone: '🤝', texto: 'Período da tarde <strong>abonado pelo acordo</strong> — desconta um meio-período da cota de abonos.' },
-        abono_acordo_dia_todo: { icone: '🤝', texto: 'Dia inteiro <strong>abonado pelo acordo</strong> — desconta um dia inteiro da cota de abonos.' },
-        pagar_hora_acordo_matutino: { icone: '⏱️', texto: 'Período da manhã marcado como <strong>pagar hora (acordo)</strong> — saldo negativo no período.' },
-        pagar_hora_acordo_vespertino: { icone: '⏱️', texto: 'Período da tarde marcado como <strong>pagar hora (acordo)</strong> — saldo negativo no período.' },
-        pagar_hora_acordo_dia_todo: { icone: '⏱️', texto: 'Dia inteiro marcado como <strong>pagar hora (acordo)</strong> — saldo negativo no dia.' }
+        afastamento: { icone: '🏥', texto: 'Horários reais preservados. Dia inteiro considerado trabalhado — <strong>saldo zero</strong>.', abrev: 'Ates. Afast.' },
+        comparecimento_matutino: { icone: '🌅', texto: 'Horários reais preservados. No cálculo, a <strong>entrada é tratada como 07:45</strong>.', abrev: 'Ates. Comp.' },
+        comparecimento_vespertino: { icone: '🌇', texto: 'Horários reais preservados. <strong>Jornada completa considerada</strong> — saldo zero.', abrev: 'Ates. Comp.' },
+        abono_matutino: { icone: '🟢', texto: 'Período da manhã <strong>abonado</strong> — saldo zero.', abrev: 'Abono' },
+        abono_vespertino: { icone: '🟢', texto: 'Período da tarde <strong>abonado</strong> — saldo zero.', abrev: 'Abono' },
+        abono_dia_todo: { icone: '🟢', texto: 'Dia inteiro <strong>abonado</strong> — saldo zero.', abrev: 'Abono' },
+        abono_acordo_matutino: { icone: '🤝', texto: 'Período da manhã <strong>abonado pelo acordo</strong> — desconta um meio-período da cota de abonos.', abrev: 'Abono Acordo' },
+        abono_acordo_vespertino: { icone: '🤝', texto: 'Período da tarde <strong>abonado pelo acordo</strong> — desconta um meio-período da cota de abonos.', abrev: 'Abono Acordo' },
+        abono_acordo_dia_todo: { icone: '🤝', texto: 'Dia inteiro <strong>abonado pelo acordo</strong> — desconta um dia inteiro da cota de abonos.', abrev: 'Abono Acordo' },
+        pagar_hora_acordo_matutino: { icone: '⏱️', texto: 'Período da manhã marcado como <strong>pagar hora (acordo)</strong> — saldo negativo no período.', abrev: 'Pagar Hora' },
+        pagar_hora_acordo_vespertino: { icone: '⏱️', texto: 'Período da tarde marcado como <strong>pagar hora (acordo)</strong> — saldo negativo no período.', abrev: 'Pagar Hora' },
+        pagar_hora_acordo_dia_todo: { icone: '⏱️', texto: 'Dia inteiro marcado como <strong>pagar hora (acordo)</strong> — saldo negativo no dia.', abrev: 'Pagar Hora' }
     };
 
     var DIAS_SEMANA_COMPLETO = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -769,8 +776,13 @@
         } else {
             if (entrada == null) entrada = (saidaAlmoco != null) ? saidaAlmoco - metade : min(p.entradaPadrao);
             if (saida == null) {
-                if (retornoAlmoco != null) saida = retornoAlmoco + metade;
-                else if (saidaAlmoco != null) saida = saidaAlmoco + p.almocoMin + metade;
+                // O período da manhã já registrado (entrada→saída almoço) pode não bater
+                // exatamente com metade da carga — a tarde precisa completar o que falta
+                // pra fechar a carga do dia, não repetir metade às cegas.
+                var manhaTrabalhada = (entrada != null && saidaAlmoco != null) ? (saidaAlmoco - entrada) : metade;
+                var tardeNecessaria = Math.max(0, p.carga - manhaTrabalhada);
+                if (retornoAlmoco != null) saida = retornoAlmoco + tardeNecessaria;
+                else if (saidaAlmoco != null) saida = saidaAlmoco + p.almocoMin + tardeNecessaria;
                 else saida = entrada + metade + p.almocoMin + metade;
             }
             if (saidaAlmoco == null || retornoAlmoco == null) {
@@ -978,9 +990,42 @@
         }
     }
 
+    /**
+     * Migração única: registros já salvos com justificativa (tipoAtestado) tinham a
+     * observação escrita por extenso — passa todos para a versão abreviada, mesma
+     * usada como sugestão ao escolher a justificativa no modal.
+     */
+    function migrarObservacoesAbreviadas() {
+        if (window.__pontoObsAbreviadasMigradas) return;
+        window.__pontoObsAbreviadasMigradas = true;
+        if (!window.PontoStore) return;
+        PontoStore.listarRegistros().forEach(function (r) {
+            if (!r.tipoAtestado) return;
+            var patch = null;
+
+            var info = INFO_ATESTADO[r.tipoAtestado];
+            if (info && info.abrev && r.observacoes !== info.abrev) {
+                patch = Object.assign({}, r, { observacoes: info.abrev });
+            }
+
+            // Registros de abono/atestado salvos sem horário (campos em branco na Folha
+            // de Ponto) ganham o horário padrão retroativamente, mesma regra aplicada a
+            // partir de agora ao escolher a justificativa no modal.
+            if (TIPOS_COM_HORARIO_PADRAO.indexOf(r.tipoAtestado) !== -1 &&
+                (!r.entrada || !r.saidaAlmoco || !r.retornoAlmoco || !r.saida)) {
+                var base = patch || Object.assign({}, r);
+                preencherHorarioPadraoAtestado(base);
+                patch = base;
+            }
+
+            if (patch) PontoStore.salvarRegistro(patch);
+        });
+    }
+
     function renderizar() {
         ligarListenersUmaVez();
         if (window.PontoStore) PontoStore.ensurePontoDefault();
+        migrarObservacoesAbreviadas();
 
         var el = document.getElementById('pontoConteudo');
         if (!el) return;
@@ -1143,6 +1188,7 @@
             var r = PontoStore.getRegistro(data);
             _registroForm = r ? Object.assign({}, r)
                 : { data: data, entrada: '', saidaAlmoco: '', retornoAlmoco: '', saida: '', observacoes: '', tipoAtestado: '' };
+            _registroForm._tipoAtestadoAnterior = _registroForm.tipoAtestado;
             renderizar();
         },
 
@@ -1150,6 +1196,7 @@
         registroNovo: function () {
             if (!podeEditar()) return;
             _registroForm = { data: '', entrada: '', saidaAlmoco: '', retornoAlmoco: '', saida: '', observacoes: '', tipoAtestado: '' };
+            _registroForm._tipoAtestadoAnterior = '';
             renderizar();
         },
         registroEditar: function (el) {
@@ -1157,14 +1204,26 @@
             var r = PontoStore.getRegistro(el.dataset.valor);
             if (!r) return;
             _registroForm = Object.assign({}, r);
+            _registroForm._tipoAtestadoAnterior = _registroForm.tipoAtestado;
             renderizar();
         },
         registroCancelar: function () { _registroForm = null; renderizar(); },
         registroDataMudou: function () { sincronizarRegistroForm(); renderizar(); },
         registroTipoMudou: function () {
             sincronizarRegistroForm();
-            if (TIPOS_ATESTADO_MEDICO.indexOf(_registroForm.tipoAtestado) !== -1) {
-                if (!_registroForm.observacoes) _registroForm.observacoes = 'Atestado';
+            // Sugere a observação abreviada da justificativa escolhida, sem sobrescrever
+            // um texto que o usuário já tenha editado manualmente (só troca se o campo
+            // estiver vazio ou ainda contiver a sugestão da justificativa anterior).
+            var tipoAnterior = _registroForm._tipoAtestadoAnterior;
+            var infoAnterior = tipoAnterior && INFO_ATESTADO[tipoAnterior];
+            var sugestaoAnterior = infoAnterior && infoAnterior.abrev;
+            var obsAtual = (_registroForm.observacoes || '').trim();
+            if (!obsAtual || obsAtual === sugestaoAnterior) {
+                var infoNovo = _registroForm.tipoAtestado && INFO_ATESTADO[_registroForm.tipoAtestado];
+                _registroForm.observacoes = (infoNovo && infoNovo.abrev) || '';
+            }
+            _registroForm._tipoAtestadoAnterior = _registroForm.tipoAtestado;
+            if (TIPOS_COM_HORARIO_PADRAO.indexOf(_registroForm.tipoAtestado) !== -1) {
                 preencherHorarioPadraoAtestado(_registroForm);
             }
             renderizar();
@@ -1183,7 +1242,7 @@
             // Cobre registros que já tinham a justificativa de atestado salva sem
             // horário (ex: dados antigos, ou o tipo foi escolhido sem disparar o
             // evento de troca) — completa na hora de salvar também.
-            if (TIPOS_ATESTADO_MEDICO.indexOf(dados.tipoAtestado) !== -1) {
+            if (TIPOS_COM_HORARIO_PADRAO.indexOf(dados.tipoAtestado) !== -1) {
                 preencherHorarioPadraoAtestado(dados);
             }
             var res = PontoStore.salvarRegistro(dados);
@@ -1442,6 +1501,7 @@
     }
 
     window.PontoUI = {
-        renderizar: renderizar
+        renderizar: renderizar,
+        _justificativas: INFO_ATESTADO
     };
 })();

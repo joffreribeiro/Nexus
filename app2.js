@@ -2496,6 +2496,7 @@ function carregarDados() {
             }
         } catch (e) {}
     } else {
+        estoque = {};
         estoque.produtos = dadosIniciais.map((item, index) => ({
             id: index + 1,
             nome: item.nome,

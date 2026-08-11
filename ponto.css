@@ -362,6 +362,14 @@
     width: 100%;
 }
 
+/* Destaque do dia atual na folha de ponto */
+.timesheet-table th.ts-dia-hoje,
+.timesheet-table td.ts-dia-hoje {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%);
+    border-left: 3px solid #3b82f6;
+    font-weight: 600;
+}
+
 /* Paleta de eventos — idêntica ao switch de classeEvento() do Ponto original,
    incluindo a mesma lacuna dele (afastamento/compensar_acordo caem no genérico). */
 .timesheet-table td.evento-feriado { background: #fef2f2; color: #b91c1c; }

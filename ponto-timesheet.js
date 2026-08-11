@@ -227,12 +227,16 @@
     // ──────────────────────────────────────────────
     function renderMes(ctx, ano, mes, saldoAnterior, contadores) {
         var ultimoDia = new Date(ano, mes + 1, 0).getDate();
+        var hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        var hojeIso = isoDe(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
 
         var dias = [];
         for (var d = 1; d <= ultimoDia; d++) {
             var dt = new Date(ano, mes, d);
             var dow = dt.getDay();
-            dias.push({ data: dt, iso: isoDe(ano, mes, d), dow: dow, fimDeSemana: (dow === 0 || dow === 6) });
+            var iso = isoDe(ano, mes, d);
+            dias.push({ data: dt, iso: iso, dow: dow, fimDeSemana: (dow === 0 || dow === 6), isHoje: iso === hojeIso });
         }
 
         var eventos = dias.map(function (dia) { return eventoDoDia(ctx, dia.iso); });
@@ -245,7 +249,8 @@
 
         var cabecalho = '<tr><th>TIPO</th><th class="th-saldo-anterior"></th>' +
             dias.map(function (dia) {
-                return '<th><div class="th-dia"><span class="th-dia-semana">' + DIA_SEM[dia.dow] + '</span>' +
+                var classHoje = dia.isHoje ? ' ts-dia-hoje' : '';
+                return '<th class="' + classHoje + '"><div class="th-dia"><span class="th-dia-semana">' + DIA_SEM[dia.dow] + '</span>' +
                     '<span class="th-dia-num">' + dia.data.getDate() + '</span></div></th>';
             }).join('') +
             '<th class="th-saldo-acumulado"></th></tr>';
@@ -398,6 +403,7 @@
                         }
                     }
 
+                    if (dia.isHoje) classes.push('ts-dia-hoje');
                     var attrs = (classes.length ? ' class="' + classes.join(' ') + '"' : '') +
                                 (titulo ? ' title="' + esc(titulo) + '"' : '') +
                                 (rowIndex <= 6 ? ' data-ponto-action="timesheetEditarDia" data-valor="' + dia.iso + '"' : '');

@@ -1090,7 +1090,6 @@ async function inicializar() {
     try { if (window.CrmStore) window.CrmStore.ensureCrmDefault(); } catch (e) { console.error('CRM ensureCrmDefault:', e); }
     try { if (window.PontoStore) window.PontoStore.ensurePontoDefault(); } catch (e) { console.error('Ponto ensurePontoDefault:', e); }
     try { renderizarListaRepresentantesConfig(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
-    try { carregarPrecificacoesSalvas(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
     // Load contract config into Configurações tab
     try {
         const cfg = carregarConfigContrato();
@@ -1100,7 +1099,6 @@ async function inicializar() {
         if (proxEl) proxEl.value = cfg.proximo;
         atualizarPreviaContrato();
     } catch (e) { _catchSilencioso(e, 'inicializar'); }
-    try { verificarExpiracaoPrecificacoes(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
     try { inicializarImpostosPreDefinidos(); } catch (e) { console.warn('Inicialização de impostos predefinidos falhou:', e); }
 
     try { inicializarImpostosEditaveis(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
@@ -2759,8 +2757,6 @@ async function carregarDoCloud({confirmOverwrite=true} = {}) {
         categoriaPorProduto = (data.categoriaPorProduto && typeof data.categoriaPorProduto === 'object')
             ? data.categoriaPorProduto
             : (estoque.categoriaPorProduto || {});
-        try { verificarExpiracaoPrecificacoes(); } catch (e) { _catchSilencioso(e, 'carregarDoCloud'); }
-
         try { inicializarImpostosPreDefinidos(); } catch (e) { console.warn('Inicializar impostos predefinidos após cloud falhou:', e); }
 
         salvarDados();
@@ -17306,7 +17302,6 @@ function trocarSubabaPrecif(subaba) {
     if (subaba === 'impostos') trocarSubabaImpostos('federais');
     if (subaba === 'porcliente') {
         try {
-            try { verificarExpiracaoPrecificacoes(); } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
             popularSelectClientesPrecif();
             try { popularSelectProdutosPrecif(); } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
         } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
@@ -22458,19 +22453,29 @@ function criarPropostaDaPrecificacao() {
     const retidMap = (reg && reg.retidPorProduto && Object.keys(reg.retidPorProduto).length) ? reg.retidPorProduto : (retidPorProduto || {});
     const benefMap = (reg && reg.beneficiosPorProduto) ? reg.beneficiosPorProduto : (beneficiosPorProduto || {});
     const benefAtivo = (reg && reg.beneficioFiscalAtivo) || !!beneficioFiscalAtivo;
-    const items = (reg.itens || []).map(it => ({ produto: it.produto, produtoId: it.produtoId, quantidade: 1, valorUnitario: Number(it.precoFinal || 0), retid: !!(retidMap[it.produto]) }));
+    const items = (reg.itens || []).map(it => ({ produto: it.produto, produtoId: it.produtoId, quantidade: Math.max(1, parseInt(it.quantidade, 10) || 1), valorUnitario: Number(it.precoFinal || 0), retid: !!(retidMap[it.produto]) }));
     const valorTotal = items.reduce((s, it) => s + (Number(it.valorUnitario || 0) * (it.quantidade || 1)), 0);
+    // Herdar a validade da própria precificação quando houver; senão, 30 dias.
+    // dataExpiracao é obrigatória: os avisos de vencimento (renderizarPropostas,
+    // verificarPropostasExpiradas) leem esse campo — sem ele a proposta nunca expira.
+    const validadeProposta = Math.max(1, parseInt(reg.validadeDias, 10) || 30);
+    const dataPropostaISO = new Date();
+    const dataExpProposta = new Date(dataPropostaISO.getTime() + validadeProposta * 86400000);
     const nova = {
         id: 'prop-' + Date.now(),
         numero: gerarNumeroProposta(),
         cliente: clienteObj ? clienteObj.nome : (reg.clienteNome || ''),
         clienteId: reg.clienteId || null,
         representante: clienteObj ? (clienteObj.representante || '') : '',
-        data: new Date().toISOString(),
-        validade: 30,
+        data: dataPropostaISO.toISOString(),
+        validade: validadeProposta,
+        dataExpiracao: dataExpProposta.toISOString(),
         status: 'rascunho',
         itens: items.map(it => ({ produtoId: it.produtoId, produto: it.produto, quantidade: it.quantidade, valorUnitario: it.valorUnitario, retid: !!it.retid })),
-        valorTotal
+        valorTotal,
+        contratoNumero: null,
+        vendaId: null,
+        dataCriacao: dataPropostaISO.toISOString()
     };
     // adicionar resumo de benefícios na observação da proposta
     try {
@@ -22487,15 +22492,24 @@ function criarPropostaDaPrecificacao() {
     mostrarNotificacao('Proposta criada a partir da precificação. Abra para editar.', 'success');
     abrirModalProposta(nova.id);
     try {
-        if (ultimaVersaoSalva) {
-            const precifAtual = (precificacoesCliente || []).find(p => String(p.clienteId) === String(reg.clienteId) && Number(p.versao) === Number(ultimaVersaoSalva));
-            if (precifAtual) {
-                precifAtual.status = 'convertida';
-                precifAtual.propostaId = nova.id;
-                try { estoque.precificacoesCliente = precificacoesCliente; } catch (e) { _catchSilencioso(e, 'criarPropostaDaPrecificacao'); }
-                salvarDados();
-                try { renderizarHistoricoPrecif(reg.clienteId); } catch (e) { _catchSilencioso(e, 'criarPropostaDaPrecificacao'); }
-            }
+        // Preferir a versão que o usuário acabou de salvar; se ele gerou a proposta
+        // sem salvar versão, cair na precificação ativa mais recente do cliente —
+        // senão o vínculo (status 'convertida' + propostaId) se perde silenciosamente.
+        const versoesDoCliente = (precificacoesCliente || []).filter(p => String(p.clienteId) === String(reg.clienteId));
+        let precifAtual = ultimaVersaoSalva
+            ? versoesDoCliente.find(p => Number(p.versao) === Number(ultimaVersaoSalva))
+            : null;
+        if (!precifAtual) {
+            precifAtual = versoesDoCliente
+                .filter(p => String(p.status) === 'ativa')
+                .sort((a, b) => new Date(b.dataCriacao || 0) - new Date(a.dataCriacao || 0))[0] || null;
+        }
+        if (precifAtual) {
+            precifAtual.status = 'convertida';
+            precifAtual.propostaId = nova.id;
+            try { estoque.precificacoesCliente = precificacoesCliente; } catch (e) { _catchSilencioso(e, 'criarPropostaDaPrecificacao'); }
+            salvarDados();
+            try { renderizarHistoricoPrecif(reg.clienteId); } catch (e) { _catchSilencioso(e, 'criarPropostaDaPrecificacao'); }
         }
     } catch (e) { _catchSilencioso(e, 'criarPropostaDaPrecificacao'); }
     try { atualizarStatusPropostaNaPrecif(reg.clienteId); } catch (e) { _catchSilencioso(e, 'criarPropostaDaPrecificacao'); }

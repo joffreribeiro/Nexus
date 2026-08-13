@@ -362,6 +362,131 @@ function calcularPrecoFinal(p) {
     };
 }
 
+/**
+ * Catálogo de tipos de movimentação IMBEL — cor, ícone, rótulo e se o tipo
+ * aumenta ou diminui o estoque (`categoria`). Usado por getImbelTipo/
+ * imbelTipoAumentaEstoque/calcularSaldosImbel e por toda a UI da tela de
+ * Movimentação IMBEL (badges, filtros). Extraído de app2.js (IMBEL_TIPOS) —
+ * dado estático, sem acoplamento a DOM/estado.
+ */
+const IMBEL_TIPOS = {
+    RECEBIMENTO_FABRICA: {
+        label: 'Recebimento Fábrica', categoria: 'entrada', icon: '📦', cor: '#16a34a', bg: '#f0fdf4', contaReceita: false,
+        descricao: 'Produto recebido da Fábrica de Itajubá'
+    },
+    RETORNO_MARKETING: {
+        label: 'Retorno Promo', categoria: 'entrada', icon: '↩', cor: '#0284c7', bg: '#e0f2fe', contaReceita: false,
+        descricao: 'Produto retornado de ação promocional'
+    },
+    AJUSTE_ENTRADA: {
+        label: 'Ajuste de Inventário (+)', categoria: 'entrada', icon: '🔧', cor: '#64748b', bg: '#f8fafc', contaReceita: false,
+        descricao: 'Correção de estoque — entrada'
+    },
+    VENDA: {
+        label: 'Venda', categoria: 'saida', icon: '💰', cor: '#d97706', bg: '#fffbeb', contaReceita: true,
+        descricao: 'Venda ao cliente final'
+    },
+    SAIDA_MARKETING: {
+        label: 'Saída Promo', categoria: 'saida', icon: '↗', cor: '#7c3aed', bg: '#f3e8ff', contaReceita: false,
+        descricao: 'Produto cedido para ação promocional ou evento'
+    },
+    DEVOLUCAO_FABRICA: {
+        label: 'Devolução à Fábrica', categoria: 'saida', icon: '🔙', cor: '#dc2626', bg: '#fef2f2', contaReceita: false,
+        descricao: 'Produto devolvido à Fábrica de Itajubá'
+    },
+    AJUSTE_SAIDA: {
+        label: 'Ajuste de Inventário (-)', categoria: 'saida', icon: '🔧', cor: '#64748b', bg: '#f8fafc', contaReceita: false,
+        descricao: 'Correção de estoque — saída'
+    }
+};
+
+/**
+ * Resolve o tipo de movimentação IMBEL pelo código (tenta o valor exato,
+ * depois uma normalização — maiúsculas com "_" no lugar de espaço — antes de
+ * cair num tipo genérico "saída"). Extraído de app2.js (getImbelTipo).
+ */
+function getImbelTipo(tipoKey) {
+    return IMBEL_TIPOS[tipoKey]
+        || IMBEL_TIPOS[(tipoKey || '').toString().toUpperCase().replace(/\s+/g, '_')]
+        || { label: tipoKey, categoria: 'saida', icon: '•', cor: '#64748b', bg: '#f8fafc', contaReceita: false };
+}
+
+/**
+ * true quando o tipo de movimentação aumenta o estoque (categoria "entrada").
+ * Extraído de app2.js (imbelTipoAumentaEstoque).
+ */
+function imbelTipoAumentaEstoque(tipoKey) {
+    try { return getImbelTipo(tipoKey).categoria === 'entrada'; } catch (e) { return false; }
+}
+
+/**
+ * Saldo de cada produto IMBEL (inicial + entradas − saídas), a partir do
+ * histórico de movimentações — a base de onde vem todo saldo exibido na tela
+ * de Movimentação IMBEL. Núcleo puro de `calcularSaldosImbel` (app2.js): já
+ * recebia `data` como parâmetro, sem ler estado global — só precisou mudar de
+ * arquivo.
+ * @param {object} data
+ * @param {Array} data.produtos - cada um com {id, quantidadeInicial}
+ * @param {Array} data.movimentacoes - cada uma com {id, tipo, produtoId?, quantidade?, items?}
+ * @param {object} [opts]
+ * @param {*} [opts.ignorarId] - ignora uma movimentação específica (usado ao editar: recalcula sem o registro antigo)
+ * @returns {object} mapa produtoId -> {inicial, entradas, saidas, saidaByTipo, saldo}
+ */
+function calcularSaldosImbel(data, { ignorarId = null } = {}) {
+    const saldos = {};
+    (data.produtos || []).forEach(p => {
+        const inicial = Number(p.quantidadeInicial) || 0;
+        saldos[p.id] = { inicial, entradas: 0, saidas: 0, saidaByTipo: {} };
+    });
+    (data.movimentacoes || []).forEach(m => {
+        if (ignorarId && m.id === ignorarId) return;
+        const aumenta = imbelTipoAumentaEstoque(m.tipo);
+        const subItens = (m.items && m.items.length)
+            ? m.items.map(it => ({ produtoId: it.produtoId, quantidade: Number(it.quantidade) || 0 }))
+            : (m.produtoId ? [{ produtoId: m.produtoId, quantidade: Number(m.quantidade) || 0 }] : []);
+        subItens.forEach(({ produtoId, quantidade }) => {
+            if (!saldos[produtoId]) return;
+            if (aumenta) {
+                saldos[produtoId].entradas += quantidade;
+            } else {
+                saldos[produtoId].saidas += quantidade;
+                saldos[produtoId].saidaByTipo[m.tipo] = (saldos[produtoId].saidaByTipo[m.tipo] || 0) + quantidade;
+            }
+        });
+    });
+    Object.values(saldos).forEach(s => { s.saldo = s.inicial + s.entradas - s.saidas; });
+    return saldos;
+}
+
+/**
+ * Alíquota efetiva de um campo (icms/pis/cofins/ipi) considerando benefícios
+ * fiscais por produto, na ordem: isenção total > RETID (zera só impostos
+ * federais, não ICMS) > override explícito por produto > valor padrão.
+ * Núcleo puro de `resolverAliquota` (app2.js) — os três mapas de estado
+ * (beneficioFiscalAtivo/beneficiosPorProduto/retidPorProduto) são globais em
+ * app2.js; aqui entram como parâmetros explícitos.
+ * @param {object} ctx
+ * @param {string} ctx.nomeProduto
+ * @param {string} ctx.campo - 'icms' | 'pis' | 'cofins' | 'ipi'
+ * @param {number} ctx.valorPadrao
+ * @param {boolean} ctx.beneficioFiscalAtivo
+ * @param {object} ctx.beneficiosPorProduto - nomeProduto -> {isentoTotal?, [campo]?: override}
+ * @param {object} ctx.retidPorProduto - nomeProduto -> true quando RETID ativo
+ * @returns {number}
+ */
+function resolverAliquotaComBeneficio(ctx) {
+    const { nomeProduto, campo, valorPadrao, beneficioFiscalAtivo, beneficiosPorProduto, retidPorProduto } = ctx;
+    try {
+        if (beneficioFiscalAtivo && beneficiosPorProduto && beneficiosPorProduto[nomeProduto] && beneficiosPorProduto[nomeProduto].isentoTotal) return 0;
+        if (retidPorProduto && retidPorProduto[nomeProduto] && campo !== 'icms') return 0;
+        if (beneficioFiscalAtivo && beneficiosPorProduto && beneficiosPorProduto[nomeProduto]) {
+            const override = beneficiosPorProduto[nomeProduto][campo];
+            if (override !== null && override !== undefined && override !== '') return Number(override);
+        }
+    } catch (e) { /* qualquer erro cai no valorPadrao, mesmo comportamento do original */ }
+    return Number(valorPadrao || 0);
+}
+
 const EstoqueCalculos = {
     calcularStatusCusto,
     parseCurrencyBRLToNumber,
@@ -371,7 +496,12 @@ const EstoqueCalculos = {
     obterMetricasImbelProduto,
     calcularImbelDisponivel,
     resolverAliquotaICMS,
-    calcularPrecoFinal
+    calcularPrecoFinal,
+    IMBEL_TIPOS,
+    getImbelTipo,
+    imbelTipoAumentaEstoque,
+    calcularSaldosImbel,
+    resolverAliquotaComBeneficio
 };
 
 if (typeof window !== 'undefined') {

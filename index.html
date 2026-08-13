@@ -232,7 +232,7 @@
         <div id="loginModal" class="modal" aria-hidden="true" style="display:none;">
             <div class="modal-backdrop" onclick="closeLoginModal()"></div>
             <div class="modal-content" role="dialog" aria-modal="true">
-                <button class="modal-close" onclick="closeLoginModal()">×</button>
+                <button class="modal-close" aria-label="Fechar" onclick="closeLoginModal()">×</button>
                 <div class="login-card">
                     <div class="login-card-icon">📋</div>
                     <h2 class="login-card-title">Acesso Administrador</h2>
@@ -3217,7 +3217,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2><span>+</span> Adicionar Novo Produto</h2>
-                    <span class="close" onclick="fecharModal('modalProduto')">&times;</span>
+                    <span class="close" aria-label="Fechar" onclick="fecharModal('modalProduto')">&times;</span>
                 </div>
                 <form id="formProduto" onsubmit="salvarProduto(event)">
                     <div class="modal-body">
@@ -3314,7 +3314,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2><span>📥</span> Entrada de Estoque (IMBEL)</h2>
-                    <span class="close" onclick="fecharModal('modalEntradaEstoque')">&times;</span>
+                    <span class="close" aria-label="Fechar" onclick="fecharModal('modalEntradaEstoque')">&times;</span>
                 </div>
                 <form id="formEntradaEstoque" onsubmit="salvarEntradaEstoque(event)">
                     <div class="modal-body">
@@ -3350,7 +3350,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2><span>📦</span> Distribuir Estoque</h2>
-                    <span class="close" onclick="fecharModal('modalDistribuicao')">&times;</span>
+                    <span class="close" aria-label="Fechar" onclick="fecharModal('modalDistribuicao')">&times;</span>
                 </div>
                 <form id="formDistribuicao" onsubmit="salvarDistribuicao(event)">
                     <div class="modal-body">
@@ -3382,7 +3382,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2><span>💰</span> Registrar Venda</h2>
-                    <span class="close" onclick="fecharModal('modalVenda')">&times;</span>
+                    <span class="close" aria-label="Fechar" onclick="fecharModal('modalVenda')">&times;</span>
                 </div>
                 <form id="formVenda" onsubmit="salvarVenda(event)">
                     <div class="modal-body">
@@ -3414,7 +3414,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2><span>↩</span> Registrar Devolução</h2>
-                    <span class="close" onclick="fecharModal('modalDevolucao')">&times;</span>
+                    <span class="close" aria-label="Fechar" onclick="fecharModal('modalDevolucao')">&times;</span>
                 </div>
                 <form id="formDevolucao" onsubmit="salvarDevolucao(event)">
                     <div class="modal-body">
@@ -3449,7 +3449,7 @@
             <div class="modal-content modal-lg">
                 <div class="modal-header">
                     <h2><span>📝</span> Nova Venda Detalhada</h2>
-                    <span class="close" onclick="fecharModal('modalVendaDetalhada')">&times;</span>
+                    <span class="close" aria-label="Fechar" onclick="fecharModal('modalVendaDetalhada')">&times;</span>
                 </div>
                 <form id="formVendaDetalhada" onsubmit="salvarVendaDetalhada(event)">
                     <div class="modal-body">
@@ -3524,7 +3524,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2><span>🚚</span> Nova Distribuição</h2>
-                    <span class="close" onclick="fecharModal('modalNovaDistribuicao')">&times;</span>
+                    <span class="close" aria-label="Fechar" onclick="fecharModal('modalNovaDistribuicao')">&times;</span>
                 </div>
                 <form id="formNovaDistribuicao" onsubmit="salvarNovaDistribuicao(event)">
                     <div class="modal-body">
@@ -3566,7 +3566,7 @@
         <div class="modal-content modal-lg">
             <div class="modal-header">
                 <h2><span>🧊</span> Fechamentos Mensais de Comissões</h2>
-                <span class="close" onclick="fecharModal('modalFechamentosComissoes')">&times;</span>
+                <span class="close" aria-label="Fechar" onclick="fecharModal('modalFechamentosComissoes')">&times;</span>
             </div>
             <div class="modal-body">
                 <div id="fechamentosComissoesConteudo" class="historico-lista"></div>
@@ -3588,7 +3588,7 @@
         <div class="modal-content modal-lg">
             <div class="modal-header">
                 <h2><span>📋</span> <span id="modalHistoricoTitulo">Painel do Contrato</span></h2>
-                <span class="close" onclick="fecharModal('modalHistorico')">&times;</span>
+                <span class="close" aria-label="Fechar" onclick="fecharModal('modalHistorico')">&times;</span>
             </div>
             <div class="modal-body" style="padding:0">
                 <!-- Resumo do contrato -->
@@ -3611,7 +3611,7 @@
         <div class="modal-content modal-lg">
             <div class="modal-header">
                 <h2><span>🔍</span> Resultados da Busca</h2>
-                <span class="close" onclick="fecharModal('modalBuscaGlobal')">&times;</span>
+                <span class="close" aria-label="Fechar" onclick="fecharModal('modalBuscaGlobal')">&times;</span>
             </div>
             <div class="modal-body">
                 <div id="resultadosBuscaGlobal" class="busca-resultados"></div>
@@ -3664,7 +3664,7 @@
         <div class="imbel-modal-panel">
             <div class="imbel-modal-header">
                 <h3>Cadastro de Produto</h3>
-                <button class="imbel-modal-close">&times;</button>
+                <button class="imbel-modal-close" aria-label="Fechar">&times;</button>
             </div>
             <div class="imbel-modal-body">
                 <input type="hidden" id="imbel_prod_edit_id" />
@@ -3718,7 +3718,7 @@
         <div class="imbel-modal-panel">
             <div class="imbel-modal-header">
                 <h3>Registrar Movimentação</h3>
-                <button class="imbel-modal-close">&times;</button>
+                <button class="imbel-modal-close" aria-label="Fechar">&times;</button>
             </div>
                         <div class="imbel-modal-body imbel-form-flex imbel-form-rolavel">
 
@@ -3823,7 +3823,7 @@
                 <div class="imbel-modal-content imbel-modal-content--estreito">
                     <div class="imbel-modal-header">
                         <span class="imbel-modal-title">💰 Definir Preço</span>
-                        <button class="imbel-modal-close">×</button>
+                        <button class="imbel-modal-close" aria-label="Fechar">×</button>
                     </div>
                     <div class="imbel-modal-body imbel-form-flex">
 
@@ -3865,14 +3865,14 @@
         <div class="modal-content modal-lg">
             <div class="modal-header">
                 <h2><span>👥</span> <span id="modalClienteTitulo">Novo Cliente</span></h2>
-                <span class="close" onclick="fecharModal('modalCliente')">&times;</span>
+                <span class="close" aria-label="Fechar" onclick="fecharModal('modalCliente')">&times;</span>
             </div>
             <form id="formCliente" onsubmit="salvarCliente(event)">
                 <div class="modal-body">
                                         <input type="hidden" id="clienteEditId">
                                         <div class="form-row">
                                             <div class="form-group" style="flex:2">
-                                                <label>Nome Fantasia / Razão Social <span class="required">*</span></label>
+                                                <label>Razão Social / Nome <span class="required">*</span></label>
                                                 <input type="text" id="clienteNome" required
                                                              placeholder="Ex: Armas & Cia LTDA ou João Silva">
                                             </div>
@@ -3908,11 +3908,38 @@
                                                              autocomplete="off">
                                             </div>
                                         </div>
+                    <!-- Dados fiscais: preenchem o bloco COMPRADOR do Contrato de
+                         Venda gerado em gerarContratoVenda() — sem eles o contrato
+                         sai com esses campos em branco. -->
+                    <div class="form-row">
+                        <div class="form-group" style="flex:2">
+                            <label>Nome Fantasia</label>
+                            <input type="text" id="clienteNomeFantasia" placeholder="Nome de fachada, se houver">
+                        </div>
+                        <div class="form-group">
+                            <label>Inscrição Estadual</label>
+                            <input type="text" id="clienteInscricaoEstadual" placeholder="000.000.000.000">
+                        </div>
+                        <div class="form-group">
+                            <label>Registro no EB</label>
+                            <input type="text" id="clienteRegistroEB" placeholder="CR / TR / CRAF">
+                        </div>
+                    </div>
                     <div class="form-row">
                         <div class="form-group" style="flex:2">
                             <label>Endereço</label>
-                            <input type="text" id="clienteEndereco" placeholder="Rua, número, bairro">
+                            <input type="text" id="clienteEndereco" placeholder="Rua, número">
                         </div>
+                        <div class="form-group">
+                            <label>Bairro</label>
+                            <input type="text" id="clienteBairro" placeholder="Bairro">
+                        </div>
+                        <div class="form-group" style="flex:0 0 120px">
+                            <label>CEP</label>
+                            <input type="text" id="clienteCep" placeholder="00000-000" maxlength="9">
+                        </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label>Cidade</label>
                             <input type="text" id="clienteCidade" placeholder="Cidade">
@@ -3942,6 +3969,88 @@
                             <select id="clienteRepresentante"></select>
                         </div>
                     </div>
+
+                    <h4 style="margin:18px 0 8px;font-size:0.9rem;color:#1e3a5f;
+                               border-bottom:1px solid #e2e8f0;padding-bottom:6px">
+                        Condições Comerciais
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group" style="flex:2">
+                            <label>Condição de Pagamento Padrão</label>
+                            <input type="text" id="clienteCondicaoPagamento" list="condicoesPagamentoDatalist"
+                                   placeholder="Ex: 30/60/90 dias">
+                            <datalist id="condicoesPagamentoDatalist">
+                                <option value="À vista"></option>
+                                <option value="30 dias"></option>
+                                <option value="30/60 dias"></option>
+                                <option value="30/60/90 dias"></option>
+                                <option value="Antecipado"></option>
+                                <option value="Empenho / GRU"></option>
+                            </datalist>
+                        </div>
+                        <div class="form-group">
+                            <label>Limite de Crédito (R$)</label>
+                            <input type="number" id="clienteLimiteCredito" min="0" step="0.01" placeholder="0,00">
+                        </div>
+                        <div class="form-group">
+                            <label>Desconto Negociado (%)</label>
+                            <input type="number" id="clienteDescontoNegociado" min="0" max="100" step="0.01" placeholder="0">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Segmento</label>
+                            <select id="clienteSegmento">
+                                <option value="">— Selecione —</option>
+                                <option value="lojista">Lojista / Revenda</option>
+                                <option value="clube_tiro">Clube de Tiro</option>
+                                <option value="seguranca_privada">Segurança Privada</option>
+                                <option value="orgao_publico">Órgão Público</option>
+                                <option value="forcas_armadas">Forças Armadas</option>
+                                <option value="cac">CAC</option>
+                                <option value="consumidor_final">Consumidor Final</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Canal de Origem</label>
+                            <select id="clienteCanalOrigem">
+                                <option value="">— Selecione —</option>
+                                <option value="indicacao">Indicação</option>
+                                <option value="representante">Representante</option>
+                                <option value="feira">Feira / Evento</option>
+                                <option value="site">Site / Formulário</option>
+                                <option value="redes_sociais">Redes Sociais</option>
+                                <option value="prospeccao">Prospecção Ativa</option>
+                                <option value="licitacao">Licitação</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h4 style="margin:18px 0 8px;font-size:0.9rem;color:#1e3a5f;
+                               border-bottom:1px solid #e2e8f0;padding-bottom:6px">
+                        Dados Bancários
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Banco</label>
+                            <input type="text" id="clienteBanco" placeholder="Ex: 001 - Banco do Brasil">
+                        </div>
+                        <div class="form-group" style="flex:0 0 110px">
+                            <label>Agência</label>
+                            <input type="text" id="clienteAgencia" placeholder="0000">
+                        </div>
+                        <div class="form-group" style="flex:0 0 150px">
+                            <label>Conta</label>
+                            <input type="text" id="clienteConta" placeholder="00000-0">
+                        </div>
+                        <div class="form-group" style="flex:2">
+                            <label>Chave PIX</label>
+                            <input type="text" id="clientePix" placeholder="CNPJ, e-mail, telefone ou chave aleatória">
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label>Observações</label>
                         <textarea id="clienteObservacoes" rows="2" placeholder="Anotações sobre o cliente..."></textarea>
@@ -3962,7 +4071,7 @@
         <div class="modal-content modal-lg">
             <div class="modal-header">
                 <h2><span>📋</span> <span id="modalPropostaTitulo">Nova Proposta</span></h2>
-                <span class="close" onclick="fecharModal('modalProposta')">&times;</span>
+                <span class="close" aria-label="Fechar" onclick="fecharModal('modalProposta')">&times;</span>
             </div>
             <form id="formProposta" onsubmit="salvarProposta(event)">
                 <div class="modal-body">
@@ -3983,7 +4092,8 @@
                                         <input type="text" id="propostaCliente" required
                                                list="clientesDatalist"
                                                placeholder="Nome do cliente"
-                                               oninput="preencherDadosCliente(this.value)">
+                                               oninput="preencherDadosCliente(this.value)"
+                                               onchange="atualizarPrecosPropostaPorCliente()">
                                     </div>
                                     <div class="form-group">
                                         <label>Data da Proposta</label>
@@ -4009,6 +4119,23 @@
                                             <option value="recusada">Recusada</option>
                                             <option value="expirada">Expirada</option>
                                         </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group" style="flex:2">
+                                        <label>Condição de Pagamento</label>
+                                        <input type="text" id="propostaCondicaoPagamento"
+                                               list="condicoesPagamentoDatalist"
+                                               placeholder="Puxada do cadastro do cliente">
+                                        <small id="propostaCondicaoOrigem"
+                                               style="display:none;font-size:0.72rem;color:#0ea5e9"></small>
+                                    </div>
+                                    <div class="form-group" style="flex:1">
+                                        <label>Desconto do Cliente</label>
+                                        <div id="propostaDescontoCliente"
+                                             class="readonly-field"
+                                             style="height:38px;display:flex;align-items:center;padding:0 10px;
+                                                    font-size:0.85rem;color:#64748b">—</div>
                                     </div>
                                 </div>
                             </section>
@@ -4059,7 +4186,7 @@
             <div class="modal-content modal-lg">
                 <div class="modal-header" style="background:#1e3a5f">
                     <h2 style="color:#fff"><span>📋</span> Histórico do Cliente</h2>
-                    <span class="close" onclick="fecharModal('modalHistoricoCliente')" style="color:#fff">&times;</span>
+                    <span class="close" aria-label="Fechar" onclick="fecharModal('modalHistoricoCliente')" style="color:#fff">&times;</span>
                 </div>
                 <div class="modal-body" style="padding:20px">
 
@@ -4116,7 +4243,7 @@
                     <h2 style="color:#fff">
                         <span>📄</span> Confirmar Conversão em Venda
                     </h2>
-                    <span class="close" onclick="fecharModal('modalConfirmarVenda')"
+                    <span class="close" aria-label="Fechar" onclick="fecharModal('modalConfirmarVenda')"
                                 style="color:#fff">&times;</span>
                 </div>
                 <div class="modal-body" style="padding:20px">
@@ -4216,7 +4343,7 @@
         <div class="modal-content modal-lg">
             <div class="modal-header">
                 <h2><span>📋</span> Tabela de ICMS por Estado / Tipo / Categoria</h2>
-                <span class="close" onclick="fecharModal('modalICMS')">&times;</span>
+                <span class="close" aria-label="Fechar" onclick="fecharModal('modalICMS')">&times;</span>
             </div>
             <div class="modal-body" style="padding:16px">
                 <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;
@@ -4264,7 +4391,7 @@
         <div class="modal-content modal-lg">
             <div class="modal-header">
                 <h2><span>🧮</span> Simulador de Preço por Estado</h2>
-                <span class="close" onclick="fecharModal('modalSimuladorICMS')">&times;</span>
+                <span class="close" aria-label="Fechar" onclick="fecharModal('modalSimuladorICMS')">&times;</span>
             </div>
             <div class="modal-body" style="padding:16px">
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;
@@ -4352,7 +4479,7 @@
             <div class="modal-content" style="max-width:680px;max-height:82vh;display:flex;flex-direction:column">
                 <div class="modal-header">
                     <h2><span>📋</span> Relatório de Importação</h2>
-                    <span class="close" onclick="document.getElementById('modalImportacaoRelatorio').style.display='none'">&times;</span>
+                    <span class="close" aria-label="Fechar" onclick="document.getElementById('modalImportacaoRelatorio').style.display='none'">&times;</span>
                 </div>
                 <div class="modal-body" style="overflow-y:auto;padding:16px 20px">
                     <div id="importacaoRelatorioConteudo"></div>
@@ -4367,7 +4494,7 @@
             <div class="modal-content" style="max-width:720px;max-height:80vh;display:flex;flex-direction:column">
                 <div class="modal-header">
                     <h2><span>⛔</span> Cancelamentos Históricos</h2>
-                    <span class="close" onclick="document.getElementById('modalCancelamentos').style.display='none'">&times;</span>
+                    <span class="close" aria-label="Fechar" onclick="document.getElementById('modalCancelamentos').style.display='none'">&times;</span>
                 </div>
                 <div class="modal-body" style="overflow-y:auto">
                     <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:12px">
@@ -4382,7 +4509,7 @@
             <div class="modal-content" style="max-width:500px">
                 <div class="modal-header" style="background: linear-gradient(135deg,#b45309,#d97706)">
                     <h2><span>⚠️</span> Estoque Insuficiente</h2>
-                    <span class="close" onclick="fecharModal('modalConfirmacaoEstoque')">&times;</span>
+                    <span class="close" aria-label="Fechar" onclick="fecharModal('modalConfirmacaoEstoque')">&times;</span>
                 </div>
                 <div class="modal-body">
                     <pre id="msgConfirmacaoEstoque"
@@ -4406,7 +4533,7 @@
         <div class="modal-content" style="max-width:560px;width:95%">
             <div class="modal-header">
                 <h3 class="modal-title">Verificação de Integridade do Estoque</h3>
-                <button class="modal-close" onclick="fecharModal('modalIntegridadeEstoque')">&times;</button>
+                <button class="modal-close" aria-label="Fechar" onclick="fecharModal('modalIntegridadeEstoque')">&times;</button>
             </div>
             <div class="modal-body" id="corpoModalIntegridade" style="padding:16px">
                 <p style="color:#64748b">Verificando...</p>
@@ -4425,7 +4552,7 @@
         <div class="modal-content" style="max-width:860px;width:95vw;max-height:88vh;overflow-y:auto">
             <div class="modal-header">
                 <h3 class="modal-title" id="tituloFechamentoMensalRep">Fechamento Mensal por Representante</h3>
-                <button class="modal-close" onclick="fecharModal('modalFechamentoMensalRep')">&times;</button>
+                <button class="modal-close" aria-label="Fechar" onclick="fecharModal('modalFechamentoMensalRep')">&times;</button>
             </div>
             <div id="conteudoFechamentoMensalRep" style="padding:16px"></div>
             <div class="modal-footer">
@@ -4440,7 +4567,7 @@
         <div class="modal-content" style="max-width:620px;width:95vw;max-height:90vh;overflow-y:auto">
             <div class="modal-header">
                 <h3 class="modal-title">Enviar Pedido por Email</h3>
-                <button class="modal-close" onclick="fecharModal('modalEmailVenda')">&times;</button>
+                <button class="modal-close" aria-label="Fechar" onclick="fecharModal('modalEmailVenda')">&times;</button>
             </div>
             <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
                 <div>
@@ -4476,7 +4603,7 @@
         <div class="modal-content" style="max-width:720px;width:95vw;max-height:88vh;overflow-y:auto">
             <div class="modal-header">
                 <h3 class="modal-title">Produtos Parados com Representante</h3>
-                <button class="modal-close" onclick="fecharModal('modalProdutosSemMovimentacao')">&times;</button>
+                <button class="modal-close" aria-label="Fechar" onclick="fecharModal('modalProdutosSemMovimentacao')">&times;</button>
             </div>
             <div id="conteudoProdutosSemMovimentacao" style="padding:16px"></div>
             <div class="modal-footer">
@@ -4492,7 +4619,7 @@
         <div class="modal-content" style="max-width:820px">
             <div class="modal-header">
                 <h3 id="crmModalNegocioTitulo">Novo negócio</h3>
-                <button class="modal-close" onclick="fecharModal('modalNegocio')">&times;</button>
+                <button class="modal-close" aria-label="Fechar" onclick="fecharModal('modalNegocio')">&times;</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="crmNegocioId">
@@ -4591,7 +4718,7 @@
         <div class="modal-content" style="max-width:820px">
             <div class="modal-header">
                 <h3 id="crmModalAnotacaoTitulo">Nova anotação</h3>
-                <button class="modal-close" onclick="fecharModal('modalAnotacao')">&times;</button>
+                <button class="modal-close" aria-label="Fechar" onclick="fecharModal('modalAnotacao')">&times;</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="crmAnotacaoId">
@@ -4789,7 +4916,7 @@
         <div class="modal-content" style="max-width:420px">
             <div class="modal-header">
                 <h3>Registro rápido de demanda</h3>
-                <button class="modal-close" onclick="fecharModal('modalRegistroRapido')">&times;</button>
+                <button class="modal-close" aria-label="Fechar" onclick="fecharModal('modalRegistroRapido')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -4816,7 +4943,7 @@
         <div class="modal-content" style="max-width:860px">
             <div class="modal-header">
                 <h3 id="crmModalAtvCalTitulo">Nova atividade</h3>
-                <button class="modal-close" onclick="fecharModal('modalAtividadeCal')">&times;</button>
+                <button class="modal-close" aria-label="Fechar" onclick="fecharModal('modalAtividadeCal')">&times;</button>
             </div>
             <div class="crm-atv-cal-modal-grid">
                 <div class="modal-body crm-atv-cal-modal-form">
@@ -4881,7 +5008,7 @@
         <div class="modal-content" style="max-width:640px">
             <div class="modal-header">
                 <h3>Gerenciar funil</h3>
-                <button class="modal-close" onclick="fecharModal('modalFunil')">&times;</button>
+                <button class="modal-close" aria-label="Fechar" onclick="fecharModal('modalFunil')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -4916,7 +5043,7 @@
         <div class="modal-content" style="max-width:560px">
             <div class="modal-header">
                 <h3>Tipos de atividade</h3>
-                <button class="modal-close" onclick="fecharModal('modalTiposAtividade')">&times;</button>
+                <button class="modal-close" aria-label="Fechar" onclick="fecharModal('modalTiposAtividade')">&times;</button>
             </div>
             <div class="modal-body">
                 <p class="crm-tipos-atv-ajuda">Personalize os tipos de atividade da empresa. Tipos desativados não aparecem para novas atividades, mas continuam vinculados às já existentes.</p>
@@ -4933,7 +5060,7 @@
         <div class="modal-content" style="max-width:420px">
             <div class="modal-header">
                 <h3 id="crmTipoAtvFormTitulo">Novo tipo de atividade</h3>
-                <button class="modal-close" onclick="fecharModal('modalTipoAtividadeForm')">&times;</button>
+                <button class="modal-close" aria-label="Fechar" onclick="fecharModal('modalTipoAtividadeForm')">&times;</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="crmTipoAtvChave">
@@ -4958,10 +5085,12 @@
     <script src="asset-loader.js?v=46401e5e"></script>
     <script src="modal-a11y.js?v=90653483"></script>
     <script src="debounce.js?v=513ecf7a"></script>
-    <script src="app2.js?v=cd77acb8"></script>
+    <!-- estoque-calculos.js carrega antes de app2.js: app2.js tem chamadas de
+         nível de módulo (ex.: initControleImbel() logo após ser definida) que
+         precisam de window.EstoqueCalculos já disponível nesse momento. -->
+    <script src="estoque-calculos.js?v=e346bd93"></script>
+    <script src="app2.js?v=cb386b85"></script>
     <script src="icms-regras.js?v=edeb04f9"></script>
-
-    <script src="estoque-calculos.js?v=73cdd7e6"></script>
 
     <script src="crm-model.js?v=a047290b"></script>
     <script src="crm-calculos.js?v=e5fd804a"></script>
@@ -5031,7 +5160,7 @@
                     <div style="font-family:var(--font-display);font-size:0.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:2px">Adicionar produtos</div>
                     <div id="selModalSubtitle" style="font-size:0.92rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
                 </div>
-                <button class="sel-close-btn" onclick="precifFecharModalProdutos()" title="Fechar">✕</button>
+                <button class="sel-close-btn" aria-label="Fechar" onclick="precifFecharModalProdutos()" title="Fechar">✕</button>
             </div>
 
             <!-- Barra de busca + filtros de categoria -->

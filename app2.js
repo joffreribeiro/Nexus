@@ -84,6 +84,21 @@ function _fmtMoeda(v) {
     return Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// Leitura tolerante de campo de formulário: devolve '' se o elemento não existir
+// (formulários vão ganhando campos, e um id ausente não deve derrubar o save).
+function _valorCampo(id) {
+    return (document.getElementById(id)?.value || '').trim();
+}
+
+// Idem, para campos numéricos: '' vira null em vez de 0, para distinguir
+// "não informado" de "zero".
+function _numeroCampo(id) {
+    const bruto = _valorCampo(id);
+    if (bruto === '') return null;
+    const n = Number(bruto.replace(',', '.'));
+    return Number.isFinite(n) ? n : null;
+}
+
 /**
  * Registra, sem nunca lançar, um erro que o chamador decidiu tolerar (catch
  * silencioso). Usa `console.debug`, que este arquivo já desativa fora de
@@ -1945,7 +1960,11 @@ async function gerarDocxProposta() {
     // ── Texto fixo ──
     const txtPrazo = 'Até 180 (cento e oitenta) dias, contados a partir do recebimento pela contratada da via do contrato assinada pelas duas partes, do recebimento do empenho ou comprovante de pagamento da Guia de Recolhimento à União (GRU), e da autorização de aquisição da Diretoria de Fiscalização de Produtos Controlados, DFPC, o que ocorrer por último.';
     const txtLocal = 'O(s) item (itens) materiais constantes desta proposta comercial deverão ser retirados pela contratante na Fábrica de Itajubá ou em local negociado entre as partes, condicionado a entrega da nota de empenho e a autorização de aquisição da Diretoria de Fiscalização de Produtos Controlados - DFPC. Caso o órgão adquirente não forneça os dois documentos citados acima até a data limite da entrega do produto, será aplicado as sanções administrativas regulamentares e contratuais cabíveis.';
-    const txtPgto = 'O pagamento será realizado por meio de Nota de Empenho ou Guia de Recolhimento à União (GRU), sendo esta última, com vencimento em até 30 (trinta) dias. O início da produção do material industrializado ocorrerá após o reconhecimento do pagamento da GRU ou da apresentação da Nota de Empenho.';
+    // Condição negociada com este cliente (campo da proposta, herdado do cadastro)
+    // prevalece sobre o texto padrão de empenho/GRU.
+    const condicaoNegociada = _valorCampo('propostaCondicaoPagamento');
+    const txtPgto = condicaoNegociada
+        || 'O pagamento será realizado por meio de Nota de Empenho ou Guia de Recolhimento à União (GRU), sendo esta última, com vencimento em até 30 (trinta) dias. O início da produção do material industrializado ocorrerá após o reconhecimento do pagamento da GRU ou da apresentação da Nota de Empenho.';
     const txtGarantia = 'Fica estabelecido o prazo de garantia de 12 (doze) meses (incluindo a garantia legal), contra eventuais defeitos de fabricação, desde que sejam cumpridas as recomendações presentes no manual da arma ou produto de acordo com o Código de Defesa do Consumidor, art. 50, que estabelece que "a garantia contratual é complementar à legal e será conferida mediante a termo escrito". A presente garantia ficará sem efeito, se o produto sofrer qualquer dano provocado por acidente, incluindo queda, mau uso, falta de manutenção, uso de munições inadequadas, desgaste natural oriundo da utilização, ou ainda no caso, apresentar sinais de conserto por pessoas não autorizadas, bem como por defeito oriundo de caso fortuito ou força maior. O Cliente, deverá acionar à Assistência Técnica indicada pelo fabricante, sendo da sua responsabilidade o transporte até o local indicado e/ou filial de Itajubá-MG, em se tratando de um produto controlado, obedecendo ao previsto na legislação vigente.';
     const txtImpostos = 'Já estão incluídas todas as despesas com embalagem, seguro, impostos, taxas, contribuições e isenções, de acordo com a legislação vigente.';
     const dadosEmpresa = `Razão Social: ${vendedor.nomeEmpresa||'Indústria de Material Bélico do Brasil – IMBEL®/ Fábrica de Itajubá (FI)'}; UG 168005 – Gestão: 16501; CNPJ (MF) nº ${vendedor.cnpj||'00.444.232/0007-24'}; Inscrição Estadual nº ${vendedor.inscricaoEstadual||'324.219.741.0138'}; Endereço: ${vendedor.endereco||'Av. Cel. Aventino Ribeiro, nº 1.099'}, ${vendedor.cidade||'Itajubá'}/${vendedor.uf||'MG'}, CEP: ${vendedor.cep||'37.501-345'}`;
@@ -6731,33 +6750,11 @@ function saveImbel(data) {
 }
 
 // Função central de cálculo de saldo — única fonte de verdade para entradas/saídas por produto.
+// Cálculo puro extraído para EstoqueCalculos.calcularSaldosImbel (estoque-calculos.js).
 // Percorre as movimentações uma única vez e retorna mapa { produtoId: { inicial, entradas, saidas, saldo, saidaByTipo } }.
 // Parâmetro ignorarId: ID de movimentação a ignorar (usado ao validar edição de registro existente).
-function calcularSaldosImbel(data, { ignorarId = null } = {}) {
-    const saldos = {};
-    (data.produtos || []).forEach(p => {
-        const inicial = Number(p.quantidadeInicial) || 0;
-        saldos[p.id] = { inicial, entradas: 0, saidas: 0, saidaByTipo: {} };
-    });
-    (data.movimentacoes || []).forEach(m => {
-        if (ignorarId && m.id === ignorarId) return;
-        const aumenta = imbelTipoAumentaEstoque(m.tipo);
-        const subItens = (m.items && m.items.length)
-            ? m.items.map(it => ({ produtoId: it.produtoId, quantidade: Number(it.quantidade) || 0 }))
-            : (m.produtoId ? [{ produtoId: m.produtoId, quantidade: Number(m.quantidade) || 0 }] : []);
-        subItens.forEach(({ produtoId, quantidade }) => {
-            if (!saldos[produtoId]) return;
-            if (aumenta) {
-                saldos[produtoId].entradas += quantidade;
-            } else {
-                saldos[produtoId].saidas += quantidade;
-                saldos[produtoId].saidaByTipo[m.tipo] = (saldos[produtoId].saidaByTipo[m.tipo] || 0) + quantidade;
-            }
-        });
-    });
-    // Calcular saldo final como valor simples em cada entrada
-    Object.values(saldos).forEach(s => { s.saldo = s.inicial + s.entradas - s.saidas; });
-    return saldos;
+function calcularSaldosImbel(data, opts) {
+    return EstoqueCalculos.calcularSaldosImbel(data, opts);
 }
 
 // Migrar movimentações antigas para novos tipos (executar uma vez no carregamento)
@@ -6985,46 +6982,20 @@ function excluirPrecoImbel(id) {
     try { mostrarNotificacao('Preço excluído', 'success'); } catch (e) { _catchSilencioso(e, 'excluirPrecoImbel'); }
 }
 
-// Definições de tipos de movimentação IMBEL
-const IMBEL_TIPOS = {
-    RECEBIMENTO_FABRICA: {
-        label: 'Recebimento Fábrica', categoria: 'entrada', icon: '📦', cor: '#16a34a', bg: '#f0fdf4', contaReceita: false,
-        descricao: 'Produto recebido da Fábrica de Itajubá'
-    },
-    RETORNO_MARKETING: {
-        label: 'Retorno Promo', categoria: 'entrada', icon: '↩', cor: '#0284c7', bg: '#e0f2fe', contaReceita: false,
-        descricao: 'Produto retornado de ação promocional'
-    },
-    AJUSTE_ENTRADA: {
-        label: 'Ajuste de Inventário (+)', categoria: 'entrada', icon: '🔧', cor: '#64748b', bg: '#f8fafc', contaReceita: false,
-        descricao: 'Correção de estoque — entrada'
-    },
-    VENDA: {
-        label: 'Venda', categoria: 'saida', icon: '💰', cor: '#d97706', bg: '#fffbeb', contaReceita: true,
-        descricao: 'Venda ao cliente final'
-    },
-    SAIDA_MARKETING: {
-        label: 'Saída Promo', categoria: 'saida', icon: '↗', cor: '#7c3aed', bg: '#f3e8ff', contaReceita: false,
-        descricao: 'Produto cedido para ação promocional ou evento'
-    },
-    DEVOLUCAO_FABRICA: {
-        label: 'Devolução à Fábrica', categoria: 'saida', icon: '🔙', cor: '#dc2626', bg: '#fef2f2', contaReceita: false,
-        descricao: 'Produto devolvido à Fábrica de Itajubá'
-    },
-    AJUSTE_SAIDA: {
-        label: 'Ajuste de Inventário (-)', categoria: 'saida', icon: '🔧', cor: '#64748b', bg: '#f8fafc', contaReceita: false,
-        descricao: 'Correção de estoque — saída'
-    }
-};
+// Definições de tipos de movimentação IMBEL — dado puro, movido para
+// EstoqueCalculos.IMBEL_TIPOS (estoque-calculos.js). Sem alias de nível de
+// módulo aqui de propósito: estoque-calculos.js carrega DEPOIS de app2.js no
+// index.html, então `EstoqueCalculos` ainda não existiria no momento em que
+// este arquivo é interpretado. Os poucos usos diretos (abaixo, dentro de
+// função) leem `EstoqueCalculos.IMBEL_TIPOS` diretamente — só código dentro
+// de função roda depois de todos os scripts terem carregado.
 
 function getImbelTipo(tipoKey) {
-    return IMBEL_TIPOS[tipoKey]
-        || IMBEL_TIPOS[(tipoKey||'').toString().toUpperCase().replace(/\s+/g,'_')]
-        || { label: tipoKey, categoria: 'saida', icon: '•', cor: '#64748b', bg: '#f8fafc', contaReceita: false };
+    return EstoqueCalculos.getImbelTipo(tipoKey);
 }
 
 function imbelTipoAumentaEstoque(tipoKey) {
-    try { const t = getImbelTipo(tipoKey); return t.categoria === 'entrada'; } catch(e) { return false; }
+    return EstoqueCalculos.imbelTipoAumentaEstoque(tipoKey);
 }
 
 let _tooltipSaidaEl = null;
@@ -8788,8 +8759,8 @@ function renderControleImbelMovimentacao() {
         if (tipoSelect) {
             tipoSelect.innerHTML = '';
             const optEmpty = document.createElement('option'); optEmpty.value = ''; optEmpty.textContent = '— selecione o tipo —'; tipoSelect.appendChild(optEmpty);
-            Object.keys(IMBEL_TIPOS).forEach(key => {
-                const opt = document.createElement('option'); opt.value = key; opt.textContent = IMBEL_TIPOS[key].label || key; tipoSelect.appendChild(opt);
+            Object.keys(EstoqueCalculos.IMBEL_TIPOS).forEach(key => {
+                const opt = document.createElement('option'); opt.value = key; opt.textContent = EstoqueCalculos.IMBEL_TIPOS[key].label || key; tipoSelect.appendChild(opt);
             });
         }
     } catch(e) { console.warn('Não foi possível popular select de tipos IMBEL', e); }
@@ -11808,6 +11779,13 @@ function renderizarRegistroVendas() {
     const dbg = document.getElementById('debug-grupos-vendas');
     if (dbg) dbg.remove();
 
+    // Fase 1 (sem DOM): resolve os dados de cada contrato e decide, com base
+    // nos filtros de envio, quais grupos entram na tabela — sem ainda criar
+    // nenhum elemento. Precisa terminar antes da Fase 2 (render) porque
+    // atualizarTotaisVendas/atualizarKPIsVendas dependem do total agregado de
+    // TODOS os grupos filtrados, não só do primeiro lote que o LazyLoader
+    // desenharia de cara.
+    const gruposParaRenderizar = [];
     chavesOrdenadas.forEach(contratoKey => {
         const grupo = grupos[contratoKey] || [];
         const linhasDoContrato = grupo.length;
@@ -11816,8 +11794,6 @@ function renderizarRegistroVendas() {
         const totalContrato = grupo.reduce((sum, linha) => sum + (Number(linha.valorTotal) || 0), 0);
         const totalQtdContrato = grupo.reduce((sum, linha) => sum + (Number(linha.quantidade) || 0), 0);
         const primeira = grupo[0];
-        const repClass = (primeira.representante || '').toLowerCase();
-        const obsGrupo = grupo.find(g => g.observacoes && g.observacoes !== '-')?.observacoes || primeira.observacoes || '-';
         const minData = grupo.map(g => g.dataNorm).filter(Boolean).sort()[0] || null;
         const maxData = grupo.map(g => g.dataNorm).filter(Boolean).sort().slice(-1)[0] || null;
         const dataDisplay = minData
@@ -11828,9 +11804,6 @@ function renderizarRegistroVendas() {
         // verificar se todas as vendas deste contrato estão canceladas
         const vendasDoContrato = (estoque.registroVendas || []).filter(v => normalizarContratoKey(v.contrato) === contratoKey);
         const contratoCancelado = vendasDoContrato.length > 0 && vendasDoContrato.every(v => !!v.cancelado);
-        const cancelBadgeHtml = contratoCancelado ? '<span class="badge-cancelado">CANCELADO</span>' : '';
-
-        const badgeNova = '';
 
         // Quando há filtro por produto ativo, expande automaticamente para mostrar os itens
         const expandido = filtroProdutoId ? true : !!_contratosExpandidos[contratoKey];
@@ -11863,109 +11836,16 @@ function renderizarRegistroVendas() {
         if (filtroProgresso === 'parcial'  && (qtdConcluidos === 0 || qtdConcluidos === 3)) return;
         if (filtroProgresso === 'pendente' && qtdConcluidos !== 0) return;
 
-        const progressCor = qtdConcluidos === 3 ? '#2da44e' : qtdConcluidos > 0 ? '#d97706' : '#94a3b8';
-        const progressBadge = contratoCancelado ? '' :
-            `<span class="ctr-progress" style="background:${progressCor}22;border-color:${progressCor};color:${progressCor}">${qtdConcluidos}/3</span>`;
+        totalQtd += totalQtdContrato;
+        totalValor += totalContrato;
 
-        const statusBtn = (checked, campo) => {
-            if (contratoCancelado) return `<button type="button" class="status-indicator" disabled title="Contrato cancelado" style="opacity:0.3;cursor:not-allowed"><svg viewBox="0 0 12 12" aria-hidden="true"><path fill="white" d="M4.7 9.2 1.9 6.4l1.1-1.1 1.7 1.7 4.2-4.2L10 4z"/></svg></button>`;
-            let tooltipTitle = campo;
-            if (campo === 'enviado' && checked) {
-                const ts = estoque.controleEnvio?.[primeira.contratoRaw || contratoKey]?.emailEnviadoEm;
-                if (ts) tooltipTitle = `Email enviado em ${ts}`;
-            }
-            return `<button type="button" class="status-indicator ${checked ? 'checked' : ''}" onclick="salvarControleEnvio('${primeira.contratoRaw || contratoKey}', '${campo}', ${!checked})" title="${tooltipTitle}"><svg viewBox="0 0 12 12" aria-hidden="true"><path fill="white" d="M4.7 9.2 1.9 6.4l1.1-1.1 1.7 1.7 4.2-4.2L10 4z"/></svg></button>`;
-        };
-
-        const resumo = document.createElement('tr');
-        resumo.className = 'row-contrato-resumo' + (contratoCancelado ? ' contrato-cancelado' : '');
-        if (!contratoCancelado) {
-            if (qtdConcluidos === 3) resumo.classList.add('row-envio-completo');
-            else if (qtdConcluidos === 0) resumo.classList.add('row-envio-pendente');
-        }
-        const fallbackYear = primeira.dataNorm ? (primeira.dataNorm.slice(0,4)) : new Date().getFullYear();
-        const contratoDisplay = formatarContratoDisplay(primeira.contratoRaw || primeira.contratoKey, fallbackYear);
-        let actionsHtml = '';
-        if (contratoCancelado) {
-            actionsHtml = '<span class="badge-cancelado">CANCELADO</span>';
-        } else {
-            const emailEnviadoEm = (estoque.controleEnvio?.[primeira.contratoRaw || contratoKey]?.emailEnviadoEm) || '';
-            const emailBtnTitle = emailEnviadoEm ? `Email enviado em ${emailEnviadoEm}` : 'Preparar email de pedido';
-            const emailBtnStyle = emailEnviadoEm ? 'color:#15803d;border-color:#bbf7d0;background:#f0fdf4' : '';
-            // Ações frequentes ficam visíveis; as raras/destrutivas (histórico, cancelar,
-            // limpar envio, excluir) vão para o menu "⋯" — eram 7 ícones lado a lado.
-            const contratoRefEnvio = primeira.contratoRaw || contratoKey;
-            actionsHtml = `<button class="btn-action btn-edit" onclick="abrirModalVendaDetalhada(${primeira.vendaId})" title="Editar venda">✎</button>` +
-                          `<button class="btn-contrato-docx" onclick="gerarContratoVenda('${primeira.vendaId || primeira.contratoRaw}')" title="Gerar contrato .docx">📄</button>` +
-                          `<button class="btn-action" onclick="prepararEmailPorContrato('${contratoRefEnvio}')" title="${emailBtnTitle}" style="${emailBtnStyle}">✉️</button>` +
-                          `<button class="btn-action" onclick="toggleMenuAcoes(this, htmlMenuAcoesVenda(${primeira.vendaId}, '${contratoKey}', '${contratoRefEnvio}'))" title="Mais ações">⋯</button>`;
-        }
-
-        resumo.innerHTML = `
-            <td class="col-contrato">
-                <div class="ctr-cell">
-                    <span class="link-contrato" title="${contratoDisplay}">${contratoDisplay || '-'}</span>
-                    ${progressBadge}
-                </div>
-                ${cancelBadgeHtml}${badgeNova}
-            </td>
-            <td class="col-loja" title="${primeira.loja}">${primeira.loja}</td>
-            <td class="col-representante"><span class="badge-rep ${repClass}">${primeira.representante}</span></td>
-            <td class="col-produto-venda">${
-                linhasDoContrato === 1
-                    ? `<span class="prod-nome-inline">${grupo[0].produtoNome}</span>`
-                    : `<button class="btn-expand-contrato expand-btn-prod" onclick="toggleContratoExpandido('${contratoKey}')">
-                        <span class="expand-chevron ${expandido ? 'open' : ''}">▶</span>
-                        <span class="expand-count">${linhasDoContrato} produtos</span>
-                        <span class="expand-preview">${grupo.map(p => p.produtoNome.split(' ').slice(0,2).join(' ')).join(' · ')}</span>
-                        ${!expandido ? `<span class="prod-mais-wrap"><span class="prod-mais-chip">+${linhasDoContrato - 1}</span><span class="prod-mais-tooltip">${grupo.slice(1).map(p => `<span class="prod-mais-row"><span class="prod-mais-nome">${p.produtoNome}</span><span class="prod-mais-qty">× ${p.quantidade}</span></span>`).join('')}</span></span>` : ''}
-                       </button>`
-            }</td>
-            <td class="col-qtd">${totalQtdContrato}</td>
-            <td class="col-valor-total">${formatarMoedaValor(totalContrato)}</td>
-            <td class="col-data">${dataDisplay}</td>
-            <td class="col-sistema">${statusBtn(sistemaMarcado, 'sistema')}</td>
-            <td class="col-assinado">${statusBtn(assinadoMarcado, 'assinado')}</td>
-            <td class="col-enviado">${statusBtn(enviadoMarcado, 'enviado')}</td>
-            <td class="col-solicitacao">
-                <input type="text" class="campo-editavel" value="${envioData.solicitacao || ''}" placeholder="Data ou obs." onchange="salvarControleEnvio('${primeira.contratoRaw || contratoKey}', 'solicitacao', this.value)" ${contratoCancelado ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}>
-            </td>
-            <td class="col-acoes">${actionsHtml}</td>
-        `;
-        tbody.appendChild(resumo);
-
-        grupo.forEach((linha) => {
-            const tr = document.createElement('tr');
-            tr.className = `row-contrato-detalhe sub-linha-produto ${expandido ? '' : 'hidden-row'}`;
-            const valorUn = linha.valorUnitario ? formatarMoedaValor(linha.valorUnitario) : '-';
-            const valorTot = linha.valorTotal || 0;
-            totalQtd += linha.quantidade || 0;
-            totalValor += valorTot || 0;
-
-            // verificar se a venda específica está cancelada
-            const vendaObj = estoque.registroVendas.find(v => v.id === linha.vendaId);
-            const isLinhaCancelada = vendaObj && vendaObj.cancelado;
-            const detalheAcoesHtml = isLinhaCancelada ? '<span class="badge-cancelado">CANCELADO</span>' : '';
-
-            tr.innerHTML = `
-                <td class="col-contrato detalhe-vazio"></td>
-                <td class="col-loja detalhe-vazio" title="${linha.observacoes || ''}"><span style="color:#64748b;font-size:0.8rem">${linha.observacoes && linha.observacoes !== '-' ? linha.observacoes : ''}</span></td>
-                <td class="col-representante detalhe-vazio"></td>
-                <td class="col-produto-venda sub-td" title="${linha.produtoNome}"><div class="sub-prod-nome"><span class="sub-prod-hierarchy">└</span>${linha.produtoNome}</div></td>
-                <td class="col-qtd sub-td sub-td-mono">${linha.quantidade}</td>
-                <td class="col-valor-total sub-td"><div class="sub-prod-valor"><span class="sub-prod-valor-unit">${valorUn}</span><span class="sub-prod-valor-formula">unit. × ${linha.quantidade}</span></div></td>
-                <td class="col-data" style="font-size:0.8rem">${linha.dataNorm ? formatDateToDDMMYYYY(linha.dataNorm) : '-'}</td>
-                <td class="col-sistema detalhe-vazio"></td>
-                <td class="col-assinado detalhe-vazio"></td>
-                <td class="col-enviado detalhe-vazio"></td>
-                <td class="col-solicitacao detalhe-vazio"></td>
-                <td class="col-acoes">${detalheAcoesHtml}</td>
-            `;
-
-            tbody.appendChild(tr);
+        gruposParaRenderizar.push({
+            contratoKey, grupo, linhasDoContrato, totalContrato, totalQtdContrato,
+            primeira, dataDisplay, contratoCancelado, expandido, envioData,
+            sistemaMarcado, assinadoMarcado, enviadoMarcado, qtdConcluidos
         });
     });
-    
+
     try { atualizarKPIsVendas(grupos); } catch (e) { _catchSilencioso(e, 'renderizarRegistroVendas'); }
     atualizarTotaisVendas(totalQtd, totalValor);
 
@@ -11998,6 +11878,144 @@ function renderizarRegistroVendas() {
             table.appendChild(tfoot);
         }
     } catch (e) { console.warn('Erro ao renderizar rodapé de totais vendas', e); }
+
+    // Fase 2: desenha as linhas em si. Totais/KPIs/rodapé acima já usaram o
+    // agregado completo de gruposParaRenderizar — só a criação de elementos
+    // DOM é adiada em lotes, exatamente como em _renderUnidade (produtos) e
+    // montarRegistrosLazy (Ponto/Registros).
+    if (window.LazyLoader) {
+        LazyLoader.render(tbody, gruposParaRenderizar, _renderGrupoVenda, {
+            chunkSize: 50,
+            criarSentinela: function (restantes) {
+                const tr = document.createElement('tr');
+                tr.className = 'lazy-sentinela';
+                const td = document.createElement('td');
+                td.colSpan = 12;
+                td.style.cssText = 'text-align:center;padding:12px;color:#94a3b8;font-size:0.8rem';
+                td.textContent = `Carregando mais contratos... (${restantes} restante${restantes !== 1 ? 's' : ''})`;
+                tr.appendChild(td);
+                return tr;
+            }
+        });
+    } else {
+        gruposParaRenderizar.forEach(_renderGrupoVenda);
+    }
+}
+
+// Constrói a linha-resumo de um contrato (+ linhas de detalhe por produto,
+// se expandido) a partir do objeto pré-computado pela Fase 1 de
+// renderizarRegistroVendas — chamada em lotes pelo LazyLoader.render.
+function _renderGrupoVenda(dados) {
+    const tbody = document.getElementById('tabelaRegistroVendasBody');
+    if (!tbody) return;
+    const {
+        contratoKey, grupo, linhasDoContrato, totalContrato, totalQtdContrato,
+        primeira, dataDisplay, contratoCancelado, expandido, envioData,
+        sistemaMarcado, assinadoMarcado, enviadoMarcado, qtdConcluidos
+    } = dados;
+
+    const repClass = (primeira.representante || '').toLowerCase();
+    const cancelBadgeHtml = contratoCancelado ? '<span class="badge-cancelado">CANCELADO</span>' : '';
+    const badgeNova = '';
+
+    const progressCor = qtdConcluidos === 3 ? '#2da44e' : qtdConcluidos > 0 ? '#d97706' : '#94a3b8';
+    const progressBadge = contratoCancelado ? '' :
+        `<span class="ctr-progress" style="background:${progressCor}22;border-color:${progressCor};color:${progressCor}">${qtdConcluidos}/3</span>`;
+
+    const statusBtn = (checked, campo) => {
+        if (contratoCancelado) return `<button type="button" class="status-indicator" disabled title="Contrato cancelado" style="opacity:0.3;cursor:not-allowed"><svg viewBox="0 0 12 12" aria-hidden="true"><path fill="white" d="M4.7 9.2 1.9 6.4l1.1-1.1 1.7 1.7 4.2-4.2L10 4z"/></svg></button>`;
+        let tooltipTitle = campo;
+        if (campo === 'enviado' && checked) {
+            const ts = estoque.controleEnvio?.[primeira.contratoRaw || contratoKey]?.emailEnviadoEm;
+            if (ts) tooltipTitle = `Email enviado em ${ts}`;
+        }
+        return `<button type="button" class="status-indicator ${checked ? 'checked' : ''}" onclick="salvarControleEnvio('${primeira.contratoRaw || contratoKey}', '${campo}', ${!checked})" title="${tooltipTitle}"><svg viewBox="0 0 12 12" aria-hidden="true"><path fill="white" d="M4.7 9.2 1.9 6.4l1.1-1.1 1.7 1.7 4.2-4.2L10 4z"/></svg></button>`;
+    };
+
+    const resumo = document.createElement('tr');
+    resumo.className = 'row-contrato-resumo' + (contratoCancelado ? ' contrato-cancelado' : '');
+    if (!contratoCancelado) {
+        if (qtdConcluidos === 3) resumo.classList.add('row-envio-completo');
+        else if (qtdConcluidos === 0) resumo.classList.add('row-envio-pendente');
+    }
+    const fallbackYear = primeira.dataNorm ? (primeira.dataNorm.slice(0,4)) : new Date().getFullYear();
+    const contratoDisplay = formatarContratoDisplay(primeira.contratoRaw || primeira.contratoKey, fallbackYear);
+    let actionsHtml = '';
+    if (contratoCancelado) {
+        actionsHtml = '<span class="badge-cancelado">CANCELADO</span>';
+    } else {
+        const emailEnviadoEm = (estoque.controleEnvio?.[primeira.contratoRaw || contratoKey]?.emailEnviadoEm) || '';
+        const emailBtnTitle = emailEnviadoEm ? `Email enviado em ${emailEnviadoEm}` : 'Preparar email de pedido';
+        const emailBtnStyle = emailEnviadoEm ? 'color:#15803d;border-color:#bbf7d0;background:#f0fdf4' : '';
+        // Ações frequentes ficam visíveis; as raras/destrutivas (histórico, cancelar,
+        // limpar envio, excluir) vão para o menu "⋯" — eram 7 ícones lado a lado.
+        const contratoRefEnvio = primeira.contratoRaw || contratoKey;
+        actionsHtml = `<button class="btn-action btn-edit" onclick="abrirModalVendaDetalhada(${primeira.vendaId})" title="Editar venda">✎</button>` +
+                      `<button class="btn-contrato-docx" onclick="gerarContratoVenda('${primeira.vendaId || primeira.contratoRaw}')" title="Gerar contrato .docx">📄</button>` +
+                      `<button class="btn-action" onclick="prepararEmailPorContrato('${contratoRefEnvio}')" title="${emailBtnTitle}" style="${emailBtnStyle}">✉️</button>` +
+                      `<button class="btn-action" onclick="toggleMenuAcoes(this, htmlMenuAcoesVenda(${primeira.vendaId}, '${contratoKey}', '${contratoRefEnvio}'))" title="Mais ações">⋯</button>`;
+    }
+
+    resumo.innerHTML = `
+        <td class="col-contrato">
+            <div class="ctr-cell">
+                <span class="link-contrato" title="${contratoDisplay}">${contratoDisplay || '-'}</span>
+                ${progressBadge}
+            </div>
+            ${cancelBadgeHtml}${badgeNova}
+        </td>
+        <td class="col-loja" title="${primeira.loja}">${primeira.loja}</td>
+        <td class="col-representante"><span class="badge-rep ${repClass}">${primeira.representante}</span></td>
+        <td class="col-produto-venda">${
+            linhasDoContrato === 1
+                ? `<span class="prod-nome-inline">${grupo[0].produtoNome}</span>`
+                : `<button class="btn-expand-contrato expand-btn-prod" onclick="toggleContratoExpandido('${contratoKey}')">
+                    <span class="expand-chevron ${expandido ? 'open' : ''}">▶</span>
+                    <span class="expand-count">${linhasDoContrato} produtos</span>
+                    <span class="expand-preview">${grupo.map(p => p.produtoNome.split(' ').slice(0,2).join(' ')).join(' · ')}</span>
+                    ${!expandido ? `<span class="prod-mais-wrap"><span class="prod-mais-chip">+${linhasDoContrato - 1}</span><span class="prod-mais-tooltip">${grupo.slice(1).map(p => `<span class="prod-mais-row"><span class="prod-mais-nome">${p.produtoNome}</span><span class="prod-mais-qty">× ${p.quantidade}</span></span>`).join('')}</span></span>` : ''}
+                   </button>`
+        }</td>
+        <td class="col-qtd">${totalQtdContrato}</td>
+        <td class="col-valor-total">${formatarMoedaValor(totalContrato)}</td>
+        <td class="col-data">${dataDisplay}</td>
+        <td class="col-sistema">${statusBtn(sistemaMarcado, 'sistema')}</td>
+        <td class="col-assinado">${statusBtn(assinadoMarcado, 'assinado')}</td>
+        <td class="col-enviado">${statusBtn(enviadoMarcado, 'enviado')}</td>
+        <td class="col-solicitacao">
+            <input type="text" class="campo-editavel" value="${envioData.solicitacao || ''}" placeholder="Data ou obs." onchange="salvarControleEnvio('${primeira.contratoRaw || contratoKey}', 'solicitacao', this.value)" ${contratoCancelado ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}>
+        </td>
+        <td class="col-acoes">${actionsHtml}</td>
+    `;
+    tbody.appendChild(resumo);
+
+    grupo.forEach((linha) => {
+        const tr = document.createElement('tr');
+        tr.className = `row-contrato-detalhe sub-linha-produto ${expandido ? '' : 'hidden-row'}`;
+        const valorUn = linha.valorUnitario ? formatarMoedaValor(linha.valorUnitario) : '-';
+
+        // verificar se a venda específica está cancelada
+        const vendaObj = estoque.registroVendas.find(v => v.id === linha.vendaId);
+        const isLinhaCancelada = vendaObj && vendaObj.cancelado;
+        const detalheAcoesHtml = isLinhaCancelada ? '<span class="badge-cancelado">CANCELADO</span>' : '';
+
+        tr.innerHTML = `
+            <td class="col-contrato detalhe-vazio"></td>
+            <td class="col-loja detalhe-vazio" title="${linha.observacoes || ''}"><span style="color:#64748b;font-size:0.8rem">${linha.observacoes && linha.observacoes !== '-' ? linha.observacoes : ''}</span></td>
+            <td class="col-representante detalhe-vazio"></td>
+            <td class="col-produto-venda sub-td" title="${linha.produtoNome}"><div class="sub-prod-nome"><span class="sub-prod-hierarchy">└</span>${linha.produtoNome}</div></td>
+            <td class="col-qtd sub-td sub-td-mono">${linha.quantidade}</td>
+            <td class="col-valor-total sub-td"><div class="sub-prod-valor"><span class="sub-prod-valor-unit">${valorUn}</span><span class="sub-prod-valor-formula">unit. × ${linha.quantidade}</span></div></td>
+            <td class="col-data" style="font-size:0.8rem">${linha.dataNorm ? formatDateToDDMMYYYY(linha.dataNorm) : '-'}</td>
+            <td class="col-sistema detalhe-vazio"></td>
+            <td class="col-assinado detalhe-vazio"></td>
+            <td class="col-enviado detalhe-vazio"></td>
+            <td class="col-solicitacao detalhe-vazio"></td>
+            <td class="col-acoes">${detalheAcoesHtml}</td>
+        `;
+
+        tbody.appendChild(tr);
+    });
 }
 
 function atualizarTotaisVendas(totalQtd, totalValor) {
@@ -15922,8 +15940,32 @@ function renderizarGraficoComissoes() {
 // MÓDULO DE CLIENTES
 // ========================================
 
+// Campos do cadastro de cliente que são apenas "id do input" ↔ "propriedade do
+// registro" de mesmo nome — limpos e preenchidos em bloco, para não repetir
+// dezenas de linhas de getElementById a cada campo novo.
+const _CAMPOS_CLIENTE_SIMPLES = [
+    ['clienteNomeFantasia',      'nomeFantasia'],
+    ['clienteInscricaoEstadual', 'inscricaoEstadual'],
+    ['clienteRegistroEB',        'registroEB'],
+    ['clienteBairro',            'bairro'],
+    ['clienteCep',               'cep'],
+    ['clienteCondicaoPagamento', 'condicaoPagamento'],
+    ['clienteLimiteCredito',     'limiteCredito'],
+    ['clienteDescontoNegociado', 'descontoNegociado'],
+    ['clienteSegmento',          'segmento'],
+    ['clienteCanalOrigem',       'canalOrigem'],
+    ['clienteBanco',             'banco'],
+    ['clienteAgencia',           'agencia'],
+    ['clienteConta',             'conta'],
+    ['clientePix',               'pix']
+];
+
 function abrirModalCliente(id = null) {
     document.getElementById('clienteEditId').value = '';
+    _CAMPOS_CLIENTE_SIMPLES.forEach(([idCampo]) => {
+        const el = document.getElementById(idCampo);
+        if (el) el.value = '';
+    });
     document.getElementById('clienteNome').value = '';
     document.getElementById('clienteCnpj').value = '';
     document.getElementById('clienteEndereco').value = '';
@@ -15952,6 +15994,10 @@ function abrirModalCliente(id = null) {
             document.getElementById('clienteContato').value = cliente.contato || '';
             document.getElementById('clienteRepresentante').value = cliente.representante || '';
             document.getElementById('clienteObservacoes').value = cliente.observacoes || '';
+            _CAMPOS_CLIENTE_SIMPLES.forEach(([idCampo, prop]) => {
+                const el = document.getElementById(idCampo);
+                if (el) el.value = (cliente[prop] === null || cliente[prop] === undefined) ? '' : cliente[prop];
+            });
             document.getElementById('modalClienteTitulo').textContent = 'Editar Cliente';
             // determinar tipo de pessoa a partir do registro salvo ou do formato do documento
             try {
@@ -16032,7 +16078,24 @@ function salvarCliente(event) {
         email: document.getElementById('clienteEmail').value.trim(),
         contato: document.getElementById('clienteContato').value.trim(),
         representante: document.getElementById('clienteRepresentante').value,
-        observacoes: document.getElementById('clienteObservacoes').value.trim()
+        observacoes: document.getElementById('clienteObservacoes').value.trim(),
+        // Dados fiscais — consumidos pelo bloco COMPRADOR de gerarContratoVenda()
+        nomeFantasia: _valorCampo('clienteNomeFantasia'),
+        inscricaoEstadual: _valorCampo('clienteInscricaoEstadual'),
+        registroEB: _valorCampo('clienteRegistroEB'),
+        bairro: _valorCampo('clienteBairro'),
+        cep: _valorCampo('clienteCep'),
+        // Condições comerciais
+        condicaoPagamento: _valorCampo('clienteCondicaoPagamento'),
+        limiteCredito: _numeroCampo('clienteLimiteCredito'),
+        descontoNegociado: _numeroCampo('clienteDescontoNegociado'),
+        segmento: _valorCampo('clienteSegmento'),
+        canalOrigem: _valorCampo('clienteCanalOrigem'),
+        // Dados bancários
+        banco: _valorCampo('clienteBanco'),
+        agencia: _valorCampo('clienteAgencia'),
+        conta: _valorCampo('clienteConta'),
+        pix: _valorCampo('clientePix')
     };
 
     // Valida o CPF/CNPJ antes de salvar
@@ -22470,6 +22533,7 @@ function criarPropostaDaPrecificacao() {
         data: dataPropostaISO.toISOString(),
         validade: validadeProposta,
         dataExpiracao: dataExpProposta.toISOString(),
+        condicaoPagamento: clienteObj ? (clienteObj.condicaoPagamento || '') : '',
         status: 'rascunho',
         itens: items.map(it => ({ produtoId: it.produtoId, produto: it.produto, quantidade: it.quantidade, valorUnitario: it.valorUnitario, retid: !!it.retid })),
         valorTotal,
@@ -22862,19 +22926,12 @@ function atualizarStatusPropostaNaPrecif(clienteId) {
         } catch (e) { console.warn('atualizarStatusPropostaNaPrecif', e); }
 }
 // ====== Helpers: RETID e Benefícios Fiscais ======
+// Cálculo puro extraído para EstoqueCalculos.resolverAliquotaComBeneficio (estoque-calculos.js).
 function resolverAliquota(nomeProduto, campo, valorPadrao) {
-    try {
-        // 1) isentoTotal em benefícios
-        if (beneficioFiscalAtivo && beneficiosPorProduto && beneficiosPorProduto[nomeProduto] && beneficiosPorProduto[nomeProduto].isentoTotal) return 0;
-        // 2) RETID zera apenas impostos federais (não ICMS)
-        if (retidPorProduto && retidPorProduto[nomeProduto] && campo !== 'icms') return 0;
-        // 3) override explícito por produto
-        if (beneficioFiscalAtivo && beneficiosPorProduto && beneficiosPorProduto[nomeProduto]) {
-            const override = beneficiosPorProduto[nomeProduto][campo];
-            if (override !== null && override !== undefined && override !== '') return Number(override);
-        }
-    } catch (e) { _catchSilencioso(e, 'resolverAliquota'); }
-    return Number(valorPadrao || 0);
+    return EstoqueCalculos.resolverAliquotaComBeneficio({
+        nomeProduto, campo, valorPadrao,
+        beneficioFiscalAtivo, beneficiosPorProduto, retidPorProduto
+    });
 }
 
 function toggleRetid(nomeProduto, ativo) {
@@ -23473,6 +23530,77 @@ function sincronizarPrecoNasVendas(nomeProduto) {
     });
 }
 
+/**
+ * Resolve o preço unitário de um produto para um cliente, na MESMA ordem de
+ * prioridade em todo o sistema — Venda e Proposta precisam chegar ao mesmo
+ * número para o mesmo cliente/produto.
+ *
+ *   1. Tabela de Preço para Lojista (manual, por grupo de estado)
+ *   2. Precificação salva do cliente (versão mais recente)
+ *   3. Última precificação calculada na tela, se for do mesmo cliente
+ *   4. Cálculo padrão — só quando `permitirCalculo` (ver abaixo)
+ *
+ * `permitirCalculo` existe porque a Venda deixa o campo em branco de propósito
+ * quando não há preço negociado (uma venda real não deve inventar preço), mas
+ * a Proposta sempre sugeriu um valor. O que a Proposta fazia de errado era
+ * chamar `calcularPreco(nome)` sem UF nem tipo de pessoa, caindo no ICMS base
+ * genérico e divergindo da Venda — aqui o cálculo já vai com a UF e o tipo do
+ * cliente.
+ *
+ * Retorna `{ preco, origem }` ou `null`. `origem`: 'lojista' | 'precificacao' | 'calculo'.
+ */
+function resolverPrecoParaCliente(clienteNome, produtoId, permitirCalculo = false) {
+    const idProduto = Number(produtoId);
+    const produto = (estoque.produtos || []).find(p => Number(p.id) === idProduto);
+    if (!produto) return null;
+    const nomeCliente = (clienteNome || '').trim();
+
+    // PRIORIDADE 1: Tabela de Preço para Lojista (manual, por grupo de estado)
+    try {
+        const precoLojista = obterPrecoEstadoParaClienteProduto(nomeCliente, idProduto);
+        if (precoLojista !== null && !isNaN(precoLojista) && Number(precoLojista) > 0) {
+            return { preco: Number(precoLojista), origem: 'lojista' };
+        }
+    } catch (e) { _catchSilencioso(e, 'resolverPrecoParaCliente'); }
+
+    // PRIORIDADE 2: precificação salva para o cliente
+    try {
+        const precoSalvo = obterPrecoFinalSalvoParaClienteProduto(nomeCliente, idProduto);
+        if (precoSalvo !== null && !isNaN(precoSalvo) && Number(precoSalvo) > 0) {
+            return { preco: Number(precoSalvo), origem: 'precificacao' };
+        }
+    } catch (e) { _catchSilencioso(e, 'resolverPrecoParaCliente'); }
+
+    const clienteObj = (clientes || []).find(c => (c.nome || '').trim().toLowerCase() === nomeCliente.toLowerCase());
+
+    // PRIORIDADE 3: última precificação calculada para o cliente
+    try {
+        if (clienteObj && ultimaPrecificacaoCalculada && String(ultimaPrecificacaoCalculada.clienteId) === String(clienteObj.id)) {
+            const item = (ultimaPrecificacaoCalculada.itens || []).find(it =>
+                Number(it.produtoId) === idProduto ||
+                (it.produto && it.produto.toLowerCase() === (produto.nome || '').toLowerCase()));
+            if (item && Number(item.precoFinal) > 0) {
+                return { preco: Number(item.precoFinal), origem: 'precificacao' };
+            }
+        }
+    } catch (e) { _catchSilencioso(e, 'resolverPrecoParaCliente'); }
+
+    // PRIORIDADE 4: cálculo padrão, já com a UF e o tipo de pessoa do cliente
+    if (permitirCalculo) {
+        try {
+            const calc = calcularPreco(produto.nome, clienteObj?.uf || null, clienteObj?.tipoPessoa || null);
+            if (calc && Number(calc.precoFinal) > 0) {
+                return { preco: Number(calc.precoFinal), origem: 'calculo' };
+            }
+        } catch (e) { _catchSilencioso(e, 'resolverPrecoParaCliente'); }
+    }
+
+    return null;
+}
+
+// Cor de fundo do campo conforme a procedência do preço sugerido.
+const _CORES_ORIGEM_PRECO = { lojista: '#eff6ff', precificacao: '#ecfdf5', calculo: '#fefce8' };
+
 function autoPreencherPrecoProduto(selectEl) {
     const row = selectEl.closest('.item-venda-row');
     if (!row) return;
@@ -23481,49 +23609,15 @@ function autoPreencherPrecoProduto(selectEl) {
     // Só preservar o valor se foi digitado manualmente pelo usuário (sem data-autofilled)
     if (valorInput.value && valorInput.value.trim() !== '' && !valorInput.hasAttribute('data-autofilled')) return;
 
-    const produtoId = parseInt(selectEl.value);
-    const produto = (estoque.produtos || []).find(p => p.id === produtoId);
-    if (!produto) return;
-
     const lojaNome = (document.getElementById('lojaVenda')?.value || '').trim();
+    // Sem permitirCalculo: na Venda, não havendo preço negociado o campo fica
+    // em branco para preenchimento manual.
+    const resultado = resolverPrecoParaCliente(lojaNome, parseInt(selectEl.value), false);
+    if (!resultado) return;
 
-    // PRIORIDADE 1: Tabela de Preço para Lojista (manual, por grupo de estado)
-    try {
-        const precoLojista = obterPrecoEstadoParaClienteProduto(lojaNome, produtoId);
-        if (precoLojista !== null && !isNaN(precoLojista) && precoLojista > 0) {
-            valorInput.value = _fmtMoeda(precoLojista);
-            valorInput.style.background = '#eff6ff';
-            valorInput.setAttribute('data-autofilled', 'lojista');
-            return;
-        }
-    } catch (e) { _catchSilencioso(e, 'autoPreencherPrecoProduto'); }
-
-    // PRIORIDADE 2: precificação salva para o cliente
-    let precoSalvo = null;
-    try { precoSalvo = obterPrecoFinalSalvoParaClienteProduto(lojaNome, produtoId); } catch (e) { precoSalvo = null; }
-
-    if (precoSalvo !== null && !isNaN(precoSalvo) && Number(precoSalvo) > 0) {
-        valorInput.value = _fmtMoeda(precoSalvo);
-        valorInput.style.background = '#ecfdf5';
-        valorInput.setAttribute('data-autofilled', '1');
-        return;
-    }
-
-    // PRIORIDADE 3: última precificação calculada para o cliente
-    try {
-        const clienteObj2 = (clientes || []).find(c => (c.nome||'').toLowerCase() === (lojaNome||'').toLowerCase());
-        if (clienteObj2 && ultimaPrecificacaoCalculada && String(ultimaPrecificacaoCalculada.clienteId) === String(clienteObj2.id)) {
-            const item = (ultimaPrecificacaoCalculada.itens || []).find(it => Number(it.produtoId) === Number(produtoId) || (it.produto && it.produto.toLowerCase() === (produto.nome||'').toLowerCase()));
-            if (item && Number(item.precoFinal) > 0) {
-                valorInput.value = _fmtMoeda(item.precoFinal);
-                valorInput.style.background = '#ecfdf5';
-                valorInput.setAttribute('data-autofilled', '1');
-                return;
-            }
-        }
-    } catch (e) { _catchSilencioso(e, 'autoPreencherPrecoProduto'); }
-
-    // Nenhuma fonte encontrada — campo fica em branco para preenchimento manual
+    valorInput.value = _fmtMoeda(resultado.preco);
+    valorInput.style.background = _CORES_ORIGEM_PRECO[resultado.origem] || '';
+    valorInput.setAttribute('data-autofilled', resultado.origem === 'lojista' ? 'lojista' : '1');
 }
 
 // Retorna o preço final salvo (number) para um produto em uma precificação do cliente, ou null
@@ -23622,6 +23716,11 @@ function abrirModalProposta(id = null) {
     const _precifIdEl = document.getElementById('propostaPrecifId'); if (_precifIdEl) _precifIdEl.value = '';
     const container = document.getElementById('itensPropostaContainer');
     if (container) container.innerHTML = '';
+    // form.reset() limpa os inputs, mas não estes dois indicadores (não são campos).
+    const _origemEl = document.getElementById('propostaCondicaoOrigem');
+    if (_origemEl) { _origemEl.textContent = ''; _origemEl.style.display = 'none'; }
+    const _descEl = document.getElementById('propostaDescontoCliente');
+    if (_descEl) { _descEl.textContent = '—'; _descEl.style.color = '#64748b'; }
     try { popularSelectRepresentantes('propostaRepresentante', true); } catch (e) { _catchSilencioso(e, 'abrirModalProposta'); }
 
     try { document.getElementById('propostaData').value = new Date().toISOString().slice(0, 10); } catch (e) { _catchSilencioso(e, 'abrirModalProposta'); }
@@ -23647,6 +23746,15 @@ function abrirModalProposta(id = null) {
     document.getElementById('propostaValidade').value = proposta.validade || 30;
     document.getElementById('propostaObservacoes').value = proposta.observacoes || '';
     try { document.getElementById('propostaData').value = proposta.data ? proposta.data.split('T')[0] : ''; } catch (e) { _catchSilencioso(e, 'abrirModalProposta'); }
+    // Condição já negociada nesta proposta manda; só cai no padrão do cliente
+    // quando a proposta é antiga e não tem o campo.
+    try {
+        const _condEl = document.getElementById('propostaCondicaoPagamento');
+        if (_condEl) _condEl.value = proposta.condicaoPagamento || '';
+        const _cli = (clientes || []).find(c => String(c.id) === String(proposta.clienteId))
+            || (clientes || []).find(c => (c.nome || '').toLowerCase() === (proposta.cliente || '').toLowerCase());
+        if (_cli) preencherCondicoesComerciaisProposta(_cli);
+    } catch (e) { _catchSilencioso(e, 'abrirModalProposta'); }
 
     if (Array.isArray(proposta.itens) && proposta.itens.length > 0) {
         proposta.itens.forEach(it => {
@@ -23729,16 +23837,72 @@ function autoPreencherPrecoItemProposta(selectEl) {
     if (!row) return;
     const valorInput = row.querySelector('.item-valor');
     if (!valorInput) return;
-    if (valorInput.value && valorInput.value.trim() !== '') return;
-    const produtoId = parseInt(selectEl.value);
-    const produto = (estoque.produtos || []).find(p => p.id === produtoId);
-    if (produto) {
-        const calc = calcularPreco(produto.nome);
-        if (calc && calc.precoFinal > 0) {
-            valorInput.value = Number(calc.precoFinal).toFixed(2).replace('.', ',');
-            try { valorInput.dataset.original = String(Number(calc.precoFinal).toFixed(2)); } catch (e) { _catchSilencioso(e, 'autoPreencherPrecoItemProposta'); }
-        }
-    }
+    // Preserva o valor digitado à mão; um valor apenas sugerido pode ser refeito.
+    if (valorInput.value && valorInput.value.trim() !== '' && !valorInput.hasAttribute('data-autofilled')) return;
+
+    const clienteNome = (document.getElementById('propostaCliente')?.value || '').trim();
+    const resultado = resolverPrecoParaCliente(clienteNome, parseInt(selectEl.value), true);
+    if (!resultado) return;
+
+    valorInput.value = _fmtMoeda(resultado.preco);
+    valorInput.style.background = _CORES_ORIGEM_PRECO[resultado.origem] || '';
+    valorInput.setAttribute('data-autofilled', resultado.origem === 'lojista' ? 'lojista' : '1');
+    // dataset.original guarda a base do desconto e é lido por aplicarDesconto(),
+    // que remove os pontos antes do parseFloat — precisa ficar no formato pt-BR
+    // (1.234,56), senão "1234.56" viraria 123456.
+    try { valorInput.dataset.original = _fmtMoeda(resultado.preco); } catch (e) { _catchSilencioso(e, 'autoPreencherPrecoItemProposta'); }
+
+    aplicarDescontoNegociadoDoCliente(row, clienteNome, resultado.origem);
+}
+
+/**
+ * Aplica o desconto negociado do cadastro do cliente na linha do item.
+ *
+ * Só entra quando o preço veio do cálculo padrão (tabela de lista). Preço de
+ * tabela lojista ou de precificação salva JÁ é preço negociado — aplicar o
+ * desconto por cima descontaria duas vezes o mesmo acordo.
+ *
+ * Nunca sobrescreve um desconto digitado pelo usuário.
+ */
+function aplicarDescontoNegociadoDoCliente(row, clienteNome, origemPreco) {
+    if (origemPreco !== 'calculo') return;
+    const descontoInput = row.querySelector('.item-desconto');
+    if (!descontoInput || (descontoInput.value || '').trim() !== '') return;
+
+    const cliente = (clientes || []).find(c => (c.nome || '').trim().toLowerCase() === (clienteNome || '').trim().toLowerCase());
+    const desconto = Number(cliente?.descontoNegociado) || 0;
+    if (desconto <= 0) return;
+
+    descontoInput.value = desconto;
+    descontoInput.title = `Desconto negociado no cadastro de ${cliente.nome}`;
+    try { aplicarDesconto(descontoInput); } catch (e) { _catchSilencioso(e, 'aplicarDescontoNegociadoDoCliente'); }
+}
+
+// Reaplica a cascata de preço em todos os itens da proposta quando o cliente muda.
+// Espelha atualizarPrecosVendaPorCliente() — sem isso, trocar o cliente deixava
+// os preços do cliente anterior no formulário.
+function atualizarPrecosPropostaPorCliente(forcarAtualizacao = true) {
+    try {
+        const clienteNome = (document.getElementById('propostaCliente')?.value || '').trim();
+        if (!clienteNome) return;
+        const container = document.getElementById('itensPropostaContainer');
+        if (!container) return;
+        container.querySelectorAll('.item-venda-row').forEach(row => {
+            const sel = row.querySelector('.item-produto');
+            if (!sel || !sel.value) return;
+            if (forcarAtualizacao) {
+                const valorInput = row.querySelector('.item-valor');
+                if (valorInput && valorInput.hasAttribute('data-autofilled')) {
+                    valorInput.value = '';
+                    valorInput.removeAttribute('data-autofilled');
+                    valorInput.style.background = '';
+                    delete valorInput.dataset.original;
+                }
+            }
+            autoPreencherPrecoItemProposta(sel);
+            atualizarItemPropostaRow(sel);
+        });
+    } catch (e) { console.error('atualizarPrecosPropostaPorCliente erro', e); }
 }
 
 function atualizarItemPropostaRow(el) {
@@ -23843,6 +24007,7 @@ function salvarProposta(event) {
     const dataStr = document.getElementById('propostaData').value;
     const validade = parseInt(document.getElementById('propostaValidade').value) || 30;
     const observacoes = document.getElementById('propostaObservacoes').value.trim();
+    const condicaoPagamento = _valorCampo('propostaCondicaoPagamento');
     const itens = _coletarItensProposta();
 
     if (!cliente) { mostrarNotificacao('Informe o cliente.', 'error'); return; }
@@ -23894,6 +24059,7 @@ function salvarProposta(event) {
             propostas[idx].itens = itens;
             propostas[idx].valorTotal = valorTotal;
             propostas[idx].observacoes = observacoes;
+            propostas[idx].condicaoPagamento = condicaoPagamento;
             if (precisaAprovacao) {
                 propostas[idx].aguardandoAprovacao = true;
                 propostas[idx].motivoAprovacao = motivoAprovacao;
@@ -23917,6 +24083,7 @@ function salvarProposta(event) {
             itens: itens,
             valorTotal: valorTotal,
             observacoes: observacoes,
+            condicaoPagamento: condicaoPagamento,
             contratoNumero: null,
             vendaId: null,
             dataCriacao: new Date().toISOString()
@@ -24340,11 +24507,47 @@ function atualizarKPIsPropostas() {
 
 function preencherDadosCliente(nomeCliente) {
     if (!nomeCliente) return;
-    const repSelect = document.getElementById('propostaRepresentante');
-    if (!repSelect || repSelect.value) return;
     const cliente = (clientes || []).find(c => (c.nome || '').toLowerCase() === nomeCliente.toLowerCase());
-    if (cliente && cliente.representante) {
+    if (!cliente) return;
+
+    const repSelect = document.getElementById('propostaRepresentante');
+    if (repSelect && !repSelect.value && cliente.representante) {
         repSelect.value = cliente.representante;
+    }
+
+    // Os campos abaixo pertencem só ao modal de proposta. Esta função também é
+    // chamada por abrirModalVendaDetalhada(), e ali não faz sentido escrever no
+    // formulário de proposta que está fechado.
+    // (o modal de proposta abre com display:flex — testar "aberto", não um valor)
+    const modalProposta = document.getElementById('modalProposta');
+    const displayProposta = modalProposta ? modalProposta.style.display : 'none';
+    if (!displayProposta || displayProposta === 'none') return;
+
+    preencherCondicoesComerciaisProposta(cliente);
+}
+
+// Traz condição de pagamento e desconto negociado do cadastro do cliente para a
+// proposta. A condição é sugestão editável (cada proposta pode ter a sua); o
+// desconto é apenas exibido aqui e aplicado item a item em
+// autoPreencherPrecoItemProposta().
+function preencherCondicoesComerciaisProposta(cliente) {
+    const condEl = document.getElementById('propostaCondicaoPagamento');
+    const origemEl = document.getElementById('propostaCondicaoOrigem');
+    if (condEl && !condEl.value.trim() && cliente.condicaoPagamento) {
+        condEl.value = cliente.condicaoPagamento;
+        if (origemEl) {
+            origemEl.textContent = `Padrão de ${cliente.nome}`;
+            origemEl.style.display = 'block';
+        }
+    }
+
+    const descEl = document.getElementById('propostaDescontoCliente');
+    if (descEl) {
+        const desc = Number(cliente.descontoNegociado) || 0;
+        descEl.textContent = desc > 0
+            ? `${_fmtMoeda(desc)}% negociado`
+            : '— sem desconto negociado';
+        descEl.style.color = desc > 0 ? '#16a34a' : '#64748b';
     }
 }
 

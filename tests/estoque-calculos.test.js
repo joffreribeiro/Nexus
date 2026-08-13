@@ -346,3 +346,172 @@ describe('EstoqueCalculos.calcularPrecoFinal', () => {
     expect(r.margem).toBe(0);
   });
 });
+
+describe('EstoqueCalculos.getImbelTipo / imbelTipoAumentaEstoque', () => {
+  it('resolve um tipo conhecido pelo código exato', () => {
+    const t = EstoqueCalculos.getImbelTipo('VENDA');
+    expect(t.label).toBe('Venda');
+    expect(t.categoria).toBe('saida');
+    expect(t.contaReceita).toBe(true);
+  });
+
+  it('normaliza espaço/minúsculas antes de cair no genérico (compat com dados legados)', () => {
+    const t = EstoqueCalculos.getImbelTipo('recebimento_fabrica');
+    expect(t.label).toBe('Recebimento Fábrica');
+  });
+
+  it('tipo desconhecido cai no genérico "saída", preservando o código como label', () => {
+    const t = EstoqueCalculos.getImbelTipo('TIPO_INEXISTENTE');
+    expect(t.categoria).toBe('saida');
+    expect(t.label).toBe('TIPO_INEXISTENTE');
+  });
+
+  it('tipos de entrada aumentam estoque; tipos de saída não', () => {
+    expect(EstoqueCalculos.imbelTipoAumentaEstoque('RECEBIMENTO_FABRICA')).toBe(true);
+    expect(EstoqueCalculos.imbelTipoAumentaEstoque('RETORNO_MARKETING')).toBe(true);
+    expect(EstoqueCalculos.imbelTipoAumentaEstoque('AJUSTE_ENTRADA')).toBe(true);
+    expect(EstoqueCalculos.imbelTipoAumentaEstoque('VENDA')).toBe(false);
+    expect(EstoqueCalculos.imbelTipoAumentaEstoque('SAIDA_MARKETING')).toBe(false);
+    expect(EstoqueCalculos.imbelTipoAumentaEstoque('DEVOLUCAO_FABRICA')).toBe(false);
+    expect(EstoqueCalculos.imbelTipoAumentaEstoque('AJUSTE_SAIDA')).toBe(false);
+  });
+
+  it('tipo desconhecido não aumenta estoque (fallback seguro para "saida")', () => {
+    expect(EstoqueCalculos.imbelTipoAumentaEstoque('XYZ')).toBe(false);
+  });
+});
+
+describe('EstoqueCalculos.calcularSaldosImbel', () => {
+  it('sem movimentações, saldo = quantidade inicial', () => {
+    const data = { produtos: [{ id: 1, quantidadeInicial: 50 }], movimentacoes: [] };
+    const s = EstoqueCalculos.calcularSaldosImbel(data);
+    expect(s[1]).toEqual({ inicial: 50, entradas: 0, saidas: 0, saidaByTipo: {}, saldo: 50 });
+  });
+
+  it('entrada soma, saída subtrai — saldo = inicial + entradas - saidas', () => {
+    const data = {
+      produtos: [{ id: 1, quantidadeInicial: 100 }],
+      movimentacoes: [
+        { id: 'a', tipo: 'RECEBIMENTO_FABRICA', produtoId: 1, quantidade: 20 },
+        { id: 'b', tipo: 'VENDA', produtoId: 1, quantidade: 30 }
+      ]
+    };
+    const s = EstoqueCalculos.calcularSaldosImbel(data);
+    expect(s[1].entradas).toBe(20);
+    expect(s[1].saidas).toBe(30);
+    expect(s[1].saldo).toBe(90); // 100 + 20 - 30
+  });
+
+  it('agrupa saídas por tipo em saidaByTipo', () => {
+    const data = {
+      produtos: [{ id: 1, quantidadeInicial: 0 }],
+      movimentacoes: [
+        { id: 'a', tipo: 'VENDA', produtoId: 1, quantidade: 5 },
+        { id: 'b', tipo: 'VENDA', produtoId: 1, quantidade: 3 },
+        { id: 'c', tipo: 'SAIDA_MARKETING', produtoId: 1, quantidade: 2 }
+      ]
+    };
+    const s = EstoqueCalculos.calcularSaldosImbel(data);
+    expect(s[1].saidaByTipo).toEqual({ VENDA: 8, SAIDA_MARKETING: 2 });
+  });
+
+  it('movimentação com items[] distribui a quantidade por produto', () => {
+    const data = {
+      produtos: [{ id: 1, quantidadeInicial: 0 }, { id: 2, quantidadeInicial: 0 }],
+      movimentacoes: [
+        { id: 'a', tipo: 'VENDA', items: [{ produtoId: 1, quantidade: 4 }, { produtoId: 2, quantidade: 6 }] }
+      ]
+    };
+    const s = EstoqueCalculos.calcularSaldosImbel(data);
+    expect(s[1].saidas).toBe(4);
+    expect(s[2].saidas).toBe(6);
+  });
+
+  it('ignora movimentação de produto não cadastrado (sem entrada correspondente em saldos)', () => {
+    const data = {
+      produtos: [{ id: 1, quantidadeInicial: 10 }],
+      movimentacoes: [{ id: 'a', tipo: 'VENDA', produtoId: 999, quantidade: 5 }]
+    };
+    const s = EstoqueCalculos.calcularSaldosImbel(data);
+    expect(s[1].saldo).toBe(10);
+    expect(s[999]).toBeUndefined();
+  });
+
+  it('ignorarId exclui uma movimentação específica do cálculo (usado ao editar)', () => {
+    const data = {
+      produtos: [{ id: 1, quantidadeInicial: 0 }],
+      movimentacoes: [
+        { id: 'a', tipo: 'VENDA', produtoId: 1, quantidade: 5 },
+        { id: 'b', tipo: 'VENDA', produtoId: 1, quantidade: 3 }
+      ]
+    };
+    const semIgnorar = EstoqueCalculos.calcularSaldosImbel(data);
+    const comIgnorar = EstoqueCalculos.calcularSaldosImbel(data, { ignorarId: 'b' });
+    expect(semIgnorar[1].saidas).toBe(8);
+    expect(comIgnorar[1].saidas).toBe(5);
+  });
+});
+
+describe('EstoqueCalculos.resolverAliquotaComBeneficio', () => {
+  const base = { nomeProduto: 'CARABINA IA2', campo: 'icms', valorPadrao: 18 };
+
+  it('sem benefício ativo e sem RETID, retorna o valor padrão', () => {
+    expect(EstoqueCalculos.resolverAliquotaComBeneficio({
+      ...base, beneficioFiscalAtivo: false, beneficiosPorProduto: {}, retidPorProduto: {}
+    })).toBe(18);
+  });
+
+  it('isentoTotal zera a alíquota, independente do campo', () => {
+    const ctx = {
+      ...base, beneficioFiscalAtivo: true,
+      beneficiosPorProduto: { 'CARABINA IA2': { isentoTotal: true } },
+      retidPorProduto: {}
+    };
+    expect(EstoqueCalculos.resolverAliquotaComBeneficio(ctx)).toBe(0);
+    expect(EstoqueCalculos.resolverAliquotaComBeneficio({ ...ctx, campo: 'pis' })).toBe(0);
+  });
+
+  it('RETID zera impostos federais (pis/cofins/ipi) mas não ICMS', () => {
+    const ctx = {
+      nomeProduto: 'CARABINA IA2', valorPadrao: 18, beneficioFiscalAtivo: false,
+      beneficiosPorProduto: {}, retidPorProduto: { 'CARABINA IA2': true }
+    };
+    expect(EstoqueCalculos.resolverAliquotaComBeneficio({ ...ctx, campo: 'pis' })).toBe(0);
+    expect(EstoqueCalculos.resolverAliquotaComBeneficio({ ...ctx, campo: 'cofins' })).toBe(0);
+    expect(EstoqueCalculos.resolverAliquotaComBeneficio({ ...ctx, campo: 'ipi' })).toBe(0);
+    expect(EstoqueCalculos.resolverAliquotaComBeneficio({ ...ctx, campo: 'icms' })).toBe(18); // ICMS não é zerado por RETID
+  });
+
+  it('override explícito por produto substitui o valor padrão quando benefício está ativo', () => {
+    const ctx = {
+      ...base, beneficioFiscalAtivo: true,
+      beneficiosPorProduto: { 'CARABINA IA2': { icms: 7 } },
+      retidPorProduto: {}
+    };
+    expect(EstoqueCalculos.resolverAliquotaComBeneficio(ctx)).toBe(7);
+  });
+
+  it('override não se aplica quando beneficioFiscalAtivo é false, mesmo com o mapa preenchido', () => {
+    const ctx = {
+      ...base, beneficioFiscalAtivo: false,
+      beneficiosPorProduto: { 'CARABINA IA2': { icms: 7 } },
+      retidPorProduto: {}
+    };
+    expect(EstoqueCalculos.resolverAliquotaComBeneficio(ctx)).toBe(18);
+  });
+
+  it('override 0 é respeitado (não confundido com "sem override")', () => {
+    const ctx = {
+      ...base, beneficioFiscalAtivo: true,
+      beneficiosPorProduto: { 'CARABINA IA2': { icms: 0 } },
+      retidPorProduto: {}
+    };
+    expect(EstoqueCalculos.resolverAliquotaComBeneficio(ctx)).toBe(0);
+  });
+
+  it('produto sem entrada em beneficiosPorProduto/retidPorProduto usa o valor padrão', () => {
+    expect(EstoqueCalculos.resolverAliquotaComBeneficio({
+      ...base, beneficioFiscalAtivo: true, beneficiosPorProduto: {}, retidPorProduto: {}
+    })).toBe(18);
+  });
+});

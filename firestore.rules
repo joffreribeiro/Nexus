@@ -1,52 +1,61 @@
-// firestore.rules
-// Example Firestore security rules for the Controle-Estoque app.
-// Two options included below — choose the one that fits your needs
+rules_version = '2';
 
-// =====================
-// OPTION A: Production-safe (recommended)
-// - Require authentication for reads
-// - Only users with custom claim `admin:true` can write (create/update/delete)
-// =====================
-// rules_version = '2';
-// service cloud.firestore {
-//   match /databases/{database}/documents {
-//     // Allow authenticated users to read any document
-//     match /{document=**} {
-//       allow read: if request.auth != null;
-//       allow write: if request.auth != null && request.auth.token.admin == true;
-//     }
-//   }
-// }
-
-// =====================
-// OPTION B: Public catalog (reads public, writes restricted)
-// - Useful if you want `produtos` to be readable by anyone, but writes limited to admins
-// - Also shows a per-collection example (keep sensitive collections private)
-// =====================
-// rules_version = '2';
-// service cloud.firestore {
-//   match /databases/{database}/documents {
-//     // Public read for produtos
-//     match /produtos/{prodId} {
-//       allow read: if true; // public
-//       allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
-//     }
+// firestore.rules — regras ATIVAS do Controle-Estoque (projeto "estoquefi").
 //
-//     // app_data (backup) - allow read for authenticated users, writes only by admin
-//     match /app_data/{docId} {
-//       allow read: if request.auth != null;
-//       allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
-//     }
+// Este arquivo é a fonte de verdade e deve ser publicado com:
+//     firebase deploy --only firestore:rules
 //
-//     // Other collections default to authenticated-only read, admin write
-//     match /{document=**} {
-//       allow read: if request.auth != null;
-//       allow write: if request.auth != null && request.auth.token.admin == true;
-//     }
-//   }
-// }
+// Modelo de permissão (espelha o que o app já faz no cliente):
+//   - Ler   : qualquer usuário autenticado.
+//   - Gravar: apenas administradores.
+//
+// Por que isso importa: hoje o controle de admin é só no navegador —
+// `isCurrentUserAdmin()` (app2.js) lê o flag de `localStorage`, e todos os
+// ~55 `requireAdminOrNotify()` do app dependem dele. Qualquer usuário logado
+// consegue contornar isso pelo DevTools. Estas regras são a única barreira
+// que o cliente não tem como burlar.
 
-// === How to use:
-// 1. Pick Option A or Option B and paste the corresponding rules into the Firestore Rules editor in Firebase Console -> Firestore -> Rules.
-// 2. Save and test using the Rules Simulator or by logging into the app and attempting the operations.
-// 3. If you prefer to deploy via CLI, install firebase-tools and run `firebase deploy --only firestore:rules` (requires firebase.json/project config).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    // Admin de verdade é a custom claim, gravada por scripts/set-admin-claim.js.
+    //
+    // O segundo braço replica o fallback por e-mail que existe em app2.js
+    // ("Fallback por email (temporário)") — sem ele, publicar estas regras
+    // tiraria o acesso de escrita do dono caso a claim ainda não esteja
+    // definida na conta. Assim que `admin: true` estiver confirmada, remova
+    // o fallback aqui e a linha correspondente no app2.js.
+    // `email_verified` evita que uma conta criada com o mesmo endereço, mas
+    // sem confirmação, herde o privilégio.
+    // `token.get(chave, padrão)` em vez de `token.admin`: contas sem a claim
+    // não têm a propriedade, e o acesso direto gera ruído de "Property admin
+    // is undefined" na avaliação.
+    function ehAdmin() {
+      return autenticado() && (
+        request.auth.token.get('admin', false) == true
+        || (request.auth.token.get('email', '') == 'joffre.ribeiro@gmail.com'
+            && request.auth.token.get('email_verified', false) == true)
+      );
+    }
+
+    // Estado da aplicação. Hoje é um único documento (`latest`) contendo
+    // estoque, CRM, ponto e propostas — ver salvarNoCloud() em app2.js.
+    // O padrão {docId} já cobre a eventual quebra desse documento em vários.
+    match /app_data/{docId} {
+      allow read:  if autenticado();
+      allow write: if ehAdmin();
+    }
+
+    // `app_data` é a única coleção que o app usa. Tudo o mais é negado por
+    // padrão — inclusive coleções criadas por engano ou por testes. Ao
+    // adicionar uma coleção nova no app, declare-a acima; caso contrário ela
+    // cai aqui e nada funciona (falha barulhenta, que é o comportamento certo).
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

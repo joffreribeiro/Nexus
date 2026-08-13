@@ -73,7 +73,7 @@ function aplicarDesconto(inputDesconto) {
         if (badge) badge.remove();
     }
 
-    try { calcularTotalProposta(); } catch (e) {}
+    try { calcularTotalProposta(); } catch (e) { _catchSilencioso(e, 'aplicarDesconto'); }
 }
 
 function _escapeJsString(texto) {
@@ -82,6 +82,21 @@ function _escapeJsString(texto) {
 
 function _fmtMoeda(v) {
     return Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/**
+ * Registra, sem nunca lançar, um erro que o chamador decidiu tolerar (catch
+ * silencioso). Usa `console.debug`, que este arquivo já desativa fora de
+ * localhost (ver abaixo) — em produção continua tão silencioso quanto um
+ * catch vazio; em desenvolvimento, o que antes desaparecia sem rastro agora
+ * aparece no console, com a origem de quem chamou.
+ * @param {*} e - o erro capturado
+ * @param {string} [origem] - identifica o ponto de chamada (ex.: nome da função)
+ */
+function _catchSilencioso(e, origem) {
+    try {
+        console.debug(origem ? `[ignorado] ${origem}:` : '[ignorado]', e);
+    } catch (_) { /* console.debug nunca deve derrubar quem chamou */ }
 }
 
 // Estrutura de dados principal
@@ -137,8 +152,8 @@ try {
             if (dot) { dot.classList.remove('fs-offline'); dot.classList.add('fs-online'); }
             if (txt) txt.textContent = 'Reconectado — sincronizando...';
             scheduleCloudSaveDebounced();
-        } catch(e) {}
-        try { mostrarNotificacao('Conexão restaurada. Sincronizando dados...', 'success'); } catch(e){}
+        } catch (e) { _catchSilencioso(e, 'atualizarIndicadoresPrecificacao'); }
+        try { mostrarNotificacao('Conexão restaurada. Sincronizando dados...', 'success'); } catch (e) { _catchSilencioso(e, 'atualizarIndicadoresPrecificacao'); }
     });
 
     window.addEventListener('offline', () => {
@@ -148,7 +163,7 @@ try {
         const txt = document.getElementById('fsText');
         if (dot) { dot.classList.remove('fs-online'); dot.classList.add('fs-offline'); }
         if (txt) txt.textContent = 'Offline — sem conexão';
-        try { mostrarNotificacao('Conexão perdida. Dados sendo salvos localmente.', 'warning'); } catch(e){}
+        try { mostrarNotificacao('Conexão perdida. Dados sendo salvos localmente.', 'warning'); } catch (e) { _catchSilencioso(e, 'atualizarIndicadoresPrecificacao'); }
     });
 
     // Verificar estado inicial
@@ -157,8 +172,8 @@ try {
             const banner = document.getElementById('offlineBanner');
             if (banner) banner.style.display = 'block';
         }
-    } catch(e) {}
-} catch(e) {}
+    } catch (e) { _catchSilencioso(e, 'atualizarIndicadoresPrecificacao'); }
+} catch (e) { _catchSilencioso(e, 'atualizarIndicadoresPrecificacao'); }
 
 let categoriaPorProduto = {};
 
@@ -193,7 +208,7 @@ let categoriaPorProduto = {};
             }
             const text = (typeof msg === 'string') ? msg : (msg && msg.stack) ? msg.stack : JSON.stringify(msg, null, 2);
             el.textContent = 'Erro em tempo de execução detectado:\n' + text;
-        } catch (e) { try { console.error('Falha ao exibir overlay de erro', e); } catch(_){} }
+        } catch (e) { try { console.error('Falha ao exibir overlay de erro', e); } catch (_) { _catchSilencioso(_, 'atualizarIndicadoresPrecificacao'); } }
     }
 
     function createDebugPanel(){
@@ -227,7 +242,7 @@ let categoriaPorProduto = {};
                     mostrarNotificacao && mostrarNotificacao('JSON copiado para área de transferência', 'info');
                 } catch(e) { showRuntimeErrorOverlay(e); }
             });
-        } catch(e){}
+        } catch (e) { _catchSilencioso(e, 'atualizarIndicadoresPrecificacao'); }
     }
 
     function updateDebugPanel(){
@@ -256,13 +271,13 @@ let categoriaPorProduto = {};
     window.__showRuntimeErrorOverlay = showRuntimeErrorOverlay;
     window.__updateDebugPanel = updateDebugPanel;
 
-    window.addEventListener('error', function(ev){ try { showRuntimeErrorOverlay(ev.error || ev.message || ev); console.error('Unhandled error', ev.error || ev.message || ev); } catch(e){} });
-    window.addEventListener('unhandledrejection', function(ev){ try { showRuntimeErrorOverlay(ev.reason || ev); console.error('Unhandled rejection', ev.reason || ev); } catch(e){} });
-    document.addEventListener('DOMContentLoaded', function(){ try { if (window.__SHOW_DEBUG_PANEL) setTimeout(updateDebugPanel, 400); } catch(e){} });
+    window.addEventListener('error', function(ev){ try { showRuntimeErrorOverlay(ev.error || ev.message || ev); console.error('Unhandled error', ev.error || ev.message || ev); } catch (e) { _catchSilencioso(e, 'atualizarIndicadoresPrecificacao'); } });
+    window.addEventListener('unhandledrejection', function(ev){ try { showRuntimeErrorOverlay(ev.reason || ev); console.error('Unhandled rejection', ev.reason || ev); } catch (e) { _catchSilencioso(e, 'atualizarIndicadoresPrecificacao'); } });
+    document.addEventListener('DOMContentLoaded', function(){ try { if (window.__SHOW_DEBUG_PANEL) setTimeout(updateDebugPanel, 400); } catch (e) { _catchSilencioso(e, 'atualizarIndicadoresPrecificacao'); } });
     // Garantir salvamento síncrono/local ao fechar a aba + aviso se não sincronizado com Firebase
     try {
         window.addEventListener('beforeunload', function(ev) {
-            try { salvarDados({imediato:true}); } catch(e) {}
+            try { salvarDados({imediato:true}); } catch (e) { _catchSilencioso(e, 'atualizarIndicadoresPrecificacao'); }
             if (window._dadosAlterados && !window._cloudSyncedRecently) {
                 const msg = 'Você tem alterações não sincronizadas com o Firebase.';
                 ev.preventDefault();
@@ -270,7 +285,7 @@ let categoriaPorProduto = {};
                 return msg;
             }
         });
-    } catch(e) {}
+    } catch (e) { _catchSilencioso(e, 'atualizarIndicadoresPrecificacao'); }
 })();
 // ===== NCM / Predefinições fiscais =====
 const NCM_PRODUTOS = {
@@ -381,82 +396,33 @@ let abaAtiva = 'estoque';
 let configAlertas = { limite: 5, ativo: true };
 
 // Helper: cálculo de estoque/vendas/distribuições
+// Cálculo puro extraído para EstoqueCalculos.obterTotalVendasProduto (estoque-calculos.js) — testado em tests/estoque-calculos.test.js.
 function obterTotalVendasProduto(produto) {
-    if (!produto) return 0;
-    // Verificar se há registros detalhados para este produto específico (fonte de verdade)
-    const registrosDesteProduto = Array.isArray(estoque.registroVendas)
-        ? estoque.registroVendas.filter(v => {
-            if (Array.isArray(v.items) && v.items.length) {
-                return v.items.some(it =>
-                    Number(it.produtoId) === Number(produto.id) ||
-                    it.produto === produto.nome ||
-                    it.produtoNome === produto.nome
-                );
-            }
-            return Number(v.produtoId) === Number(produto.id) || v.produtoNome === produto.nome;
-        })
-        : [];
-    if (registrosDesteProduto.length > 0) {
-        return registrosDesteProduto.reduce((sum, v) => {
-            if (Array.isArray(v.items) && v.items.length) {
-                return sum + v.items.reduce((s, it) => {
-                    if (Number(it.produtoId) === Number(produto.id) || (it.produto === produto.nome) || (it.produtoNome === produto.nome)) return s + (Number(it.quantidade) || 0);
-                    return s;
-                }, 0);
-            }
-            if (Number(v.produtoId) === Number(produto.id) || v.produtoNome === produto.nome) return sum + (Number(v.quantidade) || 0);
-            return sum;
-        }, 0);
-    }
-    // Fallback para agregado em produto.vendas quando não há registros para este produto
-    if (!produto.vendas) return 0;
-    return Object.keys(produto.vendas).reduce((s, k) => s + (Number(produto.vendas[k]) || 0), 0);
+    return EstoqueCalculos.obterTotalVendasProduto(produto, estoque.registroVendas);
 }
 
+// Cálculo puro extraído para EstoqueCalculos.obterDistribuicaoTotalExcluindoImbel (estoque-calculos.js).
 function obterDistribuicaoTotalExcluindoImbel(produto) {
-    if (!produto) return 0;
-    // Verificar se há registros de distribuição para este produto específico (fonte de verdade)
-    const registrosDesteProduto = Array.isArray(estoque.registroDistribuicao)
-        ? estoque.registroDistribuicao.filter(d =>
-            Number(d.produtoId) === Number(produto.id) ||
-            (d.produtoNome && d.produtoNome === produto.nome)
-        )
-        : [];
-    if (registrosDesteProduto.length > 0) {
-        return registrosDesteProduto.reduce((s, d) => {
-            try {
-                const rep = (d.representante || '').toString().toUpperCase();
-                if (rep === 'IMBEL') return s;
-                return s + (Number(d.quantidade) || 0);
-            } catch (e) {
-                console.warn('obterDistribuicaoTotalExcluindoImbel: erro ao processar registro', e);
-                return s;
-            }
-        }, 0);
-    }
-    // Fallback para o objeto produto.distribuicao (legado) quando não há registros para este produto
-    if (!produto.distribuicao) return 0;
-    return Object.keys(produto.distribuicao).reduce((s, k) => {
-        if ((k || '').toUpperCase() === 'IMBEL') return s;
-        return s + (Number(produto.distribuicao[k]) || 0);
-    }, 0);
+    return EstoqueCalculos.obterDistribuicaoTotalExcluindoImbel(produto, estoque.registroDistribuicao);
 }
 
+// Cálculo puro extraído para EstoqueCalculos.calcularSaldoConsolidado (estoque-calculos.js).
 function calcularSaldoConsolidado(produto) {
-    if (!produto) return 0;
-    const estoqueConc = Number(produto.estoqueConsolidado || 0);
-    const vendas = obterTotalVendasProduto(produto);
-    return estoqueConc - vendas;
+    return EstoqueCalculos.calcularSaldoConsolidado(produto, estoque.registroVendas);
 }
 
+// Cálculo puro extraído para EstoqueCalculos.calcularImbelDisponivel (estoque-calculos.js).
+// Retorna o saldo disponível na IMBEL considerando: estoque consolidado,
+// distribuições (exceto IMBEL), devoluções para IMBEL e apenas as vendas
+// atribuídas à IMBEL — mantém coerência com `obterMetricasImbelProduto`.
 function calcularImbelDisponivel(produto) {
-    // Retornar o saldo disponível na IMBEL considerando:
-    // estoque consolidado, distribuições (exceto IMBEL), devoluções para IMBEL
-    // e apenas as vendas atribuídas à IMBEL — mantém coerência com `obterMetricasImbelProduto`.
     try {
         if (!produto) return 0;
-        const met = obterMetricasImbelProduto(produto);
-        return Number(met.imbelSaldo || 0);
+        return EstoqueCalculos.calcularImbelDisponivel(produto, {
+            registroDistribuicao: estoque.registroDistribuicao,
+            registroDevolucoes: estoque.registroDevolucoes,
+            registroVendas: estoque.registroVendas
+        });
     } catch (e) {
         return 0;
     }
@@ -501,78 +467,19 @@ function calcularEstoqueIMBEL(nomeProduto) {
     return estoqueTotal - totalDistribuido + totalDevolvido;
 }
 
+// Cálculo puro extraído para EstoqueCalculos.obterMetricasImbelProduto (estoque-calculos.js) —
+// função central de onde derivam os saldos IMBEL/consolidado exibidos no app.
 function obterMetricasImbelProduto(produto) {
-    if (!produto) {
+    try {
+        return EstoqueCalculos.obterMetricasImbelProduto(produto, {
+            registroDistribuicao: estoque.registroDistribuicao,
+            registroDevolucoes: estoque.registroDevolucoes,
+            registroVendas: estoque.registroVendas
+        });
+    } catch (e) {
+        console.warn('obterMetricasImbelProduto: erro ao calcular', e);
         return { estoqueTotal: 0, imbelDisp: 0, imbelVenda: 0, imbelSaldo: 0 };
     }
-
-    const produtoId = produto.id;
-    const estoqueTotal = Number(
-        (produto.estoqueConsolidado ?? produto.estoqueTotal ?? produto.estoque ?? produto.qtdTotal ?? produto.estoqueInicial) || 0
-    );
-
-    const distPorRep = {};
-    (estoque.registroDistribuicao || []).forEach(d => {
-        try {
-            if (Number(d.produtoId) === Number(produtoId) || (d.produtoNome && d.produtoNome === produto.nome)) {
-                const r = (d.representante || '').toString().toUpperCase();
-                distPorRep[r] = (distPorRep[r] || 0) + (Number(d.quantidade) || 0);
-            }
-        } catch (e) {
-            console.warn('obterMetricasImbelProduto: erro ao processar distribuição', e);
-        }
-    });
-    const totalDistribuido = Object.values(distPorRep).reduce((s, v) => s + v, 0);
-
-    let totalDevolvidoParaImbel = 0;
-    (estoque.registroDevolucoes || []).forEach(d => {
-        try {
-            if (Number(d.produtoId) === Number(produtoId) || (d.produtoNome && d.produtoNome === produto.nome)) {
-                const destino = (d.destino || '').toString().toUpperCase();
-                if (destino === 'IMBEL') totalDevolvidoParaImbel += (Number(d.quantidade) || 0);
-            }
-        } catch (e) {
-            console.warn('obterMetricasImbelProduto: erro ao processar devolução', e);
-        }
-    });
-
-    const vendasPorRep = {};
-    (estoque.registroVendas || []).forEach(v => {
-        if (v.cancelado) return;
-        try {
-            const rep = (v.representante || '').toString().toUpperCase();
-            if (Array.isArray(v.items) && v.items.length) {
-                v.items.forEach(it => {
-                    if (Number(it.produtoId) === Number(produtoId) || (it.produto === produto.nome) || (it.produtoNome === produto.nome)) {
-                        vendasPorRep[rep] = (vendasPorRep[rep] || 0) + (Number(it.quantidade) || 0);
-                    }
-                });
-            } else if (Number(v.produtoId) === Number(produtoId) || (v.produtoNome === produto.nome)) {
-                vendasPorRep[rep] = (vendasPorRep[rep] || 0) + (Number(v.quantidade) || 0);
-            }
-        } catch (e) {
-            console.warn('obterMetricasImbelProduto: erro ao processar venda', e);
-        }
-    });
-
-    const totalVendasProduto = Object.values(vendasPorRep).reduce((s, v) => s + v, 0);
-    const consolidadoDisp = estoqueTotal;
-    const consolidadoVenda = totalVendasProduto;
-    const consolidadoSaldo = consolidadoDisp - consolidadoVenda;
-
-    const imbelDisp = estoqueTotal - totalDistribuido + totalDevolvidoParaImbel;
-    const imbelVenda = Number(vendasPorRep['IMBEL'] || 0);
-    const imbelSaldo = imbelDisp - imbelVenda;
-
-    return {
-        estoqueTotal,
-        imbelDisp,
-        imbelVenda,
-        imbelSaldo,
-        consolidadoDisp,
-        consolidadoVenda,
-        consolidadoSaldo
-    };
 }
 
 // Verifica se um item/registro de venda corresponde a um produto (por ID numérico ou nome)
@@ -1006,7 +913,7 @@ try {
     } else {
         console.warn('Firebase SDK não carregado — funções cloud desativadas.');
         // atualizar UI se possível
-        try { updateFirestoreStatus(false, null, 'SDK não carregado'); } catch (e) {}
+        try { updateFirestoreStatus(false, null, 'SDK não carregado'); } catch (e) { _catchSilencioso(e, 'exportarRelatorioRepresentante'); }
     }
 } catch (e) {
     console.error('Erro inicializando Firebase:', e);
@@ -1182,8 +1089,8 @@ async function inicializar() {
     carregarDados();
     try { if (window.CrmStore) window.CrmStore.ensureCrmDefault(); } catch (e) { console.error('CRM ensureCrmDefault:', e); }
     try { if (window.PontoStore) window.PontoStore.ensurePontoDefault(); } catch (e) { console.error('Ponto ensurePontoDefault:', e); }
-    try { renderizarListaRepresentantesConfig(); } catch (e) {}
-    try { carregarPrecificacoesSalvas(); } catch (e) {}
+    try { renderizarListaRepresentantesConfig(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
+    try { carregarPrecificacoesSalvas(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
     // Load contract config into Configurações tab
     try {
         const cfg = carregarConfigContrato();
@@ -1192,12 +1099,12 @@ async function inicializar() {
         if (anoEl) anoEl.value = cfg.ano;
         if (proxEl) proxEl.value = cfg.proximo;
         atualizarPreviaContrato();
-    } catch (e) {}
-    try { verificarExpiracaoPrecificacoes(); } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'inicializar'); }
+    try { verificarExpiracaoPrecificacoes(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
     try { inicializarImpostosPreDefinidos(); } catch (e) { console.warn('Inicialização de impostos predefinidos falhou:', e); }
 
-    try { inicializarImpostosEditaveis(); } catch (e) {}
-    try { inicializarICMSEditavel(); } catch (e) {}
+    try { inicializarImpostosEditaveis(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
+    try { inicializarICMSEditavel(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
 
     // Sync automático com cloud ocorre após autenticação (onAuthStateChanged)
 
@@ -1206,32 +1113,32 @@ async function inicializar() {
     try { renderizarDashboard(); } catch (e) { console.error('renderizarDashboard:', e); }
     try { renderizarRegistroVendas(); } catch (e) { console.error('renderizarVendas:', e); }
     try { renderizarRegistroDistribuicao(); } catch (e) { console.error('renderizarDist:', e); }
-    try { atualizarKPIsDistribuicao(); } catch (e) {}
+    try { atualizarKPIsDistribuicao(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
     try { renderizarControleEnvio(); } catch (e) { console.error('renderizarEnvio:', e); }
     try { renderizarClientes(); } catch (e) { console.error('renderizarClientes:', e); }
-    try { atualizarKPIsClientes(); } catch (e) {}
-    try { atualizarDatalistClientes(); } catch (e) {}
+    try { atualizarKPIsClientes(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
+    try { atualizarDatalistClientes(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
     try { renderizarPropostas(); } catch (e) { console.error('renderizarPropostas:', e); }
-    try { atualizarKPIsPropostas(); } catch (e) {}
+    try { atualizarKPIsPropostas(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
     try { renderizarPrecificacao(); } catch (e) { console.error('renderizarPrecif:', e); }
-    try { atualizarSelectsProdutos(); } catch (e) {}
-    try { popularSelectProdutosPrecif(); } catch (e) {}
-    try { atualizarSelectsRelatorios(); } catch (e) {}
-    try { atualizarEstatisticas(); } catch (e) {}
-    try { atualizarData(); } catch (e) {}
+    try { atualizarSelectsProdutos(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
+    try { popularSelectProdutosPrecif(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
+    try { atualizarSelectsRelatorios(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
+    try { atualizarEstatisticas(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
+    try { atualizarData(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
 
     // Popular selects visíveis de representantes (filtros) na inicialização
-    try { popularSelectRepresentantes('filtroDistribuicaoRep', true); } catch (e) {}
-    try { popularSelectRepresentantes('filtroRepresentante', true); } catch (e) {}
-    try { popularSelectRepresentantes('filtroControleEnvioRep', true); } catch (e) {}
-    try { popularSelectRepresentantes('filtroRelatoriosRep', true); } catch (e) {}
-    try { popularSelectRepresentantes('precifRepresentanteSelect', true); } catch (e) {}
+    try { popularSelectRepresentantes('filtroDistribuicaoRep', true); } catch (e) { _catchSilencioso(e, 'inicializar'); }
+    try { popularSelectRepresentantes('filtroRepresentante', true); } catch (e) { _catchSilencioso(e, 'inicializar'); }
+    try { popularSelectRepresentantes('filtroControleEnvioRep', true); } catch (e) { _catchSilencioso(e, 'inicializar'); }
+    try { popularSelectRepresentantes('filtroRelatoriosRep', true); } catch (e) { _catchSilencioso(e, 'inicializar'); }
+    try { popularSelectRepresentantes('precifRepresentanteSelect', true); } catch (e) { _catchSilencioso(e, 'inicializar'); }
     
 
     // Check proposal alerts every hour
     if (!window.__PROPOSTA_ALERTAS_INTERVALO__) {
         window.__PROPOSTA_ALERTAS_INTERVALO__ = setInterval(() => {
-            try { verificarAlertasEstoque(); } catch (e) {}
+            try { verificarAlertasEstoque(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
         }, 60 * 60 * 1000);
     }
 
@@ -1239,25 +1146,25 @@ async function inicializar() {
     if (!window.__PROPOSTA_ALERTAS_VISIBILITY__) {
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
-                try { verificarAlertasEstoque(); } catch (e) {}
+                try { verificarAlertasEstoque(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
             }
         });
         window.__PROPOSTA_ALERTAS_VISIBILITY__ = true;
     }
 
     // Reativar auto-save: habilita salvamento automático (debounced + periódico)
-    try { window.__AUTO_SAVE_CLOUD.enabled = true; } catch (e) {}
+    try { window.__AUTO_SAVE_CLOUD.enabled = true; } catch (e) { _catchSilencioso(e, 'inicializar'); }
     try { iniciarAutoSaveCloud(); } catch (e) { console.warn('Falha ao iniciar auto-save:', e); }
 
     // Reconstrução periódica dos agregados (a cada 5 min) para manter badges sempre corretos
     setInterval(() => {
-        try { reconstruirVendasAPartirDeRegistros(); } catch (e) {}
-        try { reconstruirDistribuicaoAPartirDeRegistros(); } catch (e) {}
-        try { atualizarBadgesEstoqueTodasLinhas(); } catch (e) {}
+        try { reconstruirVendasAPartirDeRegistros(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
+        try { reconstruirDistribuicaoAPartirDeRegistros(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
+        try { atualizarBadgesEstoqueTodasLinhas(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
     }, 5 * 60 * 1000);
 
     // Backup automático diário
-    setTimeout(() => { try { exportarBackupLocal(false); } catch (e) {} }, 3000);
+    setTimeout(() => { try { exportarBackupLocal(false); } catch (e) { _catchSilencioso(e, 'inicializar'); } }, 3000);
 
     // Marcar que a inicialização foi concluída — a partir daqui edições são do usuário
     window._appInitialized = true;
@@ -1451,7 +1358,7 @@ function renderConsultaPrecificacoes(dados) {
                             </td>
                         </tr>`;
             if (typeof _cpRenderPaginacao === 'function') _cpRenderPaginacao(totalRegistros);
-            try { if (typeof _cqPosRender === 'function') _cqPosRender(dados); } catch(e) {}
+            try { if (typeof _cqPosRender === 'function') _cqPosRender(dados); } catch (e) { _catchSilencioso(e, 'renderConsultaPrecificacoes'); }
             return;
         }
 
@@ -1572,7 +1479,7 @@ function renderConsultaPrecificacoes(dados) {
 
         body.innerHTML = html;
         if (typeof _cpRenderPaginacao === 'function') _cpRenderPaginacao(totalRegistros);
-        try { if (typeof _cqPosRender === 'function') _cqPosRender(dados); } catch(e) {}
+        try { if (typeof _cqPosRender === 'function') _cqPosRender(dados); } catch (e) { _catchSilencioso(e, 'renderConsultaPrecificacoes'); }
     } catch (e) {
         console.error('renderConsultaPrecificacoes erro:', e);
     }
@@ -1705,17 +1612,17 @@ function excluirPrecificacao(id) {
         if (!confirm('Confirma exclusão desta precificação?')) return;
         const idx = (precificacoesCliente || []).findIndex(p => String(p.id) === String(id) || String(p.versao) === String(id));
         if (idx === -1) {
-            try { mostrarNotificacao && mostrarNotificacao('Precificação não encontrada.', 'warning'); } catch (e) {}
+            try { mostrarNotificacao && mostrarNotificacao('Precificação não encontrada.', 'warning'); } catch (e) { _catchSilencioso(e, 'excluirPrecificacao'); }
             return;
         }
         precificacoesCliente.splice(idx, 1);
-        try { estoque.precificacoesCliente = precificacoesCliente; } catch (e) {}
-        try { salvarDados(); } catch (e) {}
-        try { filtrarConsultaPrecificacoes(); } catch (e) {}
-        try { mostrarNotificacao && mostrarNotificacao('Precificação excluída.', 'success'); } catch (e) {}
+        try { estoque.precificacoesCliente = precificacoesCliente; } catch (e) { _catchSilencioso(e, 'excluirPrecificacao'); }
+        try { salvarDados(); } catch (e) { _catchSilencioso(e, 'excluirPrecificacao'); }
+        try { filtrarConsultaPrecificacoes(); } catch (e) { _catchSilencioso(e, 'excluirPrecificacao'); }
+        try { mostrarNotificacao && mostrarNotificacao('Precificação excluída.', 'success'); } catch (e) { _catchSilencioso(e, 'excluirPrecificacao'); }
     } catch (e) {
         console.error('excluirPrecificacao erro:', e);
-        try { mostrarNotificacao && mostrarNotificacao('Falha ao excluir precificação.', 'error'); } catch (ex) {}
+        try { mostrarNotificacao && mostrarNotificacao('Falha ao excluir precificação.', 'error'); } catch (ex) { _catchSilencioso(ex, 'excluirPrecificacao'); }
     }
 }
 
@@ -1745,7 +1652,7 @@ try {
     window.limparFiltrosConsultaPrec = limparFiltrosConsultaPrec;
     window._cpPopularFiltroCliente = _cpPopularFiltroCliente;
     window.renderConsultaPrecificacoes = renderConsultaPrecificacoes;
-} catch (e) {}
+} catch (e) { _catchSilencioso(e, '_cpPopularFiltroCliente'); }
 
 // ── Bloomberg: KPI strip + lista lateral de cards ──
 function _cqAtualizarKpiStrip() {
@@ -1768,7 +1675,7 @@ function _cqAtualizarKpiStrip() {
         if (el('cqKpiClientes')) el('cqKpiClientes').textContent = clientesUnicos;
         if (el('cqKpiUltima')) el('cqKpiUltima').textContent = ultimaData;
         if (el('cqKpiUltimaSub')) el('cqKpiUltimaSub').textContent = ultimaCliente;
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, '_cqAtualizarKpiStrip'); }
 }
 
 function _cqRenderizarCards(dadosPaginaAtual) {
@@ -1790,7 +1697,7 @@ function _cqRenderizarCards(dadosPaginaAtual) {
             counters[y] = (counters[y] || 0) + 1;
             seqMap.set(p.id || p, counters[y]);
         });
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, '_cqRenderizarCards'); }
 
     listEl.innerHTML = lista.map(p => {
         const exp = _cpExpirada(p);
@@ -1821,7 +1728,7 @@ function _cqRenderizarCards(dadosPaginaAtual) {
         if (fbReg) fbReg.textContent = 'REG ' + lista.length;
         const fbTime = document.getElementById('cq-footbar-time');
         if (fbTime) fbTime.textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, '_cqRenderizarCards'); }
 }
 
 window._cqSelecionarCard = function(id, el) {
@@ -1837,17 +1744,17 @@ window._cqSelecionarCard = function(id, el) {
         const exp = _cpExpirada(prec);
         const fbStatus = document.getElementById('cqFootbarStatus');
         if (fbStatus) fbStatus.textContent = 'STATUS ' + (exp ? 'EXPIRADA' : 'ATIVA');
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, '_cqRenderizarCards'); }
 };
 
 // Hook pós-renderização: atualizar cards e KPIs após cada render
 function _cqPosRender(dados) {
-    try { _cqRenderizarCards(dados); } catch (e) {}
-    try { _cqAtualizarKpiStrip(); } catch (e) {}
+    try { _cqRenderizarCards(dados); } catch (e) { _catchSilencioso(e, '_cqPosRender'); }
+    try { _cqAtualizarKpiStrip(); } catch (e) { _catchSilencioso(e, '_cqPosRender'); }
     try {
         const countEl = document.getElementById('cq-footbar-count');
         if (countEl) countEl.textContent = (Array.isArray(_cpState.dados) ? _cpState.dados.length : 0) + ' registros';
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, '_cqPosRender'); }
 }
 window._cqPosRender = _cqPosRender;
 
@@ -1869,7 +1776,7 @@ function gerarPropostaDePrecificacao(id, idxProduto) {
                 if (container) container.innerHTML = '';
                 const valorUnit = prod ? (prod.precoFinal || prod.valorBase || prod.valor || 0) : 0;
                 adicionarItemPropostaRow({ produtoId: prod ? (prod.produtoId || prod.produto || prod.id) : '', quantidade: prod && prod.quantidade ? prod.quantidade : 1, valorUnit: valorUnit ? Number(valorUnit).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '' });
-                try { calcularTotalProposta(); } catch (e) {}
+                try { calcularTotalProposta(); } catch (e) { _catchSilencioso(e, 'gerarPropostaDePrecificacao'); }
             } catch (e) { console.error('erro ao popular modal proposta:', e); }
         }, 120);
     } catch (e) {
@@ -1877,7 +1784,36 @@ function gerarPropostaDePrecificacao(id, idxProduto) {
     }
 }
 
+/**
+ * Baixa sob demanda a biblioteca docx e as imagens usadas nos documentos.
+ * Chamado pelos geradores de .docx (proposta e contrato), que antes contavam
+ * com esses ~2,3 MB carregados no <head> em toda abertura do sistema.
+ * @returns {Promise<boolean>} false se o download falhou (já notificado ao usuário)
+ */
+async function carregarAssetsDocx() {
+    if (!window.AssetLoader) {
+        console.error('asset-loader.js não carregado.');
+        mostrarNotificacao('Erro interno: carregador de recursos indisponível.', 'error');
+        return false;
+    }
+    // Avisa só na primeira geração da sessão, quando a espera é real.
+    const primeiraVez = !window.AssetLoader.docxPronto();
+    if (primeiraVez) mostrarNotificacao('Preparando gerador de documentos...', 'info');
+    try {
+        await window.AssetLoader.carregarDocx();
+        return true;
+    } catch (e) {
+        console.error('Falha ao carregar assets do docx:', e);
+        mostrarNotificacao('Não foi possível carregar o gerador de documentos. Verifique sua conexão e tente novamente.', 'error');
+        return false;
+    }
+}
+
 async function gerarDocxProposta() {
+    // A biblioteca docx e as imagens da proposta só são baixadas aqui (~2,3 MB),
+    // na primeira geração da sessão — não no carregamento do sistema.
+    if (!await carregarAssetsDocx()) return;
+
     const docxLib = (typeof docx !== 'undefined' && docx?.Document) ? docx
                   : (typeof window.docx !== 'undefined' && window.docx?.Document) ? window.docx
                   : null;
@@ -2336,7 +2272,7 @@ function carregarDados() {
         if (lzRaw && window.LZString) {
             dadosSalvos = LZString.decompressFromUTF16(lzRaw);
         }
-    } catch(e) {}
+    } catch (e) { _catchSilencioso(e, 'carregarDados'); }
     if (!dadosSalvos) dadosSalvos = localStorage.getItem('estoqueArmasV2');
     if (dadosSalvos) {
         try {
@@ -2362,6 +2298,12 @@ function carregarDados() {
                 precificacoesCliente: [],
                 parametrosTabelaVenda: { versaoAtiva: null, versoes: [] }
             };
+        }
+        // Garantir que representantes existe — sem isso, atualizarEstatisticas()
+        // quebra em "estoque.representantes.forEach" (visto em saves antigos/
+        // incompletos, que nunca chegaram a gravar este campo).
+        if (!Array.isArray(estoque.representantes)) {
+            estoque.representantes = ['KOLTE', 'ISA', 'LC', 'ADES', 'FL', 'IMBEL'];
         }
         // Garantir que registroVendas existe
         if (!estoque.registroVendas) {
@@ -2442,7 +2384,7 @@ function carregarDados() {
                         } catch (inner) { p.estoqueConsolidado = 0; }
                     }
                     // padronizar: manter distribuições por representantes; zerar/ignorar IMBEL armazenado (IMBEL será calculado dinamicamente a partir do consolidado)
-                    try { if (!p.distribuicao) p.distribuicao = {}; p.distribuicao.IMBEL = 0; } catch (e) {}
+                    try { if (!p.distribuicao) p.distribuicao = {}; p.distribuicao.IMBEL = 0; } catch (e) { _catchSilencioso(e, 'carregarDados'); }
                 });
             }
         } catch (e) { console.warn('Migração estoqueConsolidado falhou:', e); }
@@ -2468,10 +2410,10 @@ function carregarDados() {
                 const rawEspelho = localStorage.getItem('precificacoesClienteBackupV1');
                 const espelho = normalizarPrecificacoesCliente(rawEspelho ? JSON.parse(rawEspelho) : []);
                 if (espelho.length) precificacoesCliente = espelho;
-            } catch (e) {}
+            } catch (e) { _catchSilencioso(e, 'carregarDados'); }
         }
         estoque.precificacoesCliente = precificacoesCliente;
-        try { atualizarIndicadoresPrecificacao(); } catch (e) {}
+        try { atualizarIndicadoresPrecificacao(); } catch (e) { _catchSilencioso(e, 'carregarDados'); }
         tabelaAliquotas = (estoque.tabelaAliquotas && typeof estoque.tabelaAliquotas === 'object')
             ? estoque.tabelaAliquotas
             : {};
@@ -2494,7 +2436,7 @@ function carregarDados() {
                     console.info('IMBEL: dados restaurados do backup principal');
                 }
             }
-        } catch (e) {}
+        } catch (e) { _catchSilencioso(e, 'carregarDados'); }
     } else {
         estoque = {};
         estoque.produtos = dadosIniciais.map((item, index) => ({
@@ -2504,6 +2446,7 @@ function carregarDados() {
             distribuicao: { ...item.distribuicao },
             vendas: { ...item.vendas }
         }));
+        estoque.representantes = ['KOLTE', 'ISA', 'LC', 'ADES', 'FL', 'IMBEL'];
         estoque.registroVendas = [];
         estoque.registroDistribuicao = [];
         estoque.registroDevolucoes = [];
@@ -2548,20 +2491,20 @@ function _executarSalvarLocal() {
     estoque.tabelaICMS = tabelaICMS;
     estoque.categoriaPorProduto = categoriaPorProduto;
     // Persistir precificações salvas por cliente
-    try { estoque.precificacoesCliente = precificacoesCliente || []; } catch (e) {}
+    try { estoque.precificacoesCliente = precificacoesCliente || []; } catch (e) { _catchSilencioso(e, '_executarSalvarLocal'); }
     // Persistir tabelas de impostos editáveis
-    try { estoque.impostosEditaveis = impostosEditaveis || {}; } catch (e) {}
-    try { estoque.icmsEditavelPJ = icmsEditavelPJ || {}; } catch (e) {}
-    try { estoque.icmsEditavelPF = icmsEditavelPF || {}; } catch (e) {}
+    try { estoque.impostosEditaveis = impostosEditaveis || {}; } catch (e) { _catchSilencioso(e, '_executarSalvarLocal'); }
+    try { estoque.icmsEditavelPJ = icmsEditavelPJ || {}; } catch (e) { _catchSilencioso(e, '_executarSalvarLocal'); }
+    try { estoque.icmsEditavelPF = icmsEditavelPF || {}; } catch (e) { _catchSilencioso(e, '_executarSalvarLocal'); }
     // marca hora local de atualização para comparação com o remoto
     // Quando carregando do cloud, preservar o timestamp remoto (já setado em carregarDoCloud)
     // para que onSnapshot não compare com um "now()" mais recente que o remoto
-    try { if (!window._carregandoDoCloud) estoque._localUpdatedAt = new Date().toISOString(); } catch (e) {}
+    try { if (!window._carregandoDoCloud) estoque._localUpdatedAt = new Date().toISOString(); } catch (e) { _catchSilencioso(e, '_executarSalvarLocal'); }
     // Include IMBEL data in main save
     try {
         const imbelData = loadImbel();
         estoque._imbelData = imbelData;
-    } catch(e) {}
+    } catch (e) { _catchSilencioso(e, '_executarSalvarLocal'); }
     try {
         const json = JSON.stringify(estoque);
         if (window.LZString) {
@@ -2574,24 +2517,27 @@ function _executarSalvarLocal() {
     } catch (e) {
         try { localStorage.setItem('estoqueArmasV2', JSON.stringify(estoque)); } catch(e2) {}
     }
-    try { localStorage.setItem('precificacoesClienteBackupV1', JSON.stringify(precificacoesCliente || [])); } catch (e) {}
-    atualizarEstatisticas();
+    try { localStorage.setItem('precificacoesClienteBackupV1', JSON.stringify(precificacoesCliente || [])); } catch (e) { _catchSilencioso(e, '_executarSalvarLocal'); }
+    // Sem o try/catch, uma falha aqui (ex.: KPI de tela ausente) interrompia a
+    // função antes de agendar o save no cloud logo abaixo — a UI não crashava
+    // visivelmente, mas o cloud nunca era acionado.
+    try { atualizarEstatisticas(); } catch (e) { _catchSilencioso(e, '_executarSalvarLocal'); }
 
     // agendar salvamento no cloud (debounced) se habilitado
     // Não re-enviar ao cloud quando estamos apenas persistindo dados recebidos do cloud
-    try { if (!window._carregandoDoCloud) scheduleCloudSaveDebounced(); } catch (e) {}
+    try { if (!window._carregandoDoCloud) scheduleCloudSaveDebounced(); } catch (e) { _catchSilencioso(e, '_executarSalvarLocal'); }
     try {
         if (!window._cloudSyncedRecently && !window._carregandoDoCloud) window._dadosAlterados = true;
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, '_executarSalvarLocal'); }
 }
 
 function salvarDados(opcoes = {}) {
     // Não marcar como alterado se viemos de uma carga do cloud (evita bloquear sync futuro)
     if (!window._carregandoDoCloud) {
-        try { window._dadosAlterados = true; } catch (e) {}
+        try { window._dadosAlterados = true; } catch (e) { _catchSilencioso(e, 'salvarDados'); }
         // Registrar edição real do usuário (só após init completa — não durante renderizações iniciais)
         if (window._appInitialized) {
-            try { window._userHasEdited = true; } catch (e) {}
+            try { window._userHasEdited = true; } catch (e) { _catchSilencioso(e, 'salvarDados'); }
         }
     }
     if (opcoes && opcoes.imediato) {
@@ -2615,7 +2561,7 @@ function getLocalUpdatedAt() {
 function setLocalUpdatedAt(date) {
     try {
         localStorage.setItem('_cloudUpdatedAt', date instanceof Date ? date.toISOString() : date);
-    } catch(e) {}
+    } catch (e) { _catchSilencioso(e, 'setLocalUpdatedAt'); }
 }
 
 // =============================
@@ -2677,7 +2623,7 @@ async function salvarNoCloud() {
             } catch(e) { window._lastCloudSaveTimestamp = Date.now(); }
             if (__cloudSyncResetTimer) clearTimeout(__cloudSyncResetTimer);
             __cloudSyncResetTimer = setTimeout(() => { window._cloudSyncedRecently = false; window._lastCloudSaveAt = 0; }, 30000);
-        } catch (e) {}
+        } catch (e) { _catchSilencioso(e, 'salvarNoCloud'); }
         console.debug('Dados salvos no Firestore (coleção app_data / doc latest)');
         return true;
     } catch (e) {
@@ -2689,9 +2635,9 @@ async function salvarNoCloud() {
                 console.warn('Firestore resource-exhausted detectado — pausando auto-save por 60s.');
                 window.__AUTO_SAVE_CLOUD = window.__AUTO_SAVE_CLOUD || {};
                 window.__AUTO_SAVE_CLOUD.enabled = false;
-                try { if (typeof mostrarNotificacao === 'function') mostrarNotificacao('Auto-save pausado por 1 minuto devido a limites do Firestore.', 'warning'); } catch (_) {}
+                try { if (typeof mostrarNotificacao === 'function') mostrarNotificacao('Auto-save pausado por 1 minuto devido a limites do Firestore.', 'warning'); } catch (_) { _catchSilencioso(_, 'salvarNoCloud'); }
                 setTimeout(() => {
-                    try { window.__AUTO_SAVE_CLOUD.enabled = true; } catch (_) {}
+                    try { window.__AUTO_SAVE_CLOUD.enabled = true; } catch (_) { _catchSilencioso(_, 'salvarNoCloud'); }
                 }, 60000);
             }
         } catch (inner) { console.warn('Erro ao processar erro do Firestore:', inner); }
@@ -2776,7 +2722,7 @@ async function carregarDoCloud({confirmOverwrite=true} = {}) {
         try {
             const tsRemoto = data.updatedAt ? data.updatedAt.toDate().toISOString() : new Date().toISOString();
             estoque._localUpdatedAt = tsRemoto;
-        } catch(e) {}
+        } catch (e) { _catchSilencioso(e, 'carregarDoCloud'); }
         // Restaurar dados IMBEL salvos no backup principal (se existirem)
         try {
             if (data && data.estado && data.estado._imbelData) {
@@ -2784,14 +2730,14 @@ async function carregarDoCloud({confirmOverwrite=true} = {}) {
             } else if (estoque && estoque._imbelData) {
                 try { localStorage.setItem(IMBEL_KEY, JSON.stringify(estoque._imbelData)); console.info('IMBEL: restaurado do backup principal'); } catch (e) { /* ignore */ }
             }
-        } catch (e) {}
+        } catch (e) { _catchSilencioso(e, 'carregarDoCloud'); }
         const precifsCloudFinal = (data.precificacoesCliente && data.precificacoesCliente.length)
             ? data.precificacoesCliente
             : (estoque.precificacoesCliente || []);
         estoque.precificacoesCliente = normalizarPrecificacoesCliente(precifsCloudFinal);
         precificacoesCliente = estoque.precificacoesCliente;
-        try { atualizarIndicadoresPrecificacao(); } catch (e) {}
-        try { localStorage.setItem('precificacoesClienteBackupV1', JSON.stringify(precificacoesCliente || [])); } catch (e) {}
+        try { atualizarIndicadoresPrecificacao(); } catch (e) { _catchSilencioso(e, 'carregarDoCloud'); }
+        try { localStorage.setItem('precificacoesClienteBackupV1', JSON.stringify(precificacoesCliente || [])); } catch (e) { _catchSilencioso(e, 'carregarDoCloud'); }
         if (!Array.isArray(estoque.auditoriaVendas)) estoque.auditoriaVendas = [];
         if (!Array.isArray(estoque.fechamentosComissoes)) estoque.fechamentosComissoes = [];
         if (!Array.isArray(estoque.clientes)) estoque.clientes = [];
@@ -2813,7 +2759,7 @@ async function carregarDoCloud({confirmOverwrite=true} = {}) {
         categoriaPorProduto = (data.categoriaPorProduto && typeof data.categoriaPorProduto === 'object')
             ? data.categoriaPorProduto
             : (estoque.categoriaPorProduto || {});
-        try { verificarExpiracaoPrecificacoes(); } catch (e) {}
+        try { verificarExpiracaoPrecificacoes(); } catch (e) { _catchSilencioso(e, 'carregarDoCloud'); }
 
         try { inicializarImpostosPreDefinidos(); } catch (e) { console.warn('Inicializar impostos predefinidos após cloud falhou:', e); }
 
@@ -2842,8 +2788,8 @@ async function carregarDoCloud({confirmOverwrite=true} = {}) {
 
             if (tabPrecifVisivel) {
                 // Tentar renderizar todas as subabas de precificação que possam estar ativas
-                try { renderizarConsultaPrecificacao && renderizarConsultaPrecificacao(); } catch(e) {}
-                try { renderizarRastreabilidade && renderizarRastreabilidade(); } catch(e) {}
+                try { renderizarConsultaPrecificacao && renderizarConsultaPrecificacao(); } catch (e) { _catchSilencioso(e, 'carregarDoCloud'); }
+                try { renderizarRastreabilidade && renderizarRastreabilidade(); } catch (e) { _catchSilencioso(e, 'carregarDoCloud'); }
             } else {
                 // Marcar flag para renderizar quando a aba for aberta
                 window._precificacaoPendenteRender = true;
@@ -2859,9 +2805,9 @@ async function carregarDoCloud({confirmOverwrite=true} = {}) {
                 try {
                     renderizarConsultaPrecificacao && renderizarConsultaPrecificacao();
                     renderizarRastreabilidade && renderizarRastreabilidade();
-                } catch(e) {}
+                } catch (e) { _catchSilencioso(e, 'carregarDoCloud'); }
             }, 400);
-        } catch(e) {}
+        } catch (e) { _catchSilencioso(e, 'carregarDoCloud'); }
         window._carregandoDoCloud = false;
         window._dadosAlterados = false;
         window._userHasEdited = false;
@@ -2901,7 +2847,7 @@ async function carregarDoCloudAuto() {
             try { if (window.CrmStore) window.CrmStore.ensureCrmDefault(); } catch (e) { console.error('CRM ensureCrmDefault (cloud auto):', e); }
             try { if (window.PontoStore) window.PontoStore.ensurePontoDefault(); } catch (e) { console.error('Ponto ensurePontoDefault (cloud auto):', e); }
             // Sincronizar _localUpdatedAt com o timestamp remoto
-            try { estoque._localUpdatedAt = data.updatedAt.toDate().toISOString(); } catch(e) {}
+            try { estoque._localUpdatedAt = data.updatedAt.toDate().toISOString(); } catch (e) { _catchSilencioso(e, 'carregarDoCloudAuto'); }
             // Restaurar dados IMBEL salvos no backup principal (se existirem)
             try {
                 if (data && data.estado && data.estado._imbelData) {
@@ -2909,15 +2855,15 @@ async function carregarDoCloudAuto() {
                 } else if (estoque && estoque._imbelData) {
                     try { localStorage.setItem(IMBEL_KEY, JSON.stringify(estoque._imbelData)); console.info('IMBEL: restaurado do backup principal (auto)'); } catch (e) { /* ignore */ }
                 }
-            } catch (e) {}
+            } catch (e) { _catchSilencioso(e, 'carregarDoCloudAuto'); }
             estoque.precificacoesCliente = normalizarPrecificacoesCliente(
                 data.precificacoesCliente && data.precificacoesCliente.length
                     ? data.precificacoesCliente
                     : (estoque.precificacoesCliente || [])
             );
             precificacoesCliente = estoque.precificacoesCliente; // sincroniza variável global
-            try { atualizarIndicadoresPrecificacao(); } catch (e) {}
-            try { localStorage.setItem('precificacoesClienteBackupV1', JSON.stringify(precificacoesCliente || [])); } catch (e) {}
+            try { atualizarIndicadoresPrecificacao(); } catch (e) { _catchSilencioso(e, 'carregarDoCloudAuto'); }
+            try { localStorage.setItem('precificacoesClienteBackupV1', JSON.stringify(precificacoesCliente || [])); } catch (e) { _catchSilencioso(e, 'carregarDoCloudAuto'); }
             if (!Array.isArray(estoque.auditoriaVendas)) estoque.auditoriaVendas = [];
             if (!Array.isArray(estoque.fechamentosComissoes)) estoque.fechamentosComissoes = [];
             if (!Array.isArray(estoque.clientes)) estoque.clientes = [];
@@ -2944,8 +2890,8 @@ async function carregarDoCloudAuto() {
             impostosEditaveis = (data.impostosEditaveis && typeof data.impostosEditaveis === 'object') ? data.impostosEditaveis : (estoque.impostosEditaveis || {});
             icmsEditavelPJ    = (data.icmsEditavelPJ && typeof data.icmsEditavelPJ === 'object') ? data.icmsEditavelPJ : (estoque.icmsEditavelPJ || {});
             icmsEditavelPF    = (data.icmsEditavelPF && typeof data.icmsEditavelPF === 'object') ? data.icmsEditavelPF : (estoque.icmsEditavelPF || {});
-            try { inicializarImpostosEditaveis(); } catch (e) {}
-            try { inicializarICMSEditavel(); } catch (e) {}
+            try { inicializarImpostosEditaveis(); } catch (e) { _catchSilencioso(e, 'carregarDoCloudAuto'); }
+            try { inicializarICMSEditavel(); } catch (e) { _catchSilencioso(e, 'carregarDoCloudAuto'); }
 
             salvarDados();
             renderizarTabela();
@@ -2968,9 +2914,9 @@ async function carregarDoCloudAuto() {
                 const isRastreaVis  = rastreaEl ? rastreaEl.style.display !== 'none' : false;
                 if (isConsultaVis && typeof renderizarConsultaPrecificacao === 'function') renderizarConsultaPrecificacao();
                 if (isRastreaVis && typeof renderizarRastreabilidade === 'function') renderizarRastreabilidade();
-            } catch (e) {}
+            } catch (e) { _catchSilencioso(e, 'carregarDoCloudAuto'); }
             console.debug('Dados carregados automaticamente do Firestore (remoto mais recente).');
-            try { mostrarNotificacao('✅ Dados sincronizados do Cloud.', 'success'); } catch(e) {}
+            try { mostrarNotificacao('✅ Dados sincronizados do Cloud.', 'success'); } catch (e) { _catchSilencioso(e, 'carregarDoCloudAuto'); }
             window._carregandoDoCloud = false;
             window._dadosAlterados = false;
             window._userHasEdited = false;
@@ -3132,7 +3078,7 @@ function atualizarEstatisticas() {
             ? (dashContainer.querySelector('#totalComissoes') || document.getElementById('totalComissoes'))
             : document.getElementById('totalComissoes');
         if (totalComissoesEl) totalComissoesEl.textContent = formatarMoedaValor(totalComissoes);
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'atualizarEstatisticas'); }
 }
 
 // Helper global: normaliza várias formas de data para YYYY-MM-DD
@@ -3144,7 +3090,7 @@ function parseDateToYYYYMMDD(input) {
             const dt = input.toDate();
             if (dt instanceof Date && !isNaN(dt.getTime())) return dt.toISOString().slice(0,10);
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'parseDateToYYYYMMDD'); }
     // Objects with seconds (e.g., { seconds, nanoseconds })
     if (input && typeof input === 'object') {
         if (typeof input.seconds === 'number') {
@@ -3192,7 +3138,7 @@ function formatDateToDDMMYYYY(input) {
             const yyyy = d.getFullYear();
             return `${dd}/${mm}/${yyyy}`;
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'formatDateToDDMMYYYY'); }
     return '-';
 }
 
@@ -3328,16 +3274,9 @@ function formatCurrencyBRLInput(value) {
     return (cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// Cálculo puro extraído para EstoqueCalculos.parseCurrencyBRLToNumber (estoque-calculos.js).
 function parseCurrencyBRLToNumber(value) {
-    const text = String(value || '').trim();
-    if (!text) return 0;
-    const normalized = text
-        .replace(/\s/g, '')
-        .replace(/[R$r$]/g, '')
-        .replace(/\./g, '')
-        .replace(',', '.');
-    const parsed = Number(normalized.replace(/[^0-9.-]/g, ''));
-    return Number.isFinite(parsed) ? parsed : 0;
+    return EstoqueCalculos.parseCurrencyBRLToNumber(value);
 }
 
 function bindImbelMovInputMasks() {
@@ -3402,11 +3341,11 @@ function formatarContratoDisplay(valor, fallbackYear) {
 
 function getUsuarioAtual() {
     let usuario = '';
-    try { usuario = (localStorage.getItem('estoqueUsuarioAtual') || '').trim(); } catch (e) {}
+    try { usuario = (localStorage.getItem('estoqueUsuarioAtual') || '').trim(); } catch (e) { _catchSilencioso(e, 'getUsuarioAtual'); }
     if (!usuario) {
         usuario = (prompt('Informe seu nome/usuário para auditoria:') || '').trim();
         if (!usuario) usuario = 'Usuário';
-        try { localStorage.setItem('estoqueUsuarioAtual', usuario); } catch (e) {}
+        try { localStorage.setItem('estoqueUsuarioAtual', usuario); } catch (e) { _catchSilencioso(e, 'getUsuarioAtual'); }
     }
     return usuario;
 }
@@ -3633,7 +3572,7 @@ function trocarAba(aba) {
         }
 
         abaAtiva = aba;
-        try { window.abaAtiva = aba; } catch (e) {}
+        try { window.abaAtiva = aba; } catch (e) { _catchSilencioso(e, 'trocarAba'); }
 
         // Atualizar botões de navegação (sidebar e fallback antigo)
         document.querySelectorAll('.sidebar .nav-item, .tabs-navigation .tab-btn').forEach(btn => {
@@ -3658,13 +3597,13 @@ function trocarAba(aba) {
         } else if (aba === 'vendas') {
             try { renderizarRegistroVendas(); } catch (e) { console.error('vendas:', e); if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
         } else if (aba === 'distribuicao') {
-            try { popularSelectRepresentantes('filtroDistribuicaoRep', true); } catch (e) {}
-            try { atualizarSelectDistribuicaoProduto(); } catch (e) {}
+            try { popularSelectRepresentantes('filtroDistribuicaoRep', true); } catch (e) { _catchSilencioso(e, 'trocarAba'); }
+            try { atualizarSelectDistribuicaoProduto(); } catch (e) { _catchSilencioso(e, 'trocarAba'); }
             try { renderizarRegistroDistribuicao(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
         } else if (aba === 'relatorios') {
             try { prepararRelatorioInventario(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
             try { gerarRelatorioRentabilidade(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
-            try { _popularSelectMes(); } catch (e) {}
+            try { _popularSelectMes(); } catch (e) { _catchSilencioso(e, 'trocarAba'); }
         } else if (aba === 'controleenvio') {
             try { renderizarControleEnvio(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
         } else if (aba === 'controleimbel') {
@@ -3672,17 +3611,17 @@ function trocarAba(aba) {
         } else if (aba === 'precificacao') {
             try { trocarSubabaPrecif('porcliente'); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
             try { renderizarPrecificacao(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
-            try { popularSelectProdutosPrecif(); } catch (e) {}
+            try { popularSelectProdutosPrecif(); } catch (e) { _catchSilencioso(e, 'trocarAba'); }
             // Se o carregamento anterior deixou uma render pendente, disparar agora
             try {
                 if (window._precificacaoPendenteRender) {
                     window._precificacaoPendenteRender = false;
                     setTimeout(() => {
-                        try { renderizarConsultaPrecificacao && renderizarConsultaPrecificacao(); } catch(e) {}
-                        try { renderizarRastreabilidade && renderizarRastreabilidade(); } catch(e) {}
+                        try { renderizarConsultaPrecificacao && renderizarConsultaPrecificacao(); } catch (e) { _catchSilencioso(e, 'trocarAba'); }
+                        try { renderizarRastreabilidade && renderizarRastreabilidade(); } catch (e) { _catchSilencioso(e, 'trocarAba'); }
                     }, 100);
                 }
-            } catch(e) {}
+            } catch (e) { _catchSilencioso(e, 'trocarAba'); }
         } else if (aba === 'clientes') {
             try { renderizarClientes(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
         } else if (aba === 'propostas') {
@@ -3698,14 +3637,14 @@ function trocarAba(aba) {
             try { renderizarAuditoria(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
             try { renderizarConfigVendedor(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
             try { renderizarSelectConfigRep(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
-            try { renderizarListaRepresentantesConfig(); } catch(e) {}
-            try { carregarConfigEmail(); } catch(e) {}
+            try { renderizarListaRepresentantesConfig(); } catch (e) { _catchSilencioso(e, 'trocarAba'); }
+            try { carregarConfigEmail(); } catch (e) { _catchSilencioso(e, 'trocarAba'); }
         }
 
-        try { if (window.__updateDebugPanel) window.__updateDebugPanel(); } catch (e) {}
+        try { if (window.__updateDebugPanel) window.__updateDebugPanel(); } catch (e) { _catchSilencioso(e, 'trocarAba'); }
 
         // Fechar drawer mobile ao trocar aba
-        try { document.body.classList.remove('mobile-sidebar-open'); } catch (e) {}
+        try { document.body.classList.remove('mobile-sidebar-open'); } catch (e) { _catchSilencioso(e, 'trocarAba'); }
     } catch (err) {
         console.error('trocarAba falhou:', err);
         if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(err);
@@ -3733,8 +3672,8 @@ function repClassName(rep) {
 // Abre a aba 'vendas' filtrada por produto e representante (função global usada por onclick)
 function abrirVendasPorProduto(produtoId, representante) {
     try {
-        try { atualizarSelectsProdutos(); } catch (e) {}
-        try { popularSelectRepresentantes('filtroRepresentante', true); } catch (e) {}
+        try { atualizarSelectsProdutos(); } catch (e) { _catchSilencioso(e, 'abrirVendasPorProduto'); }
+        try { popularSelectRepresentantes('filtroRepresentante', true); } catch (e) { _catchSilencioso(e, 'abrirVendasPorProduto'); }
         const filtroProduto = document.getElementById('filtroProduto');
         const filtroRep = document.getElementById('filtroRepresentante');
         if (filtroProduto) filtroProduto.value = produtoId || '';
@@ -3752,7 +3691,7 @@ function abrirVendasPorProduto(produtoId, representante) {
                             if ((r.textContent || '').includes(prod.nome)) { r.scrollIntoView({ behavior: 'smooth', block: 'center' }); break; }
                         }
                     }
-                } catch (e) {}
+                } catch (e) { _catchSilencioso(e, 'abrirVendasPorProduto'); }
             } catch (e) { console.warn('abrirVendasPorProduto renderizar erro', e); }
         }, 80);
     } catch (e) { console.warn('abrirVendasPorProduto erro', e); }
@@ -3928,7 +3867,7 @@ function _estRenderKPIs(produtosVisiveis, totais, repsVisiveis) {
         const kpiSZ = document.getElementById('kpiSaldoZero');
         if (kpiTV) kpiTV.textContent = `${totalVendidasGlobal.toLocaleString('pt-BR')} un.`;
         if (kpiSZ) kpiSZ.textContent = `${(negativos + zerados).toLocaleString('pt-BR')} produtos`;
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, '_estRenderKPIs'); }
 }
 
 function renderizarTabela() {
@@ -4035,7 +3974,7 @@ function renderizarTabela() {
                     const r = (d.representante || '').toUpperCase();
                     distPorRep[r] = (distPorRep[r] || 0) + (Number(d.quantidade) || 0);
                 }
-            } catch (e) {}
+            } catch (e) { _catchSilencioso(e, 'renderizarTabela'); }
         });
 
         // Devoluções
@@ -4046,7 +3985,7 @@ function renderizarTabela() {
                     const origem = (d.origem || d.representante || '').toUpperCase();
                     devPorRep[origem] = (devPorRep[origem] || 0) + (Number(d.quantidade) || 0);
                 }
-            } catch (e) {}
+            } catch (e) { _catchSilencioso(e, 'renderizarTabela'); }
         });
 
         // Vendas
@@ -4063,7 +4002,7 @@ function renderizarTabela() {
                 } else if (Number(v.produtoId) === Number(produtoId) || v.produtoNome === produto.nome) {
                     vendasPorRep[rep] = (vendasPorRep[rep] || 0) + (Number(v.quantidade) || 0);
                 }
-            } catch (e) {}
+            } catch (e) { _catchSilencioso(e, 'renderizarTabela'); }
         });
 
         // Célula produto
@@ -4187,9 +4126,9 @@ function renderizarTabela() {
     }
 
     // ── Renderizar RepBar e KPIs (sempre sobre a lista inteira, não a página atual) ──
-    try { _estRenderRepBar(produtosOrdenados); } catch (e) {}
-    try { _estRenderKPIs(produtosOrdenados, totais, repsVisiveis); } catch (e) {}
-    try { _estRenderPaginacao(totalFiltradoEst); } catch (e) {}
+    try { _estRenderRepBar(produtosOrdenados); } catch (e) { _catchSilencioso(e, 'renderizarTabela'); }
+    try { _estRenderKPIs(produtosOrdenados, totais, repsVisiveis); } catch (e) { _catchSilencioso(e, 'renderizarTabela'); }
+    try { _estRenderPaginacao(totalFiltradoEst); } catch (e) { _catchSilencioso(e, 'renderizarTabela'); }
 
     // Aplicar densidade padrão (compacto) se ainda não definida
     const tabEstoque = document.getElementById('tab-estoque');
@@ -4199,7 +4138,7 @@ function renderizarTabela() {
         tabEstoque.classList.add('est-density-compact');
     }
 
-    try { renderizarCadastroProdutos(); } catch (e) {}
+    try { renderizarCadastroProdutos(); } catch (e) { _catchSilencioso(e, 'renderizarTabela'); }
 }
 
 function _togglePecas(el, nomePai) {
@@ -4771,7 +4710,7 @@ function aprovarProposta(id) {
     p.dataAprovacao = new Date().toISOString();
     p.status = 'rascunho';
     salvarDados();
-    try { renderizarPropostas(); } catch (e) {}
+    try { renderizarPropostas(); } catch (e) { _catchSilencioso(e, 'aprovarProposta'); }
     mostrarNotificacao(`✅ Proposta ${p.numero} aprovada.`, 'success');
 }
 
@@ -4783,7 +4722,7 @@ function recusarAprovacaoProposta(id) {
     p.status = 'rascunho';
     p.observacoes = (p.observacoes || '') + `\n[RECUSADO: ${motivo} — ${new Date().toLocaleDateString('pt-BR')}]`;
     salvarDados();
-    try { renderizarPropostas(); } catch (e) {}
+    try { renderizarPropostas(); } catch (e) { _catchSilencioso(e, 'recusarAprovacaoProposta'); }
     mostrarNotificacao('Desconto recusado. Proposta voltou para rascunho.', 'warning');
 }
  
@@ -5266,7 +5205,7 @@ function imprimirRelatorioPreview() {
     // Se não há conteúdo, tentar visualizar antes de imprimir
     if (!preview.innerHTML || preview.innerHTML.trim() === '') {
         // Tenta re-gerar o preview atual com a função existente
-        try { visualizarRelatorioSelecionado(); } catch (e) {}
+        try { visualizarRelatorioSelecionado(); } catch (e) { _catchSilencioso(e, 'imprimirRelatorioPreview'); }
         if (!preview.innerHTML || preview.innerHTML.trim() === '') {
             mostrarNotificacao('Nenhum relatório visualizado para imprimir.', 'warning');
             return;
@@ -6500,7 +6439,7 @@ const IMBEL_AUDITORIA_KEY = 'estoqueImbelAuditoriaV1';
 
 function registrarAuditoriaImbel(acao, entidade, objAntes, objDepois, detalhes = '') {
     let lista = [];
-    try { lista = JSON.parse(localStorage.getItem(IMBEL_AUDITORIA_KEY) || '[]'); } catch(e) {}
+    try { lista = JSON.parse(localStorage.getItem(IMBEL_AUDITORIA_KEY) || '[]'); } catch (e) { _catchSilencioso(e, 'registrarAuditoriaImbel'); }
     lista.push({
         id: Date.now() + Math.floor(Math.random() * 1000),
         quando: new Date().toISOString(),
@@ -6513,7 +6452,7 @@ function registrarAuditoriaImbel(acao, entidade, objAntes, objDepois, detalhes =
         detalhes
     });
     if (lista.length > 1000) lista = lista.slice(-1000);
-    try { localStorage.setItem(IMBEL_AUDITORIA_KEY, JSON.stringify(lista)); } catch(e) {}
+    try { localStorage.setItem(IMBEL_AUDITORIA_KEY, JSON.stringify(lista)); } catch (e) { _catchSilencioso(e, 'registrarAuditoriaImbel'); }
 }
 
 function renderControleImbelAuditoria() {
@@ -6521,7 +6460,7 @@ function renderControleImbelAuditoria() {
     if (!container) return;
 
     let lista = [];
-    try { lista = JSON.parse(localStorage.getItem(IMBEL_AUDITORIA_KEY) || '[]'); } catch(e) {}
+    try { lista = JSON.parse(localStorage.getItem(IMBEL_AUDITORIA_KEY) || '[]'); } catch (e) { _catchSilencioso(e, 'renderControleImbelAuditoria'); }
 
     // preserve filter state
     const state = container._audState || { busca: '', filtroAcao: '', filtroEntidade: '', sel: null };
@@ -6692,7 +6631,7 @@ function _imbelAudRenderList(container, lista, state) {
         if (row) row.style.background = '#eef3f9';
 
         let lista2 = [];
-        try { lista2 = JSON.parse(localStorage.getItem(IMBEL_AUDITORIA_KEY)||'[]'); } catch(e) {}
+        try { lista2 = JSON.parse(localStorage.getItem(IMBEL_AUDITORIA_KEY)||'[]'); } catch (e) { _catchSilencioso(e, '_imbelAudRenderList'); }
         const a = lista2.find(x => String(x.id) === String(id));
         const panelEl = document.getElementById('imbelAudPanel');
         if (!panelEl || !a) return;
@@ -6737,7 +6676,7 @@ function _imbelAudRenderList(container, lista, state) {
 
 function exportarAuditoriaImbel() {
     let lista = [];
-    try { lista = JSON.parse(localStorage.getItem(IMBEL_AUDITORIA_KEY) || '[]'); } catch(e) {}
+    try { lista = JSON.parse(localStorage.getItem(IMBEL_AUDITORIA_KEY) || '[]'); } catch (e) { _catchSilencioso(e, 'exportarAuditoriaImbel'); }
     if (!lista.length) { mostrarNotificacao('Nenhum registro para exportar.', 'warning'); return; }
 
     const sep = ';';
@@ -6774,14 +6713,14 @@ function migrateImbelStorage() {
                 if (v && (Array.isArray(v.produtos) || Array.isArray(v.movimentacoes) || (v.produtos && v.movimentacoes))) {
                     localStorage.setItem(IMBEL_KEY, JSON.stringify(v));
                     console.info(`IMBEL: migrado ${k} -> ${IMBEL_KEY}`);
-                    try { mostrarNotificacao(`Dados IMBEL restaurados de "${k}"`, 'success'); } catch(e) {}
+                    try { mostrarNotificacao(`Dados IMBEL restaurados de "${k}"`, 'success'); } catch (e) { _catchSilencioso(e, 'migrateImbelStorage'); }
                     return true;
                 }
             } catch(e) {
                 // ignora chaves que não são JSON válidos
             }
         }
-    } catch(e) {}
+    } catch (e) { _catchSilencioso(e, 'migrateImbelStorage'); }
     return false;
 }
 
@@ -6864,7 +6803,7 @@ function migrarProdutoNomeImbel() {
                     }
                 });
             }
-        } catch(e) {}
+        } catch (e) { _catchSilencioso(e, 'migrarProdutoNomeImbel'); }
     });
     if (changed) {
         saveImbel(data);
@@ -7026,7 +6965,7 @@ function renderControleImbelPrecos() {
             const ano = parseInt((document.getElementById('imbel_preco_ano')||{value:''}).value,10) || new Date().getFullYear();
             const valor = parseFloat((document.getElementById('imbel_preco_valor')||{value:'0'}).value) || 0;
             const obs = (document.getElementById('imbel_preco_obs')||{value:''}).value || '';
-            if (!produtoId) { try { mostrarNotificacao('Selecione um produto antes de salvar', 'error'); } catch(e) {} return; }
+            if (!produtoId) { try { mostrarNotificacao('Selecione um produto antes de salvar', 'error'); } catch (e) { _catchSilencioso(e, 'renderControleImbelPrecos'); } return; }
             const d = loadImbel(); d.precos = d.precos || [];
             if (editId) {
                 const idx = d.precos.findIndex(x => x.id === editId);
@@ -7037,7 +6976,7 @@ function renderControleImbelPrecos() {
             saveImbel(d);
             fecharModalPrecoImbel();
             renderControleImbelPrecos();
-            try { mostrarNotificacao('Preço salvo', 'success'); } catch(e) {}
+            try { mostrarNotificacao('Preço salvo', 'success'); } catch (e) { _catchSilencioso(e, 'renderControleImbelPrecos'); }
         };
     }
 }
@@ -7047,7 +6986,7 @@ function excluirPrecoImbel(id) {
     const d = loadImbel(); d.precos = (d.precos||[]).filter(x => x.id !== id);
     saveImbel(d);
     renderControleImbelPrecos();
-    try { mostrarNotificacao('Preço excluído', 'success'); } catch(e) {}
+    try { mostrarNotificacao('Preço excluído', 'success'); } catch (e) { _catchSilencioso(e, 'excluirPrecoImbel'); }
 }
 
 // Definições de tipos de movimentação IMBEL
@@ -7120,7 +7059,7 @@ function ocultarTooltipSaida() {
 function initControleImbel() {
     // mostrar dashboard por padrão quando a aba for aberta
     // hook: chamar trocarSubAbaControleImbel('dashboard') para inicializar
-    try { trocarSubAbaControleImbel('dashboard'); } catch(e) {}
+    try { trocarSubAbaControleImbel('dashboard'); } catch (e) { _catchSilencioso(e, 'initControleImbel'); }
 }
 
 function trocarSubAbaControleImbel(sub) {
@@ -7164,14 +7103,14 @@ function closeImbelProdModal() {
 function openImbelMovModal() {
     const modal = document.getElementById('imbel_mov_modal');
     if (modal) modal.classList.add('open');
-    try { onImbelTipoChange(); } catch(e) {}
+    try { onImbelTipoChange(); } catch (e) { _catchSilencioso(e, 'openImbelMovModal'); }
 }
 
 function closeImbelMovModal() {
     const modal = document.getElementById('imbel_mov_modal');
     if (modal) modal.classList.remove('open');
     // limpar formulário
-    try { document.getElementById('imbel_mov_tipo').value = 'VENDA'; } catch(e) {}
+    try { document.getElementById('imbel_mov_tipo').value = 'VENDA'; } catch (e) { _catchSilencioso(e, 'closeImbelMovModal'); }
     const hoje = new Date().toISOString().slice(0,10);
     document.getElementById('imbel_mov_data').value = hoje;
     document.getElementById('imbel_mov_dest').value = '';
@@ -7182,7 +7121,7 @@ function closeImbelMovModal() {
     document.getElementById('imbel_mov_obs').value = '';
     const editField = document.getElementById('imbel_mov_edit_id'); if (editField) editField.value = '';
     document.getElementById('imbel_mov_salvar').textContent = 'Registrar Movimentação';
-    try { clearImbelMovItensDOM(); } catch(e){}
+    try { clearImbelMovItensDOM(); } catch (e) { _catchSilencioso(e, 'closeImbelMovModal'); }
 }
 
 // Helpers para gerenciar itens na modal de movimentação
@@ -7230,7 +7169,7 @@ function renderImbelMovItensDOM(items) {
                         inpVal.value = (Number(p.valor) * qtd).toLocaleString('pt-BR',{minimumFractionDigits:2});
                     }
                 }
-            } catch(e){}
+            } catch (e) { _catchSilencioso(e, 'renderImbelMovItensDOM'); }
         });
 
         // when qty changes, if price ref exists and valor blank-ish, update total
@@ -7243,7 +7182,7 @@ function renderImbelMovItensDOM(items) {
                         inpVal.value = (Number(p.valor) * (Number(this.value)||1)).toLocaleString('pt-BR',{minimumFractionDigits:2});
                     }
                 }
-            } catch(e){}
+            } catch (e) { _catchSilencioso(e, 'renderImbelMovItensDOM'); }
         });
 
         const btnRem = document.createElement('button'); btnRem.type='button'; btnRem.className='btn btn-outline btn-sm'; btnRem.style.cssText='margin-left:auto'; btnRem.textContent='Remover';
@@ -7467,9 +7406,9 @@ document.addEventListener('DOMContentLoaded', function(){
     });
 
     // Tentar migrar dados IMBEL de chaves antigas (se houver)
-    try { migrateImbelStorage(); } catch(e) {}
-    try { migrateImbelTipos(); } catch(e) {}
-    try { migrarProdutoNomeImbel(); } catch(e) {}
+    try { migrateImbelStorage(); } catch (e) { _catchSilencioso(e, 'onImbelTipoChange'); }
+    try { migrateImbelTipos(); } catch (e) { _catchSilencioso(e, 'onImbelTipoChange'); }
+    try { migrarProdutoNomeImbel(); } catch (e) { _catchSilencioso(e, 'onImbelTipoChange'); }
 }, { once: true });
 
 function renderControleImbelDashboard() {
@@ -8620,7 +8559,7 @@ function imbelToggleDetalhes(tr, m) {
 
 function renderControleImbelMovimentacao() {
     const data = loadImbel();
-    try { migrarProdutoNomeImbel(); } catch(e) {}
+    try { migrarProdutoNomeImbel(); } catch (e) { _catchSilencioso(e, 'renderControleImbelMovimentacao'); }
     const container = document.getElementById('controleImbelMovContainer');
     container.innerHTML = '';
     container.className = 'imbel-subtab';
@@ -8820,7 +8759,7 @@ function renderControleImbelMovimentacao() {
 
     // --- connect button handlers ---
     cmdbar.querySelector('#imbelBtnAddMov').onclick = () => {
-        try { document.getElementById('imbel_mov_tipo').value = 'VENDA'; } catch(e) {}
+        try { document.getElementById('imbel_mov_tipo').value = 'VENDA'; } catch (e) { _catchSilencioso(e, 'renderControleImbelMovimentacao'); }
         const hoje = new Date().toISOString().slice(0,10);
         document.getElementById('imbel_mov_data').value = hoje;
         document.getElementById('imbel_mov_dest').value = '';
@@ -8831,8 +8770,8 @@ function renderControleImbelMovimentacao() {
         document.getElementById('imbel_mov_obs').value = '';
         const editField = document.getElementById('imbel_mov_edit_id'); if (editField) editField.value = '';
         document.getElementById('imbel_mov_salvar').textContent = 'Registrar Movimentação';
-        try { clearImbelMovItensDOM(); } catch(e) {}
-        try { adicionarItemMovImbel(); } catch(e) {}
+        try { clearImbelMovItensDOM(); } catch (e) { _catchSilencioso(e, 'renderControleImbelMovimentacao'); }
+        try { adicionarItemMovImbel(); } catch (e) { _catchSilencioso(e, 'renderControleImbelMovimentacao'); }
         openImbelMovModal();
         document.getElementById('imbel_mov_dest').focus();
     };
@@ -9315,7 +9254,7 @@ function renderControleImbelMovimentacao() {
 
         // Funções públicas para manipular grupos (tornadas globais)
         window.imbelToggleGrupo = function(groupKey, event) {
-            if (event) try { event.stopPropagation(); } catch(e) {}
+            if (event) try { event.stopPropagation(); } catch (e) { _catchSilencioso(e, 'renderControleImbelMovimentacao'); }
 
             const children = document.querySelectorAll(
                 `[data-group-child="${groupKey}"],
@@ -9402,7 +9341,7 @@ function renderControleImbelMovimentacao() {
             if (!strip) return;
         }
 
-        try { atualizarResumoMovimentacoes(); } catch(e) {}
+        try { atualizarResumoMovimentacoes(); } catch (e) { _catchSilencioso(e, 'renderControleImbelMovimentacao'); }
 
     // Preencher select de produtos do modal (se houver produtos)
     const selec = document.getElementById('imbel_mov_prod');
@@ -9489,7 +9428,7 @@ function renderControleImbelMovimentacao() {
             try {
                 const prod = (data.produtos||[]).find(p => p.id === it.produtoId);
                 it.produtoNome = it.produtoNome || prod?.nome || '';
-            } catch(e) {}
+            } catch (e) { _catchSilencioso(e, 'renderControleImbelMovimentacao'); }
         });
         let totalQuantidade = items.reduce((s,it) => s + (Number(it.quantidade)||0), 0);
         let totalValor = items.reduce((s,it) => s + (Number(it.valor)||0), 0);
@@ -9525,7 +9464,7 @@ function renderControleImbelMovimentacao() {
                 try {
                     const prod = (data.produtos||[]).find(p => p.id === mov.produtoId);
                     mov.produtoNome = prod?.nome || (mov.produtoNome || '');
-                } catch(e) {}
+                } catch (e) { _catchSilencioso(e, 'renderControleImbelMovimentacao'); }
                 mov.quantidade = totalQuantidade;
                 mov.valor = totalValor;
                 mov.tipo = (tipoKey||'').toString();
@@ -9581,7 +9520,7 @@ function renderControleImbelMovimentacao() {
 }
 
 // Inicializar controle IMBEL (não altera outros dados)
-try { initControleImbel(); } catch(e) {}
+try { initControleImbel(); } catch (e) { _catchSilencioso(e, 'renderControleImbelMovimentacao'); }
 
 // Exportar movimentações IMBEL para Excel
 function exportarMovimentacoesImbel() {
@@ -10202,7 +10141,7 @@ function renderizarDashboard() {
         if (typeof renderizarGraficoComissoes === 'function') renderizarGraficoComissoes();
     } catch (e) { console.warn('Erro ao renderizar gráfico de comissões', e); }
 
-    try { renderizarAlertasDashboard(); } catch (e) {}
+    try { renderizarAlertasDashboard(); } catch (e) { _catchSilencioso(e, 'renderizarDashboard'); }
 }
 
 function renderizarAlertasDashboard() {
@@ -10428,7 +10367,7 @@ function atualizarSelectsProdutos() {
             });
             sel.value = cur;
         });
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'atualizarSelectsProdutos'); }
 }
 
 // Helpers para adicionar/remover linhas nos modais de distribuição/devolução
@@ -10631,8 +10570,8 @@ function abrirModalDevolucao() {
     modal.style.display = 'flex';
     document.getElementById('formDevolucao').reset();
     // Popular selects de representantes via helper centralizado
-    try { popularSelectRepresentantes('representanteDevolucao', false); } catch (e) {}
-    try { popularSelectRepresentantes('destinoDevolucao', true); } catch (e) {}
+    try { popularSelectRepresentantes('representanteDevolucao', false); } catch (e) { _catchSilencioso(e, 'abrirModalDevolucao'); }
+    try { popularSelectRepresentantes('destinoDevolucao', true); } catch (e) { _catchSilencioso(e, 'abrirModalDevolucao'); }
 
     // Reset container de itens e adicionar uma linha inicial
     try {
@@ -10641,7 +10580,7 @@ function abrirModalDevolucao() {
             container.innerHTML = '';
             adicionarItemDevolucao();
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'abrirModalDevolucao'); }
 }
 
 // Fecha um modal e restaura z-index do header fixo se necessário
@@ -10659,7 +10598,7 @@ function fecharModal(modalId) {
             const submitBtn = document.querySelector('#modalProduto .modal-footer button[type="submit"]');
             if (submitBtn) submitBtn.textContent = 'Salvar Produto';
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'fecharModal'); }
     // Sempre tentar restaurar z-index do header fixo quando um modal fechar
 }
 
@@ -10738,8 +10677,8 @@ function salvarConfigContrato() {
     const proximo = parseInt(document.getElementById('configContratoProximo')?.value)  || 1;
     const cfg = { ano, proximo };
     localStorage.setItem('configContrato', JSON.stringify(cfg));
-    try { atualizarPreviaContrato(); } catch(e) {}
-    try { mostrarNotificacao('Configuração de contrato salva!', 'success'); } catch(e) {}
+    try { atualizarPreviaContrato(); } catch (e) { _catchSilencioso(e, 'salvarConfigContrato'); }
+    try { mostrarNotificacao('Configuração de contrato salva!', 'success'); } catch (e) { _catchSilencioso(e, 'salvarConfigContrato'); }
 }
 
 function atualizarPreviaContrato() {
@@ -10795,7 +10734,7 @@ function obterProximoNumeroContratoParaAno(ano) {
                     }
                 }
             }
-        } catch (e) {}
+        } catch (e) { _catchSilencioso(e, 'obterProximoNumeroContratoParaAno'); }
     });
     if (maxSeq > 0) return maxSeq + 1;
     // fallback para configContrato quando não houver registos
@@ -10890,7 +10829,7 @@ function salvarFormRep() {
     };
 
     salvarConfigRepresentantes(dados);
-    try { renderizarSelectConfigRep(); } catch (e) {}
+    try { renderizarSelectConfigRep(); } catch (e) { _catchSilencioso(e, 'salvarFormRep'); }
     mostrarNotificacao('Dados do representante salvos!', 'success');
 }
 
@@ -10952,7 +10891,7 @@ function abrirModalVendaDetalhada(vendaId = null, propostaId = null) {
     document.getElementById('valorUnitarioVenda').value = '';
     document.getElementById('valorTotalVenda').value = '';
     atualizarSelectsProdutos();
-    try { popularSelectRepresentantes('representanteVendaDet', true); } catch (e) {}
+    try { popularSelectRepresentantes('representanteVendaDet', true); } catch (e) { _catchSilencioso(e, 'abrirModalVendaDetalhada'); }
 
     const container = document.getElementById('itensVendaContainer');
     if (!container) return;
@@ -10962,15 +10901,15 @@ function abrirModalVendaDetalhada(vendaId = null, propostaId = null) {
         const lojaEl = document.getElementById('lojaVenda');
         if (lojaEl) {
             const _onLojaChange = function() {
-                try { preencherDadosCliente(lojaEl.value); } catch(e) {}
-                try { atualizarUFClienteVenda(lojaEl.value); } catch(e) {}
-                try { atualizarPrecosVendaPorCliente(true); } catch(e) {}
-                try { atualizarBadgesEstoqueTodasLinhas(); } catch(e) {}
+                try { preencherDadosCliente(lojaEl.value); } catch (e) { _catchSilencioso(e, 'abrirModalVendaDetalhada'); }
+                try { atualizarUFClienteVenda(lojaEl.value); } catch (e) { _catchSilencioso(e, 'abrirModalVendaDetalhada'); }
+                try { atualizarPrecosVendaPorCliente(true); } catch (e) { _catchSilencioso(e, 'abrirModalVendaDetalhada'); }
+                try { atualizarBadgesEstoqueTodasLinhas(); } catch (e) { _catchSilencioso(e, 'abrirModalVendaDetalhada'); }
             };
             lojaEl.oninput = _onLojaChange;
             lojaEl.onchange = _onLojaChange;
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'abrirModalVendaDetalhada'); }
 
     // Pre-fill from proposal if propostaId provided
     if (propostaId && !vendaId) {
@@ -10999,12 +10938,12 @@ function abrirModalVendaDetalhada(vendaId = null, propostaId = null) {
                         }
                     };
                 }
-            } catch (e) {}
+            } catch (e) { _catchSilencioso(e, 'abrirModalVendaDetalhada'); }
             document.getElementById('lojaVenda').value = proposta.cliente || '';
-            try { atualizarUFClienteVenda(proposta.cliente || ''); } catch(e) {}
+            try { atualizarUFClienteVenda(proposta.cliente || ''); } catch (e) { _catchSilencioso(e, 'abrirModalVendaDetalhada'); }
             document.getElementById('representanteVendaDet').value = proposta.representante || '';
             document.getElementById('observacoesVenda').value = 'Gerado a partir da proposta ' + proposta.numero + (proposta.observacoes ? '\n' + proposta.observacoes : '');
-            try { document.getElementById('dataVenda').value = new Date().toISOString().slice(0, 10); } catch (e) {}
+            try { document.getElementById('dataVenda').value = new Date().toISOString().slice(0, 10); } catch (e) { _catchSilencioso(e, 'abrirModalVendaDetalhada'); }
 
             if (Array.isArray(proposta.itens) && proposta.itens.length > 0) {
                 proposta.itens.forEach(it => {
@@ -11044,9 +10983,9 @@ function abrirModalVendaDetalhada(vendaId = null, propostaId = null) {
                     }
                 };
             }
-        } catch (e) {}
+        } catch (e) { _catchSilencioso(e, 'abrirModalVendaDetalhada'); }
         // Preencher data padrão como hoje
-        try { document.getElementById('dataVenda').value = new Date().toISOString().slice(0,10); } catch (e) {}
+        try { document.getElementById('dataVenda').value = new Date().toISOString().slice(0,10); } catch (e) { _catchSilencioso(e, 'abrirModalVendaDetalhada'); }
         return;
     }
 
@@ -11065,11 +11004,11 @@ function abrirModalVendaDetalhada(vendaId = null, propostaId = null) {
 
     document.getElementById('contratoVenda').value = venda.contrato || '';
     document.getElementById('lojaVenda').value = venda.loja || '';
-    try { atualizarUFClienteVenda(venda.loja || ''); } catch(e) {}
+    try { atualizarUFClienteVenda(venda.loja || ''); } catch (e) { _catchSilencioso(e, 'abrirModalVendaDetalhada'); }
     document.getElementById('representanteVendaDet').value = venda.representante || '';
     document.getElementById('observacoesVenda').value = venda.observacoes || '';
     // Preencher campo de data com valor existente (normalizado para YYYY-MM-DD)
-    try { document.getElementById('dataVenda').value = parseDateToYYYYMMDD(venda.data) || ''; } catch (e) {}
+    try { document.getElementById('dataVenda').value = parseDateToYYYYMMDD(venda.data) || ''; } catch (e) { _catchSilencioso(e, 'abrirModalVendaDetalhada'); }
 
     if (Array.isArray(venda.items) && venda.items.length > 0) {
         venda.items.forEach(it => {
@@ -11169,7 +11108,7 @@ function adicionarItemVendaRow(preProdutoId = '', preQuantidade = 1, preValor = 
                 });
                 valorInp.dataset._listenerVal = '1';
             }
-        } catch (e) {}
+        } catch (e) { _catchSilencioso(e, 'adicionarItemVendaRow'); }
 
         // Se já existe um cliente preenchido no modal, tentar preencher o preço salvo automaticamente
         try {
@@ -11178,7 +11117,7 @@ function adicionarItemVendaRow(preProdutoId = '', preQuantidade = 1, preValor = 
                 const sel = row.querySelector('.item-produto');
                 if (sel) autoPreencherPrecoProduto(sel);
             }
-        } catch (e) {}
+        } catch (e) { _catchSilencioso(e, 'adicionarItemVendaRow'); }
 
         // Atualizar visual do item
         atualizarItemRow(row.querySelector('.item-produto'));
@@ -11428,11 +11367,11 @@ function finalizarSalvamentoVendaDetalhada(params) {
                     JSON.parse(JSON.stringify(estoque.registroVendas[idx])),
                     `Contrato ${contrato} atualizado (${totalQtd} itens / ${formatarMoedaValor(totalValor)})`
                 );
-            } catch (e) {}
+            } catch (e) { _catchSilencioso(e, 'finalizarSalvamentoVendaDetalhada'); }
         }
         vendaEditandoId = null;
 
-        try { reconstruirVendasAPartirDeRegistros(); } catch (e) {}
+        try { reconstruirVendasAPartirDeRegistros(); } catch (e) { _catchSilencioso(e, 'finalizarSalvamentoVendaDetalhada'); }
         salvarDados();
         renderizarTabela();
         renderizarDashboard();
@@ -11466,7 +11405,7 @@ function finalizarSalvamentoVendaDetalhada(params) {
         quantidadeTotal: totalQtd,
         valorTotal: totalValor,
         observacoes: observacoes,
-        data: (function(){ const di = document.getElementById('dataVenda') ? document.getElementById('dataVenda').value : ''; if (di && di !== '') { try { return new Date(di + 'T00:00:00Z').toISOString(); } catch(e){} } return new Date().toISOString(); })()
+        data: (function(){ const di = document.getElementById('dataVenda') ? document.getElementById('dataVenda').value : ''; if (di && di !== '') { try { return new Date(di + 'T00:00:00Z').toISOString(); } catch (e) { _catchSilencioso(e, 'finalizarSalvamentoVendaDetalhada'); } } return new Date().toISOString(); })()
     };
 
     estoque.registroVendas.push(novaVenda);
@@ -11478,9 +11417,9 @@ function finalizarSalvamentoVendaDetalhada(params) {
             JSON.parse(JSON.stringify(novaVenda)),
             `Contrato ${contrato} criado (${totalQtd} itens / ${formatarMoedaValor(totalValor)})`
         );
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'finalizarSalvamentoVendaDetalhada'); }
 
-    try { reconstruirVendasAPartirDeRegistros(); } catch (e) {}
+    try { reconstruirVendasAPartirDeRegistros(); } catch (e) { _catchSilencioso(e, 'finalizarSalvamentoVendaDetalhada'); }
     salvarDados();
     renderizarTabela();
     renderizarDashboard();
@@ -12031,7 +11970,7 @@ function renderizarRegistroVendas() {
         });
     });
     
-    try { atualizarKPIsVendas(grupos); } catch(e) {}
+    try { atualizarKPIsVendas(grupos); } catch (e) { _catchSilencioso(e, 'renderizarRegistroVendas'); }
     atualizarTotaisVendas(totalQtd, totalValor);
 
     const vendasContador = document.getElementById('vendasContador');
@@ -12324,7 +12263,7 @@ function excluirVenda(vendaId) {
         delete estoque.controleEnvio[venda.contrato];
     }
 
-    try { reconstruirVendasAPartirDeRegistros(); } catch (e) {}
+    try { reconstruirVendasAPartirDeRegistros(); } catch (e) { _catchSilencioso(e, 'excluirVenda'); }
     salvarDados();
     renderizarTabela();
     renderizarDashboard();
@@ -12340,7 +12279,7 @@ function excluirVenda(vendaId) {
             null,
             `Contrato ${venda.contrato} excluído`
         );
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'excluirVenda'); }
 }
 
 function cancelarContrato(contratoKey) {
@@ -12365,10 +12304,10 @@ function cancelarContrato(contratoKey) {
 
         try {
             registrarAuditoriaVenda('cancelamento', snapshot, JSON.parse(JSON.stringify(venda)), `Contrato ${contratoKey} cancelado`);
-        } catch (e) {}
+        } catch (e) { _catchSilencioso(e, 'cancelarContrato'); }
     });
 
-    try { reconstruirVendasAPartirDeRegistros(); } catch (e) {}
+    try { reconstruirVendasAPartirDeRegistros(); } catch (e) { _catchSilencioso(e, 'cancelarContrato'); }
     salvarDados();
     renderizarTabela();
     renderizarDashboard();
@@ -12413,6 +12352,10 @@ async function gerarContratoVenda(vendaId) {
     const regEBCli    = clienteObj?.registroEB || '';
     const emailCli    = clienteObj?.email    || '';
     const nomeFantCli = clienteObj?.nomeFantasia || '';
+
+    // Só baixa a biblioteca (~2,3 MB) depois das validações acima — não adianta
+    // pagar o download para descobrir em seguida que a venda não tem itens.
+    if (!await carregarAssetsDocx()) return;
 
     const docxLib = (typeof docx !== 'undefined' && docx?.Document) ? docx
                   : (typeof window.docx !== 'undefined' && window.docx?.Document) ? window.docx
@@ -12956,7 +12899,7 @@ function abrirModalNovaDistribuicao() {
     document.getElementById('modalNovaDistribuicao').style.display = 'flex';
     document.getElementById('formNovaDistribuicao').reset();
     atualizarSelectsProdutos();
-    try { popularSelectRepresentantes('representanteDistDet', false); } catch (e) {}
+    try { popularSelectRepresentantes('representanteDistDet', false); } catch (e) { _catchSilencioso(e, 'abrirModalNovaDistribuicao'); }
     // Reset container de itens e adicionar uma linha inicial
     try {
         const container = document.getElementById('itensDistribuicaoContainer');
@@ -12964,7 +12907,7 @@ function abrirModalNovaDistribuicao() {
             container.innerHTML = '';
             adicionarItemDistribuicao();
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'abrirModalNovaDistribuicao'); }
 
     // Definir data atual
     const hoje = new Date().toISOString().split('T')[0];
@@ -13052,18 +12995,18 @@ function salvarNovaDistribuicao(event) {
         };
         estoque.registroDistribuicao.push(novaDistribuicao);
         registrosCriados.push(novaDistribuicao);
-        try { registrarAuditoria('distribuicao', null, novaDistribuicao, `Distribuído ${item.quantidade}x ${produto.nome} → ${representante}`); } catch(e) {}
+        try { registrarAuditoria('distribuicao', null, novaDistribuicao, `Distribuído ${item.quantidade}x ${produto.nome} → ${representante}`); } catch (e) { _catchSilencioso(e, 'salvarNovaDistribuicao'); }
     });
     // Reconstruir agregados a partir dos registros e salvar
-    try { reconstruirDistribuicaoAPartirDeRegistros(); } catch (e) {}
+    try { reconstruirDistribuicaoAPartirDeRegistros(); } catch (e) { _catchSilencioso(e, 'salvarNovaDistribuicao'); }
     salvarDados();
     renderizarTabela();
     renderizarDashboard();
     renderizarRegistroDistribuicao();
-    try { if (document.getElementById('painelSaldoProduto')?.style.display !== 'none') renderizarSaldoPorProduto(); } catch(e) {}
+    try { if (document.getElementById('painelSaldoProduto')?.style.display !== 'none') renderizarSaldoPorProduto(); } catch (e) { _catchSilencioso(e, 'salvarNovaDistribuicao'); }
     fecharModal('modalNovaDistribuicao');
 
-    try { verificarAlertasEstoque(); } catch (e) {}
+    try { verificarAlertasEstoque(); } catch (e) { _catchSilencioso(e, 'salvarNovaDistribuicao'); }
 
     mostrarNotificacao(`Distribuição registrada: ${registrosCriados.length} item(s) para ${representante}`, 'success');
 }
@@ -13608,9 +13551,9 @@ function salvarProduto(event) {
         };
         if (categoria) categoriaPorProduto[nome] = categoria;
 
-        try { registrarAuditoria('edicao-produto', { nome: nomeAnterior }, { nome, estoqueConsolidado: Number(estoqueTotal) || 0 }, `Produto "${nome}" editado`); } catch(e) {}
+        try { registrarAuditoria('edicao-produto', { nome: nomeAnterior }, { nome, estoqueConsolidado: Number(estoqueTotal) || 0 }, `Produto "${nome}" editado`); } catch (e) { _catchSilencioso(e, 'salvarProduto'); }
         atualizarSelectsProdutos();
-        try { popularSelectProdutosPrecif(); } catch (e) {}
+        try { popularSelectProdutosPrecif(); } catch (e) { _catchSilencioso(e, 'salvarProduto'); }
         salvarDados();
         renderizarTabela();
         renderizarDashboard();
@@ -13679,10 +13622,10 @@ function salvarProduto(event) {
     if (categoria) categoriaPorProduto[nome] = categoria;
 
     estoque.produtos.push(novoProduto);
-    try { registrarAuditoria('cadastro-produto', null, { id: novoProduto.id, nome, categoria, estoqueConsolidado: Number(estoqueConsolidado) || 0 }, `Produto "${nome}" cadastrado`); } catch(e) {}
+    try { registrarAuditoria('cadastro-produto', null, { id: novoProduto.id, nome, categoria, estoqueConsolidado: Number(estoqueConsolidado) || 0 }, `Produto "${nome}" cadastrado`); } catch (e) { _catchSilencioso(e, 'salvarProduto'); }
     // Atualizar selects imediatamente para refletir o novo produto em qualquer modal aberto
     atualizarSelectsProdutos();
-    try { popularSelectProdutosPrecif(); } catch (e) {}
+    try { popularSelectProdutosPrecif(); } catch (e) { _catchSilencioso(e, 'salvarProduto'); }
     salvarDados();
     renderizarTabela();
     renderizarDashboard();
@@ -13724,11 +13667,11 @@ function salvarDistribuicao(event) {
     };
     estoque.registroDistribuicao.push(novaDistribuicao);
 
-    try { reconstruirDistribuicaoAPartirDeRegistros(); } catch (e) {}
+    try { reconstruirDistribuicaoAPartirDeRegistros(); } catch (e) { _catchSilencioso(e, 'salvarDistribuicao'); }
     salvarDados();
     renderizarTabela();
     renderizarDashboard();
-    try { verificarAlertasEstoque(); } catch(e) {}
+    try { verificarAlertasEstoque(); } catch (e) { _catchSilencioso(e, 'salvarDistribuicao'); }
     fecharModal('modalDistribuicao');
 
     mostrarNotificacao(`${quantidade} unidades distribuídas para ${representante}!`, 'success');
@@ -13870,11 +13813,11 @@ function salvarDevolucao(event) {
     renderizarTabela();
     renderizarDashboard();
     atualizarSelectsProdutos();
-    try { if (document.getElementById('painelSaldoProduto')?.style.display !== 'none') renderizarSaldoPorProduto(); } catch(e) {}
+    try { if (document.getElementById('painelSaldoProduto')?.style.display !== 'none') renderizarSaldoPorProduto(); } catch (e) { _catchSilencioso(e, 'salvarDevolucao'); }
 
     fecharModal('modalDevolucao');
 
-    try { verificarAlertasEstoque(); } catch(e) {}
+    try { verificarAlertasEstoque(); } catch (e) { _catchSilencioso(e, 'salvarDevolucao'); }
 
     mostrarNotificacao(`${registros.length} item(s) devolvidos de ${representante} para ${destino}!`, 'success');
 }
@@ -13882,7 +13825,7 @@ function salvarDevolucao(event) {
 function limparFiltros() {
     renderizarTabela();
     renderizarDashboard();
-    atualizarEstatisticas();
+    try { atualizarEstatisticas(); } catch (e) { _catchSilencioso(e, 'limparFiltros'); }
     mostrarNotificacao('Dados atualizados!', 'info');
 }
 
@@ -14142,8 +14085,8 @@ function importarSistema(event) {
             impostosEditaveis = obj.impostosEditaveis || {};
             icmsEditavelPJ = obj.icmsEditavelPJ || {};
             icmsEditavelPF = obj.icmsEditavelPF || {};
-            try { inicializarImpostosEditaveis(); } catch (e) {}
-            try { inicializarICMSEditavel(); } catch (e) {}
+            try { inicializarImpostosEditaveis(); } catch (e) { _catchSilencioso(e, 'importarSistema'); }
+            try { inicializarICMSEditavel(); } catch (e) { _catchSilencioso(e, 'importarSistema'); }
 
             // Restaurar dados IMBEL se presentes no arquivo
             try {
@@ -14231,8 +14174,8 @@ function importarBackup(event) {
                 if (backup.imbelData) {
                     localStorage.setItem(IMBEL_KEY, JSON.stringify(backup.imbelData));
                 }
-            } catch(e) {}
-            try { salvarDados(); } catch (e) {}
+            } catch (e) { _catchSilencioso(e, 'importarBackup'); }
+            try { salvarDados(); } catch (e) { _catchSilencioso(e, 'importarBackup'); }
             location.reload();
         } catch (err) {
             console.error('Erro ao importar backup:', err);
@@ -14398,8 +14341,8 @@ function importarEstoque(event) {
                 renderizarDashboard();
                 renderizarRegistroVendas();
                 renderizarRegistroDistribuicao();
-                try { renderizarCadastroProdutos(); } catch(ex) {}
-                atualizarEstatisticas();
+                try { renderizarCadastroProdutos(); } catch (ex) { _catchSilencioso(ex, 'importarEstoque'); }
+                try { atualizarEstatisticas(); } catch (ex) { _catchSilencioso(ex, 'importarEstoque'); }
             }
 
             event.target.value = '';
@@ -14703,8 +14646,8 @@ function limparTodosDados() {
     atualizarKPIsPropostas();
     renderizarPrecificacao();
     atualizarSelectsProdutos();
-    atualizarEstatisticas();
-    
+    try { atualizarEstatisticas(); } catch (e) { _catchSilencioso(e, 'limparTodosDados'); }
+
     mostrarNotificacao('Todos os dados foram apagados!', 'success');
 }
 
@@ -14928,7 +14871,7 @@ function salvarControleEnvio(contrato, campo, valor) {
     estoque.controleEnvio[contrato][campo] = valor;
     salvarDados();
     // Re-renderizar a tabela unificada
-    try { renderizarRegistroVendas(); } catch (e) {}
+    try { renderizarRegistroVendas(); } catch (e) { _catchSilencioso(e, 'salvarControleEnvio'); }
 }
 
 function limparFiltrosControleEnvio() {
@@ -14942,7 +14885,7 @@ function limparControleEnvio(contrato) {
     if (confirm(`Deseja limpar os dados de envio do contrato ${contrato}?`)) {
         delete estoque.controleEnvio[contrato];
         salvarDados();
-        try { renderizarRegistroVendas(); } catch (e) {}
+        try { renderizarRegistroVendas(); } catch (e) { _catchSilencioso(e, 'limparControleEnvio'); }
         mostrarNotificacao(`Dados de envio do contrato ${contrato} removidos`, 'success');
     }
 }
@@ -15308,7 +15251,7 @@ function aplicarSortTabela(table, campo) {
             th.classList.remove('sort-asc', 'sort-desc');
             if (th.dataset.sort === campo) th.classList.add('sort-' + cur.dir);
         });
-    } catch (e) { }
+    } catch (e) { _catchSilencioso(e, 'aplicarSortTabela'); }
 
     // Compatibilidade com ordenação antiga específica de vendas
     if (table === 'vendas') {
@@ -15350,9 +15293,9 @@ function getSortedArray(arr, campo, direcao, getValue) {
     });
 }
 
-function sortVendas(campo) { aplicarSortTabela('vendas', campo); try { renderizarRegistroVendas(); } catch(e){} }
-function sortClientes(campo) { aplicarSortTabela('clientes', campo); try { renderizarClientes(); } catch(e){} }
-function sortPropostas(campo) { aplicarSortTabela('propostas', campo); try { renderizarPropostas(); } catch(e){} }
+function sortVendas(campo) { aplicarSortTabela('vendas', campo); try { renderizarRegistroVendas(); } catch (e) { _catchSilencioso(e, 'sortVendas'); } }
+function sortClientes(campo) { aplicarSortTabela('clientes', campo); try { renderizarClientes(); } catch (e) { _catchSilencioso(e, 'sortClientes'); } }
+function sortPropostas(campo) { aplicarSortTabela('propostas', campo); try { renderizarPropostas(); } catch (e) { _catchSilencioso(e, 'sortPropostas'); } }
 
 // ========================================
 // PAGINAÇÃO
@@ -15429,7 +15372,7 @@ function salvarConfigAlertas() {
         const ativo = ativoEl ? !!ativoEl.checked : !!configAlertas.ativo;
         configAlertas.limite = isNaN(limite) ? configAlertas.limite : limite;
         configAlertas.ativo = ativo;
-        try { localStorage.setItem('configAlertas', JSON.stringify(configAlertas)); } catch (e) {}
+        try { localStorage.setItem('configAlertas', JSON.stringify(configAlertas)); } catch (e) { _catchSilencioso(e, 'salvarConfigAlertas'); }
         mostrarNotificacao('Configurações de alertas salvas.', 'success');
         verificarAlertasEstoque();
     } catch (e) {
@@ -15607,8 +15550,8 @@ function verificarAlertasEstoque() {
         });
 
         if (mudouStatusProposta) {
-            try { estoque.propostas = propostas; } catch (e) {}
-            try { salvarDados(); } catch (e) {}
+            try { estoque.propostas = propostas; } catch (e) { _catchSilencioso(e, 'verificarAlertasEstoque'); }
+            try { salvarDados(); } catch (e) { _catchSilencioso(e, 'verificarAlertasEstoque'); }
         }
 
         if (alertasPropostas.length > 0) {
@@ -15729,7 +15672,7 @@ const __drawValuesAbovePlugin = {
         });
     }
 };
-if (typeof Chart !== 'undefined' && Chart) { try { Chart.register(__drawValuesAbovePlugin); } catch (e) { } }
+if (typeof Chart !== 'undefined' && Chart) { try { Chart.register(__drawValuesAbovePlugin); } catch (e) { _catchSilencioso(e, 'verificarAlertasEstoque'); } }
 
 function renderizarGraficos() {
     if (typeof Chart === 'undefined') return;
@@ -15976,7 +15919,7 @@ function renderizarGraficoComissoes() {
         }
     } catch (e) { console.warn('erro renderizar valor vendas por rep', e); }
     // Gráfico de evolução de vendas (item 13)
-    try { renderizarGraficoEvolucao(); } catch(e) {}
+    try { renderizarGraficoEvolucao(); } catch (e) { _catchSilencioso(e, 'renderizarGraficoComissoes'); }
 }
 
 // ========================================
@@ -15993,11 +15936,11 @@ function abrirModalCliente(id = null) {
     document.getElementById('clienteTelefone').value = '';
     document.getElementById('clienteEmail').value = '';
     document.getElementById('clienteContato').value = '';
-    try { popularSelectRepresentantes('clienteRepresentante', true); } catch (e) {}
+    try { popularSelectRepresentantes('clienteRepresentante', true); } catch (e) { _catchSilencioso(e, 'abrirModalCliente'); }
     document.getElementById('clienteRepresentante').value = '';
     document.getElementById('clienteObservacoes').value = '';
     document.getElementById('modalClienteTitulo').textContent = 'Novo Cliente';
-    try { if (typeof selecionarTipoPessoa === 'function') selecionarTipoPessoa('PJ'); } catch(e) {}
+    try { if (typeof selecionarTipoPessoa === 'function') selecionarTipoPessoa('PJ'); } catch (e) { _catchSilencioso(e, 'abrirModalCliente'); }
 
     if (id) {
         const cliente = clientes.find(c => c.id === id);
@@ -16018,12 +15961,12 @@ function abrirModalCliente(id = null) {
             try {
                 const tipoPessoa = cliente.tipoPessoa || (((cliente.cnpj||'').replace(/\D/g,'').length <= 11) ? 'PF' : 'PJ');
                 if (typeof selecionarTipoPessoa === 'function') selecionarTipoPessoa(tipoPessoa);
-            } catch(e) {}
+            } catch (e) { _catchSilencioso(e, 'abrirModalCliente'); }
         }
     }
 
     document.getElementById('modalCliente').style.display = 'block';
-    try { if (typeof limparValidacaoDocumento === 'function') limparValidacaoDocumento(); } catch(e) {}
+    try { if (typeof limparValidacaoDocumento === 'function') limparValidacaoDocumento(); } catch (e) { _catchSilencioso(e, 'abrirModalCliente'); }
 }
 
 function fecharModalCliente() {
@@ -16102,7 +16045,7 @@ function salvarCliente(event) {
             mostrarNotificacao('Documento inválido. Corrija antes de salvar.', 'error');
             return;
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'salvarCliente'); }
 
     // Verificar duplicidade de nome e/ou CNPJ
     const cnpjNorm = (dados.cnpj || '').replace(/\D/g, '');
@@ -16154,13 +16097,13 @@ function salvarCliente(event) {
         if (sub && sub.style.display === 'block') {
             popularSelectClientesPrecif();
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'salvarCliente'); }
 
     // Avisa quem abriu este cadastro de outra tela (ex.: CRM) para atualizar a
     // exibição sem precisar recarregar. Ver Crm.abrirCadastroCliente.
     try {
         document.dispatchEvent(new CustomEvent('cliente:salvo', { detail: { id: idSalvo } }));
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'salvarCliente'); }
 }
 
 function excluirCliente(id) {
@@ -16970,43 +16913,21 @@ function inicializarImpostosPreDefinidos() {
     }
 }
 
+// Resolve NCM/categoria/fallback a partir dos globais e delega o scoring puro
+// para EstoqueCalculos.resolverAliquotaICMS (estoque-calculos.js).
 function buscarAliquotaICMS(estado, tipoPessoa, nomeProduto) {
-    // tentar obter produto e seu NCM
     const produto = (estoque.produtos || []).find(p => p.nome === nomeProduto);
     const ncm = produto?.ncm || detectarNCM(nomeProduto);
-
-    // 1) tentar tabela predefinida por NCM (PJ/PF)
-    if (ncm) {
-        const tabela = (tipoPessoa === 'PF') ? ICMS_PF_POR_NCM : ICMS_PJ_POR_NCM;
-        if (tabela[ncm] && tabela[ncm][estado] !== undefined) {
-            return tabela[ncm][estado];
-        }
-    }
-
-    // 2) regras usuário (tabelaICMS) com scoring incluindo NCM
     const categoria = categoriaPorProduto[nomeProduto] || 'Outro';
-    const score = (rule) => {
-        let s = 0;
-        if (rule.ncm && ncm && rule.ncm === ncm) s += 8;
-        else if (rule.ncm && rule.ncm !== 'Todos') return -1;
-        if (rule.estado === estado) s += 4;
-        else if (rule.estado !== 'Todos') return -1;
-        if (rule.tipoPessoa === tipoPessoa) s += 2;
-        else if (rule.tipoPessoa !== 'Todos') return -1;
-        if (rule.categoriaProduto === categoria) s += 1;
-        else if (rule.categoriaProduto !== 'Todos') return -1;
-        return s;
-    };
+    const icmsBaseFallback = parseFloat(tabelaAliquotas[nomeProduto]?.icmsBase) || 0;
 
-    const match = tabelaICMS
-        .map(r => ({ rule: r, score: score(r) }))
-        .filter(x => x.score >= 0)
-        .sort((a, b) => b.score - a.score)[0];
-
-    if (match) return match.rule.aliquota;
-
-    // fallback: icmsBase na tabelaAliquotas do produto
-    return parseFloat(tabelaAliquotas[nomeProduto]?.icmsBase) || 0;
+    return EstoqueCalculos.resolverAliquotaICMS({
+        estado, tipoPessoa, ncm, categoria,
+        icmsPjPorNcm: ICMS_PJ_POR_NCM,
+        icmsPfPorNcm: ICMS_PF_POR_NCM,
+        tabelaICMS,
+        icmsBaseFallback
+    });
 }
 
 function _obterVersaoAtivaTabelaVenda() {
@@ -17059,41 +16980,18 @@ function calcularPreco(nomeProduto, estado = null, tipoPessoa = null, taxaOverri
         ? buscarAliquotaICMS(estado, tipoPessoa, nomeProduto)
         : (parseFloat(aliq.icmsBase) || 0);
 
-    if (ci === 0) return null;
-
-    // Step 1: valorBase = CI + (CI × Taxa%) + (CI × ROI%)  →  CI × (1 + Taxa% + ROI%)
-    const valorBase = ci * (1 + (Number(taxaPct) / 100) + (Number(roiPct) / 100));
-
-    // Step 2: impostos sobre valorBase
-    const icmsR = valorBase * icms / 100;
-    const pisR = valorBase * pis / 100;
-    const cofinsR = valorBase * cofins / 100;
-    const valorImpostos = valorBase + icmsR + pisR + cofinsR;
-
-    // Step 3: IPI sobre valorImpostos
-    const ipiR = valorImpostos * ipi / 100;
-    const valorTotal = valorImpostos + ipiR;
-
-    // Step 4: comissão sobre valorImpostos (sem IPI) — calculada mas não incluída no preço
-    const comissaoR = valorImpostos * comissao / 100;
-    const precoFinal = (prec.precoFinalManual !== null && prec.precoFinalManual !== undefined && prec.precoFinalManual !== '')
-        ? parseFloat(prec.precoFinalManual)
-        : valorImpostos + ipiR;
-
-    return {
-        ci, taxa: taxaPct, roi: roiPct,
-        valorBase,
-        icms, icmsR,
-        pis, pisR,
-        cofins, cofinsR,
-        valorImpostos,
-        ipi, ipiR,
-        valorTotal,
-        comissao, comissaoR,
-        precoFinal,
-        margem: (valorTotal > 0 ? ((precoFinal - valorTotal) / valorTotal * 100) : 0),
-        isManual: !!(prec.precoFinalManual !== null && prec.precoFinalManual !== undefined && prec.precoFinalManual !== '')
-    };
+    // A partir daqui a matemática é pura — sem DOM, sem globais — e vive em
+    // EstoqueCalculos.calcularPrecoFinal (estoque-calculos.js), testada
+    // isoladamente. Tudo acima resolve os insumos (overrides > valor salvo
+    // por produto/NCM > padrão global lido do DOM).
+    return EstoqueCalculos.calcularPrecoFinal({
+        ci,
+        taxaPct, roiPct,
+        comissaoPct: comissao,
+        pisPct: pis, cofinsPct: cofins, ipiPct: ipi,
+        icmsPct: icms,
+        precoFinalManual: prec.precoFinalManual
+    });
 }
 
 function renderizarPrecificacao() {
@@ -17185,7 +17083,7 @@ function salvarMargemMinima(nomeProduto, valor) {
     if (!precificacao[nomeProduto]) precificacao[nomeProduto] = {};
     precificacao[nomeProduto].margemMinima = parseFloat(valor) || null;
     estoque.precificacao = precificacao;
-    try { localStorage.setItem('estoqueArmasV2', JSON.stringify(estoque)); } catch (e) {}
+    try { localStorage.setItem('estoqueArmasV2', JSON.stringify(estoque)); } catch (e) { _catchSilencioso(e, 'salvarMargemMinima'); }
 }
 
 function salvarDescontoMaximo(nomeProduto, valor) {
@@ -17196,9 +17094,9 @@ function salvarDescontoMaximo(nomeProduto, valor) {
         precificacao[nomeProduto].descontoMaximo = parseFloat(valor) || null;
     }
     estoque.precificacao = precificacao;
-    try { salvarDados(); } catch (e) { try { localStorage.setItem('estoqueArmasV2', JSON.stringify(estoque)); } catch (e) {} }
-    try { renderizarTabelaCI(); } catch (e) {}
-    try { mostrarNotificacao('Desconto máximo salvo.', 'success'); } catch (e) {}
+    try { salvarDados(); } catch (e) { try { localStorage.setItem('estoqueArmasV2', JSON.stringify(estoque)); } catch (e) { _catchSilencioso(e, 'salvarDescontoMaximo'); } }
+    try { renderizarTabelaCI(); } catch (e) { _catchSilencioso(e, 'salvarDescontoMaximo'); }
+    try { mostrarNotificacao('Desconto máximo salvo.', 'success'); } catch (e) { _catchSilencioso(e, 'salvarDescontoMaximo'); }
 }
 
 function atualizarLinhaPrecificacao(nomeProduto) {
@@ -17408,10 +17306,10 @@ function trocarSubabaPrecif(subaba) {
     if (subaba === 'impostos') trocarSubabaImpostos('federais');
     if (subaba === 'porcliente') {
         try {
-            try { verificarExpiracaoPrecificacoes(); } catch (e) {}
+            try { verificarExpiracaoPrecificacoes(); } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
             popularSelectClientesPrecif();
-            try { popularSelectProdutosPrecif(); } catch (e) {}
-        } catch (e) {}
+            try { popularSelectProdutosPrecif(); } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
+        } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
         const res = document.getElementById('precifClienteResultado');
         const empty = document.getElementById('precifClienteEmpty');
         const banner = document.getElementById('precifClienteBanner');
@@ -17425,19 +17323,19 @@ function trocarSubabaPrecif(subaba) {
             if (fbCli) fbCli.textContent = 'CLI ' + (clientes || []).length;
             const fbTime = document.getElementById('pcFootbarTime');
             if (fbTime) fbTime.textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        } catch (e) {}
-        try { window._pcRenderizarLista(); } catch (e) {}
+        } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
+        try { window._pcRenderizarLista(); } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
     }
 
     if (subaba === 'consultaPrec') {
-        try { if (typeof _cpPopularFiltroCliente === 'function') _cpPopularFiltroCliente(); filtrarConsultaPrecificacoes(); } catch (e) {}
+        try { if (typeof _cpPopularFiltroCliente === 'function') _cpPopularFiltroCliente(); filtrarConsultaPrecificacoes(); } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
     }
 
     if (subaba === 'rastreabilidade') {
         try { renderizarRastreabilidade(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
     }
     if (subaba === 'comparativo') {
-        try { popularSelectsComparativo(); } catch (e) {}
+        try { popularSelectsComparativo(); } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
         const res = document.getElementById('compResultado');
         const empty = document.getElementById('compEmpty');
         const verdict = document.getElementById('cmpVerdict');
@@ -17453,18 +17351,18 @@ function trocarSubabaPrecif(subaba) {
             if (fbProd) fbProd.textContent = 'PRODUTOS: ' + nProd;
             const fbCli = document.getElementById('cmpFootbarCli');
             if (fbCli) fbCli.textContent = 'CLIENTES: 0/3';
-        } catch(e) {}
+        } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
     }
     if (subaba === 'precoestado') {
-        try { renderizarTabelaPrecoEstado(); } catch (e) {}
+        try { renderizarTabelaPrecoEstado(); } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
     }
     if (subaba === 'tabelavenda') {
-        try { renderizarTabelaPrecoVenda(); } catch (e) {}
+        try { renderizarTabelaPrecoVenda(); } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
     }
     if (subaba === 'tabelaci') {
-        try { renderizarTabelaCI(); } catch (e) {}
-        try { atualizarKPIsCI(); } catch (e) {}
-        try { popularSelectProdutosCI(); } catch (e) {}
+        try { renderizarTabelaCI(); } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
+        try { atualizarKPIsCI(); } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
+        try { popularSelectProdutosCI(); } catch (e) { _catchSilencioso(e, 'trocarSubabaPrecif'); }
     }
 }
 
@@ -17571,7 +17469,7 @@ function _renderizarImpostosBloomb(container) {
         if (!isNaN(nv)) s.edits[uf+'-'+ncm] = nv;
         else delete s.edits[uf+'-'+ncm];
         // re-render parcial: apenas atualizar KPIs e marcadores sem full-render para performance
-        try { _impAtualizarKPIsInline(container, s, effective, visNCMs); } catch(e) {}
+        try { _impAtualizarKPIsInline(container, s, effective, visNCMs); } catch (e) { _catchSilencioso(e, '_renderizarImpostosBloomb'); }
     };
     window._impResetCell = (uf, ncm) => {
         delete s.edits[uf+'-'+ncm];
@@ -18337,7 +18235,7 @@ function obterPrecoEstadoParaClienteProduto(lojaNome, produtoId) {
         if (tabela[produtoId] && tabela[produtoId][grupo.id] !== undefined) {
             return Number(tabela[produtoId][grupo.id]);
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'obterPrecoEstadoParaClienteProduto'); }
     return null;
 }
 
@@ -18386,7 +18284,7 @@ function _tvCalcKPIs(produtos, ufs, tipoPessoa, taxaWI, roiWI, ncmOverrides) {
         const roiEf  = (roiWI  !== null) ? (ncmOverrides?.[ncm]?.roi  ?? roiWI)  : null;
         ufs.forEach(uf => {
             let r;
-            try { r = calcularPreco(prod.nome, uf, tipoPessoa, taxaEf, roiEf); } catch(e) {}
+            try { r = calcularPreco(prod.nome, uf, tipoPessoa, taxaEf, roiEf); } catch (e) { _catchSilencioso(e, '_tvCalcKPIs'); }
             if (!r) return;
             const pv = r.precoFinal;
             if (!pv) return;
@@ -18548,8 +18446,8 @@ function renderizarTabelaPrecoVenda() {
                         vB = Number(precificacao[pB.nome]?.ci ?? pB.ci ?? 0);
                     } else {
                         let rA = 0, rB = 0;
-                        try { const res = calcularPreco(pA.nome, tvState.sortCol, tipoPessoa, tvState.wiTaxa, tvState.wiROI); rA = res ? res.precoFinal : 0; } catch(e) {}
-                        try { const res = calcularPreco(pB.nome, tvState.sortCol, tipoPessoa, tvState.wiTaxa, tvState.wiROI); rB = res ? res.precoFinal : 0; } catch(e) {}
+                        try { const res = calcularPreco(pA.nome, tvState.sortCol, tipoPessoa, tvState.wiTaxa, tvState.wiROI); rA = res ? res.precoFinal : 0; } catch (e) { _catchSilencioso(e, 'renderizarTabelaPrecoVenda'); }
+                        try { const res = calcularPreco(pB.nome, tvState.sortCol, tipoPessoa, tvState.wiTaxa, tvState.wiROI); rB = res ? res.precoFinal : 0; } catch (e) { _catchSilencioso(e, 'renderizarTabelaPrecoVenda'); }
                         vA = rA; vB = rB;
                     }
                     const cmp = typeof vA === 'number' ? vA - vB : String(vA).localeCompare(String(vB), 'pt-BR');
@@ -18711,8 +18609,8 @@ function renderizarTabelaPrecoVenda() {
                         else if (st.sortCol === 'ci') { vA = Number(precificacao[pA.nome]?.ci ?? pA.ci ?? 0); vB = Number(precificacao[pB.nome]?.ci ?? pB.ci ?? 0); }
                         else {
                             let rA = 0, rB = 0;
-                            try { const res = calcularPreco(pA.nome, st.sortCol, tp, wTaxa, wROI); rA = res?.precoFinal || 0; } catch(e){}
-                            try { const res = calcularPreco(pB.nome, st.sortCol, tp, wTaxa, wROI); rB = res?.precoFinal || 0; } catch(e){}
+                            try { const res = calcularPreco(pA.nome, st.sortCol, tp, wTaxa, wROI); rA = res?.precoFinal || 0; } catch (e) { _catchSilencioso(e, 'renderizarTabelaPrecoVenda'); }
+                            try { const res = calcularPreco(pB.nome, st.sortCol, tp, wTaxa, wROI); rB = res?.precoFinal || 0; } catch (e) { _catchSilencioso(e, 'renderizarTabelaPrecoVenda'); }
                             vA = rA; vB = rB;
                         }
                         const cmp = typeof vA === 'number' ? vA - vB : String(vA).localeCompare(String(vB), 'pt-BR');
@@ -19391,7 +19289,7 @@ function abrirGavetaComponentes(chaveGrupo) {
             <td style="padding:6px 10px;text-align:right;border-right:2px solid #b2c7e8;font-weight:600;color:#0f766e">${ciStr}</td>`;
         ESTADOS_BR.forEach(uf => {
             let preco = null;
-            try { const r = calcularPreco(peca.nome, uf, tipoPessoa); preco = r ? r.precoFinal : null; } catch (e) {}
+            try { const r = calcularPreco(peca.nome, uf, tipoPessoa); preco = r ? r.precoFinal : null; } catch (e) { _catchSilencioso(e, 'abrirGavetaComponentes'); }
             if (preco !== null && preco > 0) {
                 const nomeEsc = _escapeJsString(peca.nome);
                 const tipoEsc = _escapeJsString(tipoPessoa);
@@ -19670,7 +19568,7 @@ function exportarTabelaPrecoVenda() {
             try {
                 const r = calcularPreco(prod.nome, uf, tipo);
                 if (r && r.precoFinal > 0) preco = r.precoFinal.toFixed(2).replace('.',',');
-            } catch (e) {}
+            } catch (e) { _catchSilencioso(e, 'exportarTabelaPrecoVenda'); }
             linha.push(preco);
         });
         linhas.push(linha);
@@ -20118,7 +20016,7 @@ function renderizarTabelaCI() {
         </tr>`;
     }).join('');
 
-    try { atualizarKPIsCI(); } catch (e) {}
+    try { atualizarKPIsCI(); } catch (e) { _catchSilencioso(e, 'renderizarTabelaCI'); }
 }
 
 function exibirHistoricoCI(nomeProduto) {
@@ -20333,8 +20231,8 @@ function calcularComparativo() {
         if (ft) ft.textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 
         // ── Verdict bar ──
-        try { _cmpAtualizarVerdict(clientesData); } catch(e) {}
-        try { _cmpAtualizarFootbar(clientesData); } catch(e) {}
+        try { _cmpAtualizarVerdict(clientesData); } catch (e) { _catchSilencioso(e, 'calcularComparativo'); }
+        try { _cmpAtualizarFootbar(clientesData); } catch (e) { _catchSilencioso(e, 'calcularComparativo'); }
 
     } catch (e) { console.warn('calcularComparativo', e); }
 }
@@ -20409,7 +20307,7 @@ window._cmpSetTipo = function(tipo, btn) {
     if (seg) seg.querySelectorAll('.cmp-seg-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
     // Recalcular com novo tipo (futuro)
-    try { calcularComparativo(); } catch(e) {}
+    try { calcularComparativo(); } catch (e) { _catchSilencioso(e, '_cmpAtualizarFootbar'); }
 };
 
 function exportarComparativo() {
@@ -20490,7 +20388,7 @@ function renderizarRastreabilidade() {
                     : (parsed && Array.isArray(parsed.precificacoesCliente)) ? parsed.precificacoesCliente : null;
                 if (_dadosPrecif && _dadosPrecif.length > 0) precificacoesCliente = _dadosPrecif;
             }
-        } catch(e) {}
+        } catch (e) { _catchSilencioso(e, 'renderizarRastreabilidade'); }
     }
 
     if (!container._rastrState) {
@@ -20950,7 +20848,7 @@ window._pcSelecionarCliente = function(id) {
             const kpiUltSub = document.getElementById('pcKpiUltimaPrecifSub');
             if (kpiUlt) kpiUlt.textContent = ultima ? new Date(ultima.dataCriacao).toLocaleDateString('pt-BR') : '—';
             if (kpiUltSub) kpiUltSub.textContent = ultima ? 'data de emissão' : 'sem precificação salva';
-        } catch (e) {}
+        } catch (e) { _catchSilencioso(e, 'popularSelectClientesPrecif'); }
 
         // Detalhe header
         const head = document.getElementById('pcDetailHead'); if (head) head.style.display = 'flex';
@@ -21036,7 +20934,7 @@ window._pcAtualizarFootbar = function(cliente, uf) {
 function popularSelectProdutosPrecif() {
     // Mantida para compatibilidade com chamadas antigas.
     // Agora a seleção de produtos é via checklist.
-    try { precifPopularChecklist(); } catch (e) {}
+    try { precifPopularChecklist(); } catch (e) { _catchSilencioso(e, 'popularSelectProdutosPrecif'); }
 }
 
 // Populate product checklist when client is selected
@@ -21095,7 +20993,7 @@ function precifSelecionarTodosProdutos(selecionar) {
         cb.checked = selecionar;
     });
     precifAtualizarContador();
-    try { calcularPrecificacaoPorCliente(); } catch (e) {}
+    try { calcularPrecificacaoPorCliente(); } catch (e) { _catchSilencioso(e, 'precifSelecionarTodosProdutos'); }
 }
 
 function precifGetProdutosSelecionados() {
@@ -21700,12 +21598,12 @@ function aplicarEstadoPrecificacaoSalva(registro) {
         retidPorProduto = registro.retidPorProduto || {};
         beneficioFiscalAtivo = registro.beneficioFiscalAtivo || false;
         beneficiosPorProduto = registro.beneficiosPorProduto || {};
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'aplicarEstadoPrecificacaoSalva'); }
 
     exibindoPrecifSalva = true;
     precifSalvaCarregada = registro;
     ultimaPrecificacaoCalculada = registro;
-    try { ultimaVersaoSalva = registro.versao || null; } catch (e) {}
+    try { ultimaVersaoSalva = registro.versao || null; } catch (e) { _catchSilencioso(e, 'aplicarEstadoPrecificacaoSalva'); }
 
     try {
         const cliente = (clientes || []).find(c => String(c.id) === String(registro.clienteId));
@@ -21735,7 +21633,7 @@ function aplicarEstadoPrecificacaoSalva(registro) {
         const cb = document.getElementById('precifBeneficioFiscal'); if (cb) cb.checked = !!beneficioFiscalAtivo;
         const painel = document.getElementById('painelBeneficioFiscal'); if (painel) painel.style.display = beneficioFiscalAtivo ? 'block' : 'none';
         if (beneficioFiscalAtivo) renderizarTabelaBeneficios();
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'aplicarEstadoPrecificacaoSalva'); }
 
     // Repopular linhas de produtos para edição, se existirem itens salvos
     try {
@@ -21748,12 +21646,12 @@ function aplicarEstadoPrecificacaoSalva(registro) {
                 itens.forEach(it => {
                     try {
                         precifAdicionarProdutoLinha(it.produto || it.produtoNome || it.nome || '', it.taxa || it.taxaPct || null, it.roi || it.roiPct || null, it.frete || it.freteR || 0, it.quantidade || it.qtd || 1, it.comissao || it.comissaoPct || null);
-                    } catch (e) {}
+                    } catch (e) { _catchSilencioso(e, 'aplicarEstadoPrecificacaoSalva'); }
                 });
             }
             atualizarContadorLinhasPrecif();
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'aplicarEstadoPrecificacaoSalva'); }
 
     calcularPrecificacaoPorCliente();
 }
@@ -21771,13 +21669,13 @@ function selecionarClientePrecif() {
     try {
         const cbBenef = document.getElementById('precifBeneficioFiscal'); if (cbBenef) cbBenef.checked = false;
         const painel = document.getElementById('painelBeneficioFiscal'); if (painel) painel.style.display = 'none';
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'selecionarClientePrecif'); }
         const cliente = (clientes || []).find(c => String(c.id) === String(clienteId));
         if (!cliente) {
                 const banner = document.getElementById('precifClienteBanner'); if (banner) banner.style.display = 'none';
                 const resultado = document.getElementById('precifClienteResultado'); if (resultado) resultado.style.display = 'none';
                 const empty = document.getElementById('precifClienteEmpty'); if (empty) empty.style.display = 'block';
-            try { atualizarStatusPropostaNaPrecif(''); } catch (e) {}
+            try { atualizarStatusPropostaNaPrecif(''); } catch (e) { _catchSilencioso(e, 'selecionarClientePrecif'); }
             limparAvisoCI();
                 return;
         }
@@ -21799,7 +21697,7 @@ function selecionarClientePrecif() {
 
         calcularPrecificacaoPorCliente({ forcarAtual: true });
 
-        try { renderizarHistoricoPrecif(cliente.id); } catch (e) {}
+        try { renderizarHistoricoPrecif(cliente.id); } catch (e) { _catchSilencioso(e, 'selecionarClientePrecif'); }
 
         // Mostrar se existe precificação salva para este cliente
         try {
@@ -21813,8 +21711,8 @@ function selecionarClientePrecif() {
                 const infoEl2 = document.getElementById('precifSalvoInfo'); if (infoEl2) infoEl2.innerHTML = '';
                 limparAvisoCI();
             }
-        } catch (e) {}
-        try { atualizarStatusPropostaNaPrecif(cliente.id); } catch (e) {}
+        } catch (e) { _catchSilencioso(e, 'selecionarClientePrecif'); }
+        try { atualizarStatusPropostaNaPrecif(cliente.id); } catch (e) { _catchSilencioso(e, 'selecionarClientePrecif'); }
 }
 
 function calcularPrecificacaoPorCliente(opcoes = {}) {
@@ -21846,10 +21744,10 @@ function calcularPrecificacaoPorCliente(opcoes = {}) {
             ufEl.style.color = uf ? '' : '#dc2626';
             ufEl.title = uf ? '' : 'UF não cadastrada — ICMS será 0%. Edite o cliente e preencha o estado.';
         }
-    } catch (e) {}
-    try { document.getElementById('precifClienteTipo').value = tipoPessoa; } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'calcularPrecificacaoPorCliente'); }
+    try { document.getElementById('precifClienteTipo').value = tipoPessoa; } catch (e) { _catchSilencioso(e, 'calcularPrecificacaoPorCliente'); }
     // pré-selecionar representante se cadastro do cliente tiver
-    try { const repSel = document.getElementById('precifRepresentanteSelect'); if (repSel) repSel.value = cliente.representante || ''; } catch (e) {}
+    try { const repSel = document.getElementById('precifRepresentanteSelect'); if (repSel) repSel.value = cliente.representante || ''; } catch (e) { _catchSilencioso(e, 'calcularPrecificacaoPorCliente'); }
 
     const taxaOverride = parseFloat(document.getElementById('precifTaxaOverride')?.value);
     const roiOverride = parseFloat(document.getElementById('precifROIOverride')?.value);
@@ -22178,7 +22076,7 @@ function calcularPrecificacaoPorCliente(opcoes = {}) {
         try {
             const contadorEl = document.getElementById('precifProdutoContador');
             if (contadorEl) contadorEl.textContent = `${produtosFiltrados.length} produto(s) serão calculados`;
-        } catch (e) {}
+        } catch (e) { _catchSilencioso(e, 'calcularPrecificacaoPorCliente'); }
         return;
     }
     tbody.innerHTML = rows.join('');
@@ -22240,7 +22138,7 @@ function calcularPrecificacaoPorCliente(opcoes = {}) {
         freteModo
     };
     atualizarAvisoCIDivergente(exibindoPrecifSalva ? precifSalvaCarregada : obterUltimaPrecificacaoCliente(cliente.id));
-    try { atualizarStatusPropostaNaPrecif(ultimaPrecificacaoCalculada.clienteId); } catch (e) {}
+    try { atualizarStatusPropostaNaPrecif(ultimaPrecificacaoCalculada.clienteId); } catch (e) { _catchSilencioso(e, 'calcularPrecificacaoPorCliente'); }
 }
 
 function exportarPrecifCliente() {
@@ -22385,20 +22283,20 @@ function salvarPrecificacaoCliente() {
     registro.validadeDias = validadeDias;
     registro.dataExpiracao = new Date(Date.now() + validadeDias * 86400000).toISOString();
     // Garantir compatibilidade de campos de UF/representante
-    try { registro.clienteUF = registro.clienteUF || registro.uf || (document.getElementById('precifClienteUF')?.value || ''); } catch (e) {}
-    try { registro.uf = registro.uf || registro.clienteUF || (document.getElementById('precifClienteUF')?.value || ''); } catch (e) {}
-    try { registro.representante = registro.representante || (document.getElementById('precifRepresentanteSelect')?.value || ''); } catch (e) {}
+    try { registro.clienteUF = registro.clienteUF || registro.uf || (document.getElementById('precifClienteUF')?.value || ''); } catch (e) { _catchSilencioso(e, 'salvarPrecificacaoCliente'); }
+    try { registro.uf = registro.uf || registro.clienteUF || (document.getElementById('precifClienteUF')?.value || ''); } catch (e) { _catchSilencioso(e, 'salvarPrecificacaoCliente'); }
+    try { registro.representante = registro.representante || (document.getElementById('precifRepresentanteSelect')?.value || ''); } catch (e) { _catchSilencioso(e, 'salvarPrecificacaoCliente'); }
     // Mostrar modal de confirmação com resumo antes de salvar
     confirmarSalvarPrecificacao(registro, cId, () => {
         precificacoesCliente.push(registro);
         ultimaVersaoSalva = proximaVersao;
         estoque.precificacoesCliente = precificacoesCliente;
         salvarDados();
-        try { atualizarIndicadoresPrecificacao(); } catch (e) {}
+        try { atualizarIndicadoresPrecificacao(); } catch (e) { _catchSilencioso(e, 'salvarPrecificacaoCliente'); }
         const infoEl = document.getElementById('precifSalvoInfo');
         if (infoEl) infoEl.innerHTML = `<span style="color:#16a34a; font-size:0.82rem">✅ Precificação salva v${registro.versao} em ${new Date(registro.dataCriacao).toLocaleString('pt-BR')}</span> <button onclick="carregarVersaoPrecif('${registro.id}')" class="btn btn-outline btn-sm" style="margin-left:8px">↩ Carregar versão</button> <button onclick="renderizarHistoricoPrecif('${cId}')" class="btn btn-outline btn-sm" style="margin-left:8px">🕘 Histórico</button>`;
         mostrarNotificacao('Precificação salva para o cliente.', 'success');
-        try { renderizarHistoricoPrecif(cId); } catch (e) {}
+        try { renderizarHistoricoPrecif(cId); } catch (e) { _catchSilencioso(e, 'salvarPrecificacaoCliente'); }
         try {
             const consultaEl = document.getElementById('subaba-precif-consulta');
             const rastreaEl = document.getElementById('subaba-precif-rastreabilidade');
@@ -22406,8 +22304,8 @@ function salvarPrecificacaoCliente() {
             const isRastreaVis  = rastreaEl ? rastreaEl.style.display !== 'none' : false;
             if (isConsultaVis && typeof renderizarConsultaPrecificacao === 'function') renderizarConsultaPrecificacao();
             if (isRastreaVis && typeof renderizarRastreabilidade === 'function') renderizarRastreabilidade();
-        } catch (e) {}
-        try { if (typeof _cpPopularFiltroCliente === 'function') _cpPopularFiltroCliente(); filtrarConsultaPrecificacoes(); } catch (e) {}
+        } catch (e) { _catchSilencioso(e, 'salvarPrecificacaoCliente'); }
+        try { if (typeof _cpPopularFiltroCliente === 'function') _cpPopularFiltroCliente(); filtrarConsultaPrecificacoes(); } catch (e) { _catchSilencioso(e, 'salvarPrecificacaoCliente'); }
     });
 }
 
@@ -22528,7 +22426,7 @@ function criarPropostaDaPrecificacao() {
                 if (!ok) return;
             }
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'criarPropostaDaPrecificacao'); }
 
     // Bloquear geração de proposta a partir de versão arquivada (quando o usuário carregou uma versão salva)
     try {
@@ -22536,7 +22434,7 @@ function criarPropostaDaPrecificacao() {
             alert('Esta versão de precificação está arquivada e não pode ser usada para gerar propostas. Reative ou carregue outra versão.');
             return;
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'criarPropostaDaPrecificacao'); }
 
     if (!ultimaPrecificacaoCalculada) {
         alert('Calcule ou carregue uma precificação antes de gerar proposta.');
@@ -22580,7 +22478,7 @@ function criarPropostaDaPrecificacao() {
         if (Object.values(retidMap || {}).some(v => v)) benefSummary.push('RETID aplicado em produtos selecionados');
         if (benefAtivo && Object.keys(benefMap || {}).length) benefSummary.push('Benefícios fiscais aplicados');
         if (benefSummary.length) nova.observacoes = (nova.observacoes || '') + ' | ' + benefSummary.join(', ');
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'criarPropostaDaPrecificacao'); }
     propostas.push(nova);
     estoque.propostas = propostas;
     salvarDados();
@@ -22594,13 +22492,13 @@ function criarPropostaDaPrecificacao() {
             if (precifAtual) {
                 precifAtual.status = 'convertida';
                 precifAtual.propostaId = nova.id;
-                try { estoque.precificacoesCliente = precificacoesCliente; } catch (e) {}
+                try { estoque.precificacoesCliente = precificacoesCliente; } catch (e) { _catchSilencioso(e, 'criarPropostaDaPrecificacao'); }
                 salvarDados();
-                try { renderizarHistoricoPrecif(reg.clienteId); } catch(e) {}
+                try { renderizarHistoricoPrecif(reg.clienteId); } catch (e) { _catchSilencioso(e, 'criarPropostaDaPrecificacao'); }
             }
         }
-    } catch (e) {}
-    try { atualizarStatusPropostaNaPrecif(reg.clienteId); } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'criarPropostaDaPrecificacao'); }
+    try { atualizarStatusPropostaNaPrecif(reg.clienteId); } catch (e) { _catchSilencioso(e, 'criarPropostaDaPrecificacao'); }
 }
 
 // ====== Helpers: RETID e Benefícios Fiscais ======
@@ -22837,10 +22735,10 @@ function arquivarVersaoPrecif(id) {
         if (!v) return;
         if (!confirm(`Arquivar versão v${v.versao}?\nEla ficará visível no histórico mas não poderá ser usada para novas propostas.`)) return;
         v.status = 'arquivada';
-        try { estoque.precificacoesCliente = precificacoesCliente; } catch (e) {}
+        try { estoque.precificacoesCliente = precificacoesCliente; } catch (e) { _catchSilencioso(e, 'arquivarVersaoPrecif'); }
         salvarDados();
-        try { renderizarHistoricoPrecif(v.clienteId); } catch (e) {}
-        try { mostrarNotificacao && mostrarNotificacao('Versão arquivada.', 'success'); } catch (e) {}
+        try { renderizarHistoricoPrecif(v.clienteId); } catch (e) { _catchSilencioso(e, 'arquivarVersaoPrecif'); }
+        try { mostrarNotificacao && mostrarNotificacao('Versão arquivada.', 'success'); } catch (e) { _catchSilencioso(e, 'arquivarVersaoPrecif'); }
     } catch (e) { console.error('arquivarVersaoPrecif erro:', e); }
 }
 
@@ -22854,10 +22752,10 @@ function excluirVersaoPrecif(id) {
         }
         if (!confirm(`Excluir versão v${v.versao} permanentemente?`)) return;
         precificacoesCliente = (precificacoesCliente || []).filter(p => p.id !== id);
-        try { estoque.precificacoesCliente = precificacoesCliente; } catch (e) {}
+        try { estoque.precificacoesCliente = precificacoesCliente; } catch (e) { _catchSilencioso(e, 'excluirVersaoPrecif'); }
         salvarDados();
-        try { renderizarHistoricoPrecif(v.clienteId); } catch (e) {}
-        try { mostrarNotificacao && mostrarNotificacao('Versão excluída.', 'success'); } catch (e) {}
+        try { renderizarHistoricoPrecif(v.clienteId); } catch (e) { _catchSilencioso(e, 'excluirVersaoPrecif'); }
+        try { mostrarNotificacao && mostrarNotificacao('Versão excluída.', 'success'); } catch (e) { _catchSilencioso(e, 'excluirVersaoPrecif'); }
     } catch (e) { console.error('excluirVersaoPrecif erro:', e); }
 }
 
@@ -22961,7 +22859,7 @@ function resolverAliquota(nomeProduto, campo, valorPadrao) {
             const override = beneficiosPorProduto[nomeProduto][campo];
             if (override !== null && override !== undefined && override !== '') return Number(override);
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'resolverAliquota'); }
     return Number(valorPadrao || 0);
 }
 
@@ -23584,7 +23482,7 @@ function autoPreencherPrecoProduto(selectEl) {
             valorInput.setAttribute('data-autofilled', 'lojista');
             return;
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'autoPreencherPrecoProduto'); }
 
     // PRIORIDADE 2: precificação salva para o cliente
     let precoSalvo = null;
@@ -23609,7 +23507,7 @@ function autoPreencherPrecoProduto(selectEl) {
                 return;
             }
         }
-    } catch (e) {}
+    } catch (e) { _catchSilencioso(e, 'autoPreencherPrecoProduto'); }
 
     // Nenhuma fonte encontrada — campo fica em branco para preenchimento manual
 }
@@ -23710,9 +23608,9 @@ function abrirModalProposta(id = null) {
     const _precifIdEl = document.getElementById('propostaPrecifId'); if (_precifIdEl) _precifIdEl.value = '';
     const container = document.getElementById('itensPropostaContainer');
     if (container) container.innerHTML = '';
-    try { popularSelectRepresentantes('propostaRepresentante', true); } catch (e) {}
+    try { popularSelectRepresentantes('propostaRepresentante', true); } catch (e) { _catchSilencioso(e, 'abrirModalProposta'); }
 
-    try { document.getElementById('propostaData').value = new Date().toISOString().slice(0, 10); } catch (e) {}
+    try { document.getElementById('propostaData').value = new Date().toISOString().slice(0, 10); } catch (e) { _catchSilencioso(e, 'abrirModalProposta'); }
 
     if (!id) {
         document.getElementById('modalPropostaTitulo').textContent = 'Nova Proposta';
@@ -23734,7 +23632,7 @@ function abrirModalProposta(id = null) {
     document.getElementById('propostaStatus').value = proposta.status || 'rascunho';
     document.getElementById('propostaValidade').value = proposta.validade || 30;
     document.getElementById('propostaObservacoes').value = proposta.observacoes || '';
-    try { document.getElementById('propostaData').value = proposta.data ? proposta.data.split('T')[0] : ''; } catch (e) {}
+    try { document.getElementById('propostaData').value = proposta.data ? proposta.data.split('T')[0] : ''; } catch (e) { _catchSilencioso(e, 'abrirModalProposta'); }
 
     if (Array.isArray(proposta.itens) && proposta.itens.length > 0) {
         proposta.itens.forEach(it => {
@@ -23824,7 +23722,7 @@ function autoPreencherPrecoItemProposta(selectEl) {
         const calc = calcularPreco(produto.nome);
         if (calc && calc.precoFinal > 0) {
             valorInput.value = Number(calc.precoFinal).toFixed(2).replace('.', ',');
-            try { valorInput.dataset.original = String(Number(calc.precoFinal).toFixed(2)); } catch (e) {}
+            try { valorInput.dataset.original = String(Number(calc.precoFinal).toFixed(2)); } catch (e) { _catchSilencioso(e, 'autoPreencherPrecoItemProposta'); }
         }
     }
 }
@@ -24036,9 +23934,9 @@ function salvarProposta(event) {
             const _novaId = propostas[propostas.length - 1]?.id;
             if (_novaId) {
                 _precifOrigem.propostaId = _novaId;
-                try { estoque.precificacoesCliente = precificacoesCliente; } catch(e) {}
+                try { estoque.precificacoesCliente = precificacoesCliente; } catch (e) { _catchSilencioso(e, 'salvarProposta'); }
                 salvarDados();
-                try { renderConsultaPrecificacoes(); } catch(e) {}
+                try { renderConsultaPrecificacoes(); } catch (e) { _catchSilencioso(e, 'salvarProposta'); }
             }
         }
         document.getElementById('propostaPrecifId').value = '';
@@ -24202,15 +24100,15 @@ function confirmarConversaoVenda() {
     fecharModal('modalConfirmarVenda');
     _propostaParaConverter = null;
 
-    try { renderizarRegistroVendas(); } catch(e) {}
-    try { renderizarPropostas(); } catch(e) {}
-    try { atualizarKPIsPropostas(); } catch(e) {}
-    try { renderizarTabela(); } catch(e) {}
-    try { renderizarDashboard(); } catch(e) {}
+    try { renderizarRegistroVendas(); } catch (e) { _catchSilencioso(e, 'confirmarConversaoVenda'); }
+    try { renderizarPropostas(); } catch (e) { _catchSilencioso(e, 'confirmarConversaoVenda'); }
+    try { atualizarKPIsPropostas(); } catch (e) { _catchSilencioso(e, 'confirmarConversaoVenda'); }
+    try { renderizarTabela(); } catch (e) { _catchSilencioso(e, 'confirmarConversaoVenda'); }
+    try { renderizarDashboard(); } catch (e) { _catchSilencioso(e, 'confirmarConversaoVenda'); }
     try {
         const c = (clientes||[]).find(x => x.nome === proposta.cliente);
         if (c) atualizarStatusPropostaNaPrecif(c.id);
-    } catch(e) {}
+    } catch (e) { _catchSilencioso(e, 'confirmarConversaoVenda'); }
 
     mostrarNotificacao(
         `✅ Contrato nº ${contrato} criado! Venda registrada com sucesso.`,
@@ -24248,12 +24146,12 @@ function recusarProposta(id) {
     p.status = 'recusada';
     p.motivoRecusa = motivo || 'Sem motivo informado';
     p.dataRecusa = new Date().toISOString();
-    try { estoque.propostas = propostas; } catch (e) {}
+    try { estoque.propostas = propostas; } catch (e) { _catchSilencioso(e, 'recusarProposta'); }
     salvarDados();
-    try { renderizarPropostas(); } catch (e) {}
-    try { atualizarKPIsPropostas(); } catch (e) {}
+    try { renderizarPropostas(); } catch (e) { _catchSilencioso(e, 'recusarProposta'); }
+    try { atualizarKPIsPropostas(); } catch (e) { _catchSilencioso(e, 'recusarProposta'); }
     mostrarNotificacao(`Proposta ${p.numero} marcada como recusada.`, 'warning');
-    try { registrarHistorico('proposta_recusada', `Proposta ${p.numero} recusada: ${p.motivoRecusa}`); } catch (e) {}
+    try { registrarHistorico('proposta_recusada', `Proposta ${p.numero} recusada: ${p.motivoRecusa}`); } catch (e) { _catchSilencioso(e, 'recusarProposta'); }
 }
 
 function renderizarPropostas(filtro, statusFiltro) {
@@ -25084,7 +24982,7 @@ limparFiltrosDistribuicao = function() {
 const _inicializarOriginal = inicializar;
 inicializar = async function() {
     await _inicializarOriginal();
-    try { verificarAlertasEstoque(); } catch(e) {}
+    try { verificarAlertasEstoque(); } catch (e) { _catchSilencioso(e, 'exportarRelatorioPDF'); }
 };
 
 // Hook salvarDados to check low stock and register audit
@@ -25094,7 +24992,7 @@ const _salvarDadosHook = salvarDados;
 const _renderizarTabelaOriginal = renderizarTabela;
 renderizarTabela = function() {
     _renderizarTabelaOriginal();
-    try { verificarAlertasEstoque(); } catch(e) {}
+    try { verificarAlertasEstoque(); } catch (e) { _catchSilencioso(e, 'exportarRelatorioPDF'); }
 };
 
 // Hooks for audit log on key operations
@@ -25117,7 +25015,7 @@ salvarNovaDistribuicao = function(event) {
             const qtd = document.getElementById('quantidadeDistDet')?.value || '';
             registrarHistorico('distribuicao', `${qtd}x ${prod} → ${rep}`);
         }
-    } catch(e) {}
+    } catch (e) { _catchSilencioso(e, 'exportarRelatorioPDF'); }
 };
 
 const _salvarEntradaEstoqueOriginal = salvarEntradaEstoque;
@@ -25127,8 +25025,8 @@ salvarEntradaEstoque = function(event) {
     const prodNome = prodEl?.selectedOptions[0]?.text || '';
     const qtd = qtdEl?.value || '';
     _salvarEntradaEstoqueOriginal(event);
-    try { registrarHistorico('entrada', `+${qtd} ${prodNome} (IMBEL)`); } catch(e) {}
-    try { verificarAlertasEstoque(); } catch(e) {}
+    try { registrarHistorico('entrada', `+${qtd} ${prodNome} (IMBEL)`); } catch (e) { _catchSilencioso(e, 'exportarRelatorioPDF'); }
+    try { verificarAlertasEstoque(); } catch (e) { _catchSilencioso(e, 'exportarRelatorioPDF'); }
 };
 
 const _excluirVendaOriginal = excluirVenda;
@@ -25136,7 +25034,7 @@ excluirVenda = function(vendaId) {
     const venda = estoque.registroVendas.find(v => v.id === vendaId);
     _excluirVendaOriginal(vendaId);
     if (venda) {
-        try { registrarHistorico('exclusao', `Venda CTR ${venda.contrato} excluída`); } catch(e) {}
+        try { registrarHistorico('exclusao', `Venda CTR ${venda.contrato} excluída`); } catch (e) { _catchSilencioso(e, 'exportarRelatorioPDF'); }
     }
 };
 
@@ -25145,7 +25043,7 @@ excluirDistribuicao = function(distId) {
     const dist = estoque.registroDistribuicao.find(d => d.id === distId);
     _excluirDistribuicaoOriginal(distId);
     if (dist) {
-        try { registrarHistorico('exclusao', `Distribuição ${dist.produtoNome} x${dist.quantidade} (${dist.representante}) excluída`); } catch(e) {}
+        try { registrarHistorico('exclusao', `Distribuição ${dist.produtoNome} x${dist.quantidade} (${dist.representante}) excluída`); } catch (e) { _catchSilencioso(e, 'exportarRelatorioPDF'); }
     }
 };
 
@@ -25196,7 +25094,7 @@ if (window.firebase && firebase.auth) {
                 try {
                     const banner = document.getElementById('bannerSemSync');
                     if (banner) banner.style.display = 'none';
-                } catch (e) {}
+                } catch (e) { _catchSilencioso(e, 'signOut'); }
 
                 // Verifica claims para habilitar controles de admin
                 let isAdmin = false;
@@ -25229,13 +25127,13 @@ if (window.firebase && firebase.auth) {
                             el.style.opacity = '0.55';
                         }
                     });
-                } catch(e) {}
+                } catch (e) { _catchSilencioso(e, 'signOut'); }
                 if (loggedEmailEl) loggedEmailEl.textContent = user.email || '';
 
                 // Persist a short record of current user in localStorage for quick reference
                 try {
                     localStorage.setItem('currentUser', JSON.stringify({ email: user.email || null, uid: user.uid || null, isAdmin }));
-                } catch(e) {}
+                } catch (e) { _catchSilencioso(e, 'signOut'); }
 
                 // Após autenticar, atualizar status do cloud e tentar auto-load 1x por usuário
                 try {
@@ -25262,7 +25160,7 @@ if (window.firebase && firebase.auth) {
                             const autoLoaded = await carregarDoCloud({ confirmOverwrite: false });
                             window.__cloudAutoLoadDoneForUid = user.uid;
                             if (autoLoaded) {
-                                try { mostrarNotificacao('✅ Dados sincronizados do Cloud.', 'success'); } catch (e) {}
+                                try { mostrarNotificacao('✅ Dados sincronizados do Cloud.', 'success'); } catch (e) { _catchSilencioso(e, 'signOut'); }
                             }
                         }
 
@@ -25283,13 +25181,13 @@ if (window.firebase && firebase.auth) {
                                         if (window._lastCloudSaveAt && (Date.now() - window._lastCloudSaveAt) < 10000) return;
                                         // Se há edições locais pendentes (ainda não enviadas ao cloud), não sobrescrever
                                         if (window._dadosAlterados) {
-                                            try { updateFirestoreStatus(true, new Date(remoteUpdated), 'Cloud: atualização disponível'); } catch(e) {}
+                                            try { updateFirestoreStatus(true, new Date(remoteUpdated), 'Cloud: atualização disponível'); } catch (e) { _catchSilencioso(e, 'signOut'); }
                                             window.__cloudHasRemoteUpdate = true;
                                             return;
                                         }
                                         // Remoto é mais recente — carregar automaticamente
                                         await carregarDoCloud({ confirmOverwrite: false });
-                                        try { if (window.__SHOW_AUTO_UPDATE_NOTIFICATION) mostrarNotificacao('Dados atualizados automaticamente do Cloud.', 'success'); } catch (e) {}
+                                        try { if (window.__SHOW_AUTO_UPDATE_NOTIFICATION) mostrarNotificacao('Dados atualizados automaticamente do Cloud.', 'success'); } catch (e) { _catchSilencioso(e, 'signOut'); }
                                     } catch (e) {
                                         console.error('Erro no snapshot do Firestore:', e);
                                     }
@@ -25297,7 +25195,7 @@ if (window.firebase && firebase.auth) {
                                     console.warn('Erro no listener Firestore:', err);
                                 });
                             }
-                        } catch(e) {}
+                        } catch (e) { _catchSilencioso(e, 'signOut'); }
                     }
                 } catch (e) { /* ignore */ }
 
@@ -25305,23 +25203,23 @@ if (window.firebase && firebase.auth) {
                 // Se deslogou, cancelar listener em tempo real se existia
                 try {
                     if (window.__firestoreAppDataUnsubscribe) {
-                        try { window.__firestoreAppDataUnsubscribe(); } catch(e) {}
+                        try { window.__firestoreAppDataUnsubscribe(); } catch (e) { _catchSilencioso(e, 'signOut'); }
                         window.__firestoreAppDataUnsubscribe = null;
                     }
-                } catch(e) {}
+                } catch (e) { _catchSilencioso(e, 'signOut'); }
                 if (formEl) formEl.style.display = 'flex';
                 if (signedEl) signedEl.style.display = 'none';
                 if (userDisplay) userDisplay.textContent = '';
                 document.body.classList.remove('is-admin');
                 if (loggedEmailEl) loggedEmailEl.textContent = '';
                 if (loggedBadgeEl) loggedBadgeEl.style.display = 'none';
-                try { localStorage.removeItem('currentUser'); } catch(e) {}
-                try { window.__cloudAutoLoadDoneForUid = null; } catch (e) {}
-                try { updateFirestoreStatus(false, null, 'Cloud: aguardando login'); } catch (e) {}
+                try { localStorage.removeItem('currentUser'); } catch (e) { _catchSilencioso(e, 'signOut'); }
+                try { window.__cloudAutoLoadDoneForUid = null; } catch (e) { _catchSilencioso(e, 'signOut'); }
+                try { updateFirestoreStatus(false, null, 'Cloud: aguardando login'); } catch (e) { _catchSilencioso(e, 'signOut'); }
                 try {
                     const banner = document.getElementById('bannerSemSync');
                     if (banner) banner.style.display = 'flex';
-                } catch (e) {}
+                } catch (e) { _catchSilencioso(e, 'signOut'); }
             }
         });
     } catch (err) {
@@ -25354,7 +25252,7 @@ function requireAdminOrNotify() {
 }
 
 // Forçar chamada inicial para ajustar UI caso o listener já tenha ocorrido
-try { if (firebase && firebase.auth) firebase.auth().currentUser; } catch(e) {}
+try { if (firebase && firebase.auth) firebase.auth().currentUser; } catch (e) { _catchSilencioso(e, 'requireAdminOrNotify'); }
 
 // =============================
 // Pesquisa Global (Ctrl+K)
@@ -25670,8 +25568,8 @@ function renderizarGraficoEvolucao() {
 
 // Inicializar select de meses ao carregar a aba de relatórios
 document.addEventListener('DOMContentLoaded', function() {
-    try { _popularSelectMes(); } catch(e) {}
-    try { carregarConfigEmail(); } catch(e) {}
+    try { _popularSelectMes(); } catch (e) { _catchSilencioso(e, 'renderizarGraficoEvolucao'); }
+    try { carregarConfigEmail(); } catch (e) { _catchSilencioso(e, 'renderizarGraficoEvolucao'); }
 });
 
 // =============================
@@ -25765,9 +25663,9 @@ function abrirEmailNoZimbra() {
             estoque.controleEnvio[contrato].enviado = true;
             estoque.controleEnvio[contrato].emailEnviadoEm = ts;
             salvarDados();
-            try { renderizarRegistroVendas(); } catch(e) {}
+            try { renderizarRegistroVendas(); } catch (e) { _catchSilencioso(e, 'abrirEmailNoZimbra'); }
             mostrarNotificacao(`Email preparado — contrato ${contrato} marcado como enviado (${ts}).`, 'success');
-        } catch(e) {}
+        } catch (e) { _catchSilencioso(e, 'abrirEmailNoZimbra'); }
         window._emailVendaContratoAtual = null;
     }
 }

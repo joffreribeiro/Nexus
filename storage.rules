@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// storage.rules — regras ATIVAS do Firebase Storage (projeto "estoquefi").
+//
+// Publicar com:
+//     firebase deploy --only storage
+//
+// O único uso de Storage hoje são os anexos do CRM: `enviarAnexo()` em
+// crm-ui.js grava em  crm/<entidade>/<entidadeId>/<timestamp>_<nome do arquivo>.
+// Mesmo modelo do Firestore: leitura para autenticados, escrita só para admin.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    // Mesma definição usada em firestore.rules — manter as duas em sincronia.
+    function ehAdmin() {
+      return autenticado() && (
+        request.auth.token.get('admin', false) == true
+        || (request.auth.token.get('email', '') == 'joffre.ribeiro@gmail.com'
+            && request.auth.token.get('email_verified', false) == true)
+      );
+    }
+
+    match /crm/{entidade}/{entidadeId}/{arquivo} {
+      allow read: if autenticado();
+
+      // ATENÇÃO — limite novo: o app não valida tamanho hoje. 25 MB é folgado
+      // para anexo de CRM e evita que um upload acidental (ou malicioso) queime
+      // a cota do bucket. Se algum anexo legítimo for maior, ajuste aqui.
+      allow write: if ehAdmin()
+                   && request.resource.size < 25 * 1024 * 1024;
+    }
+
+    // Nenhum outro caminho é usado pelo app.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

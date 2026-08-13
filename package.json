@@ -1,11 +1,17 @@
 {
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:rules": "firebase emulators:exec --only firestore --project estoquefi \"vitest run --config vitest.rules.config.js\"",
+    "deploy:rules": "firebase deploy --only firestore:rules,storage --project estoquefi",
+    "stamp:versions": "node scripts/stamp-versions.js",
+    "check:versions": "node scripts/stamp-versions.js --check"
   },
   "dependencies": {
     "firebase-admin": "^13.8.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
+    "firebase": "^12.17.1",
     "vitest": "^2.1.9"
   }
 }

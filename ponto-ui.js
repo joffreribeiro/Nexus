@@ -26,6 +26,10 @@
 
     // Filtros das listas (mesmos campos das telas do Ponto original)
     var _fReg = { acordo: '', de: '', ate: '', justificativa: '', saldo: '', obs: '' };
+
+    // Lista de registros já filtrada/ordenada por renderizarRegistros(), consumida por
+    // montarRegistrosLazy() logo após o HTML ser inserido no DOM — ver comentário lá.
+    var _registrosParaRenderizarLazy = [];
     var _fEvt = { acordo: '', tipo: '', de: '', ate: '' };
     var _buscaAcordos = '';
     var _acordoSecoesAbertas = {}; // 'acordoId:secao' -> boolean (estado de expandir/recolher dos cards)
@@ -872,6 +876,7 @@
      * dia; badges de justificativa; fins de semana destacados.
      */
     function renderizarRegistros() {
+        _registrosParaRenderizarLazy = [];
         var acordos = PontoStore.listarAcordos();
         var todos = PontoStore.listarRegistros();
 
@@ -923,50 +928,94 @@
             return barra + '<div class="ponto-placeholder"><p>Nenhum registro para os filtros aplicados.</p></div>';
         }
 
-        var hora = function (h) {
-            return h ? '<span class="rp-hora">' + esc(h) + '</span>' : '<span class="rp-hora rp-hora-vazia">—</span>';
-        };
-
-        var linhas = registros.map(function (r) {
-            var calc = PontoStore.calcularDia(r.data);
-            var clsSaldo = calc.saldo > 0 ? 'saldo-positivo' : (calc.saldo < 0 ? 'saldo-negativo' : '');
-
-            var justi = '';
-            if (r.tipoAtestado) {
-                justi = '<span class="reg-badge ' + (BADGE_ATESTADO[r.tipoAtestado] || '') + '">' +
-                    esc(LABEL_ATESTADO[r.tipoAtestado] || r.tipoAtestado) + '</span>';
-            } else if (r.periodoEvento) {
-                var rot = { matutino: '☀️ Mat.', vespertino: '🌙 Ves.', dia_todo: '⛶ Todo' }[r.periodoEvento] || r.periodoEvento;
-                justi = '<span class="reg-badge">' + esc(rot) + '</span>';
-            }
-
-            var dsem = diaSemanaDe(r.data);
-            var fds = (dsem === 'Sáb' || dsem === 'Dom');
-
-            return '<tr' + (fds ? ' class="rp-tr-fds"' : '') + '>' +
-                '<td class="rp-td-data"><span class="rp-data-dia">' + fmtData(r.data) + '</span>' +
-                    '<span class="rp-data-dsem' + (fds ? ' rp-data-fds' : '') + '">' + dsem + '</span></td>' +
-                '<td>' + hora(r.entrada) + '</td>' +
-                '<td>' + hora(r.saidaAlmoco) + '</td>' +
-                '<td>' + hora(r.retornoAlmoco) + '</td>' +
-                '<td>' + hora(r.saida) + '</td>' +
-                '<td class="rp-td-justi">' + justi + '</td>' +
-                '<td>' + PontoCalculos.minutosParaHHMM(calc.trabalhadas) + '</td>' +
-                '<td>' + (calc.saldo
-                    ? '<span class="rp-saldo-chip ' + clsSaldo + '">' + PontoCalculos.minutosParaHHMM(calc.saldo) + '</span>'
-                    : '<span class="rp-saldo-chip rp-saldo-zero">—</span>') + '</td>' +
-                '<td class="rp-td-obs" title="' + esc(r.observacoes || '') + '">' + esc(r.observacoes || '') + '</td>' +
-                '<td class="ponto-col-acoes">' +
-                    '<button type="button" class="crm-btn-mini" data-ponto-action="registroEditar" data-valor="' + esc(r.data) + '">Editar</button>' +
-                    '<button type="button" class="crm-btn-mini crm-btn-mini-perigo" data-ponto-action="registroExcluir" data-valor="' + esc(r.data) + '">Excluir</button>' +
-                '</td>' +
-            '</tr>';
-        }).join('');
+        // As linhas em si são inseridas em lotes por montarRegistrosLazy(), chamada
+        // por renderizar() logo após este HTML entrar no DOM — ver comentário lá.
+        // Sem isso, anos de registros diários (um histórico que só cresce) travariam
+        // a tela inteira a cada troca de filtro, como acontecia com a lista de
+        // produtos antes do LazyLoader (ver app2.js, _renderUnidade).
+        _registrosParaRenderizarLazy = registros;
 
         return barra + '<div class="crm-lista-wrapper"><table class="crm-lista-table rp-table"><thead><tr>' +
             '<th>Data</th><th>Entrada</th><th>Saída Almoço</th><th>Retorno Almoço</th><th>Saída</th>' +
             '<th>Justificativa</th><th>Total</th><th>Saldo</th><th>Observações</th><th>Ações</th>' +
-        '</tr></thead><tbody>' + linhas + '</tbody></table></div>';
+        '</tr></thead><tbody id="pontoRegistrosBody"></tbody></table></div>';
+    }
+
+    var _horaRegistro = function (h) {
+        return h ? '<span class="rp-hora">' + esc(h) + '</span>' : '<span class="rp-hora rp-hora-vazia">—</span>';
+    };
+
+    // Constrói o <tr> de uma linha de registro como elemento DOM (não string),
+    // para poder ser inserido incrementalmente por LazyLoader.render — mesmo
+    // padrão de _renderLinhaProduto em app2.js. Conteúdo de cada célula é
+    // idêntico ao que a versão anterior (string + join) produzia.
+    function _renderLinhaRegistro(r) {
+        var calc = PontoStore.calcularDia(r.data);
+        var clsSaldo = calc.saldo > 0 ? 'saldo-positivo' : (calc.saldo < 0 ? 'saldo-negativo' : '');
+
+        var justi = '';
+        if (r.tipoAtestado) {
+            justi = '<span class="reg-badge ' + (BADGE_ATESTADO[r.tipoAtestado] || '') + '">' +
+                esc(LABEL_ATESTADO[r.tipoAtestado] || r.tipoAtestado) + '</span>';
+        } else if (r.periodoEvento) {
+            var rot = { matutino: '☀️ Mat.', vespertino: '🌙 Ves.', dia_todo: '⛶ Todo' }[r.periodoEvento] || r.periodoEvento;
+            justi = '<span class="reg-badge">' + esc(rot) + '</span>';
+        }
+
+        var dsem = diaSemanaDe(r.data);
+        var fds = (dsem === 'Sáb' || dsem === 'Dom');
+
+        var tr = document.createElement('tr');
+        if (fds) tr.className = 'rp-tr-fds';
+        tr.innerHTML =
+            '<td class="rp-td-data"><span class="rp-data-dia">' + fmtData(r.data) + '</span>' +
+                '<span class="rp-data-dsem' + (fds ? ' rp-data-fds' : '') + '">' + dsem + '</span></td>' +
+            '<td>' + _horaRegistro(r.entrada) + '</td>' +
+            '<td>' + _horaRegistro(r.saidaAlmoco) + '</td>' +
+            '<td>' + _horaRegistro(r.retornoAlmoco) + '</td>' +
+            '<td>' + _horaRegistro(r.saida) + '</td>' +
+            '<td class="rp-td-justi">' + justi + '</td>' +
+            '<td>' + PontoCalculos.minutosParaHHMM(calc.trabalhadas) + '</td>' +
+            '<td>' + (calc.saldo
+                ? '<span class="rp-saldo-chip ' + clsSaldo + '">' + PontoCalculos.minutosParaHHMM(calc.saldo) + '</span>'
+                : '<span class="rp-saldo-chip rp-saldo-zero">—</span>') + '</td>' +
+            '<td class="rp-td-obs" title="' + esc(r.observacoes || '') + '">' + esc(r.observacoes || '') + '</td>' +
+            '<td class="ponto-col-acoes">' +
+                '<button type="button" class="crm-btn-mini" data-ponto-action="registroEditar" data-valor="' + esc(r.data) + '">Editar</button>' +
+                '<button type="button" class="crm-btn-mini crm-btn-mini-perigo" data-ponto-action="registroExcluir" data-valor="' + esc(r.data) + '">Excluir</button>' +
+            '</td>';
+        return tr;
+    }
+
+    // Chamada por renderizar() depois que o HTML de renderizarRegistros() já está
+    // no DOM (o <tbody id="pontoRegistrosBody"> precisa existir de verdade para o
+    // IntersectionObserver do LazyLoader observar a sentinela). Fora da sub-aba
+    // "registros" o elemento não existe e a função não faz nada.
+    function montarRegistrosLazy() {
+        var tbody = document.getElementById('pontoRegistrosBody');
+        if (!tbody) return;
+        var registros = _registrosParaRenderizarLazy;
+        if (!registros || !registros.length) return;
+
+        if (window.LazyLoader) {
+            LazyLoader.render(tbody, registros, function (r) { tbody.appendChild(_renderLinhaRegistro(r)); }, {
+                chunkSize: 50,
+                criarSentinela: function (restantes) {
+                    var tr = document.createElement('tr');
+                    tr.className = 'lazy-sentinela';
+                    var td = document.createElement('td');
+                    td.colSpan = 10;
+                    td.style.cssText = 'text-align:center;padding:12px;color:#94a3b8;font-size:0.8rem';
+                    td.textContent = 'Carregando mais registros... (' + restantes + ' restante' + (restantes !== 1 ? 's' : '') + ')';
+                    tr.appendChild(td);
+                    return tr;
+                }
+            });
+        } else {
+            // LazyLoader não carregou por algum motivo: cai no comportamento antigo
+            // (tudo de uma vez) em vez de deixar a tabela vazia.
+            registros.forEach(function (r) { tbody.appendChild(_renderLinhaRegistro(r)); });
+        }
     }
 
     /**
@@ -1039,6 +1088,7 @@
         '</div>';
 
         el.innerHTML = abas + '<div class="ponto-subaba-corpo">' + renderizarConteudoSubaba(_subaba) + '</div>';
+        if (_subaba === 'registros') montarRegistrosLazy();
         ajustarPontoSticky();
 
         // Modais renderizados fora de #pontoConteudo, direto em <body>: um ancestral

@@ -10,3 +10,10 @@ yarn-error.log
 workerd
 **/workerd/
 **/workerd/**
+
+# Emuladores do Firebase (gerados por `npm run test:rules`)
+firebase-debug.log
+firestore-debug.log
+storage-debug.log
+ui-debug.log
+.firebase/

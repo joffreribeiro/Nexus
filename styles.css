@@ -4113,6 +4113,131 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
     margin: 0 !important;
 }
 
+/* ── Campos dos modais Produto/Movimentação/Preço — migrados de inline
+   styles (ver index.html). Escopadas sob .imbel-modal-body para ter
+   especificidade suficiente e vencer as regras genéricas .form-group
+   input/select/label/textarea (mais abaixo neste arquivo), que do
+   contrário ganhariam de uma classe sozinha (0,1,1 > 0,1,0). ── */
+.imbel-modal-body .imbel-prod-topo-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 2fr auto;
+    gap: 10px;
+    align-items: end;
+}
+.imbel-modal-body .imbel-label-standalone {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #555;
+    display: block;
+    margin-bottom: 4px;
+}
+.imbel-modal-body .imbel-input-compacto {
+    width: 100%;
+    padding: 7px 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: .85rem;
+}
+.imbel-modal-body .imbel-input-padrao {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+}
+.imbel-modal-body .imbel-hint-texto {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+.imbel-modal-body .imbel-form-acoes {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+.imbel-modal-body .imbel-form-acoes .btn {
+    margin-top: 16px;
+}
+.imbel-modal-body.imbel-form-flex {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.imbel-modal-body.imbel-form-rolavel {
+    max-height: 80vh;
+}
+.imbel-modal-body .imbel-section-heading {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 6px;
+    margin-top: 4px;
+}
+.imbel-modal-body .imbel-section-heading--primeira {
+    margin-top: 0;
+}
+.imbel-modal-body .imbel-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.imbel-modal-body .imbel-fg-full {
+    margin: 0;
+    grid-column: 1 / -1;
+}
+.imbel-modal-body .imbel-fg-tight {
+    margin: 0;
+}
+.imbel-modal-body .imbel-label-compacto {
+    font-size: 0.82rem;
+    color: #64748b;
+    font-weight: 600;
+}
+.imbel-modal-body .imbel-obrigatorio {
+    color: #dc2626;
+}
+.imbel-modal-body .imbel-input-form {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+.imbel-modal-body .imbel-input-form.imbel-resize-v {
+    resize: vertical;
+}
+.imbel-modal-body .imbel-input-form.imbel-alinhar-centro {
+    text-align: center;
+}
+.imbel-modal-body .imbel-input-form.imbel-alinhar-direita {
+    text-align: right;
+}
+.imbel-modal-body .imbel-alerta-preco {
+    display: none;
+    background: #fffbf0;
+    border: 1px solid #fcd34d;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.84rem;
+    color: #92400e;
+}
+.imbel-modal-body .imbel-oculto {
+    display: none;
+}
+.imbel-modal-body .imbel-itens-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.imbel-modal-body .imbel-btn-add-item {
+    align-self: flex-start;
+}
+.imbel-modal-content.imbel-modal-content--estreito {
+    max-width: 480px;
+}
+
 /* ========================================
    UI REFACTOR 2026
    ======================================== */

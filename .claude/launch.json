@@ -1,11 +1,12 @@
 {
   "version": "0.0.1",
+  "autoPort": true,
   "configurations": [
     {
       "name": "estoque-static",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["serve", "-l", "5180", "."],
-      "port": 5180
+      "runtimeArgs": ["serve", "."],
+      "port": 5181
     }
   ]
 }

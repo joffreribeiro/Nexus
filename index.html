@@ -6,19 +6,17 @@
     <title>Nexus | Operações Conectadas</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260625-02">
-    <link rel="stylesheet" href="imbel.css?v=20260611-02">
-    <link rel="stylesheet" href="fluxo-nav.css?v=3">
+    <link rel="stylesheet" href="styles.css?v=ae533593">
+    <link rel="stylesheet" href="imbel.css?v=59a1ca6a">
+    <link rel="stylesheet" href="fluxo-nav.css?v=294ab8aa">
     <link id="favicon" rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2248%22%20fill%3D%22%230b1723%22%3E%3C%2Fcircle%3E%0A%20%20%3Cline%20x1%3D%2250%22%20y1%3D%2250%22%20x2%3D%2250%22%20y2%3D%2220%22%20stroke%3D%22%23e5a128%22%20stroke-width%3D%226%22%20stroke-linecap%3D%22round%22%3E%3C%2Fline%3E%0A%20%20%3Cline%20x1%3D%2250%22%20y1%3D%2250%22%20x2%3D%2276%22%20y2%3D%2265%22%20stroke%3D%22%23e5a128%22%20stroke-width%3D%226%22%20stroke-linecap%3D%22round%22%3E%3C%2Fline%3E%0A%20%20%3Cline%20x1%3D%2250%22%20y1%3D%2250%22%20x2%3D%2224%22%20y2%3D%2265%22%20stroke%3D%22%23e5a128%22%20stroke-width%3D%226%22%20stroke-linecap%3D%22round%22%3E%3C%2Fline%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2212%22%20fill%3D%22%23ffd700%22%3E%3C%2Fcircle%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2220%22%20r%3D%228%22%20fill%3D%22%23f6c84c%22%3E%3C%2Fcircle%3E%0A%20%20%3Ccircle%20cx%3D%2276%22%20cy%3D%2265%22%20r%3D%228%22%20fill%3D%22%23f6c84c%22%3E%3C%2Fcircle%3E%0A%20%20%3Ccircle%20cx%3D%2224%22%20cy%3D%2265%22%20r%3D%228%22%20fill%3D%22%23f6c84c%22%3E%3C%2Fcircle%3E%0A%3C%2Fsvg%3E">
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="docx.min.js"></script>
-    <script src="imbel_logo.js"></script>
-    <script src="imbel_logo_black.js"></script>
-    <script src="proposta_bg.js"></script>
+    <!-- docx.min.js, proposta_bg.js e os logos (~2,3 MB) são carregados sob demanda
+         por asset-loader.js, só quando o usuário gera um .docx. Ver asset-loader.js. -->
 </head>
 <body>
     <div class="container">
@@ -3670,25 +3668,25 @@
             </div>
             <div class="imbel-modal-body">
                 <input type="hidden" id="imbel_prod_edit_id" />
-                <div style="display:grid;grid-template-columns:2fr 1fr 1fr 2fr auto;gap:10px;align-items:end">
+                <div class="imbel-prod-topo-grid">
                     <div>
-                        <label style="font-size:.82rem;font-weight:600;color:#555;display:block;margin-bottom:4px">Nome do Produto</label>
-                        <input type="text" id="imbel_prod_nome" placeholder="Nome" style="width:100%;padding:7px 8px;border:1px solid #ddd;border-radius:6px;font-size:.85rem"/>
+                        <label class="imbel-label-standalone">Nome do Produto</label>
+                        <input type="text" id="imbel_prod_nome" placeholder="Nome" class="imbel-input-compacto"/>
                     </div>
                     <div>
-                        <label style="font-size:.82rem;font-weight:600;color:#555;display:block;margin-bottom:4px">Código</label>
-                        <input type="text" id="imbel_prod_codigo" placeholder="Cód." style="width:100%;padding:7px 8px;border:1px solid #ddd;border-radius:6px;font-size:.85rem"/>
+                        <label class="imbel-label-standalone">Código</label>
+                        <input type="text" id="imbel_prod_codigo" placeholder="Cód." class="imbel-input-compacto"/>
                     </div>
                     <div>
-                        <label style="font-size:.82rem;font-weight:600;color:#555;display:block;margin-bottom:4px">Quantidade Inicial</label>
-                        <input type="number" id="imbel_prod_qtd_inicial" value="0" min="0" style="width:100%;padding:7px 8px;border:1px solid #ddd;border-radius:6px;font-size:.85rem"/>
+                        <label class="imbel-label-standalone">Quantidade Inicial</label>
+                        <input type="number" id="imbel_prod_qtd_inicial" value="0" min="0" class="imbel-input-compacto"/>
                     </div>
                     <div class="form-group">
                         <label for="imbel_prod_valor_unit">Valor Unitário (R$)</label>
                         <input type="number" id="imbel_prod_valor_unit"
                                step="0.01" min="0" placeholder="0,00"
-                               style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px">
-                        <small style="color:#64748b;font-size:0.75rem">
+                               class="imbel-input-padrao">
+                        <small class="imbel-hint-texto">
                             Usado para calcular o valor total em estoque
                         </small>
                     </div>
@@ -3697,18 +3695,18 @@
                         <label for="imbel_prod_ponto_reposicao">Ponto de Reposição (Qtd mínima)</label>
                         <input type="number" id="imbel_prod_ponto_reposicao"
                                step="1" min="0" placeholder="Ex: 10"
-                               style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px">
-                        <small style="color:#64748b;font-size:0.75rem">
+                               class="imbel-input-padrao">
+                        <small class="imbel-hint-texto">
                             Alerta amarelo quando estoque atingir este valor
                         </small>
                     </div>
                     <div>
-                        <label style="font-size:.82rem;font-weight:600;color:#555;display:block;margin-bottom:4px">Observação</label>
-                        <input type="text" id="imbel_prod_obs" placeholder="Observação" style="width:100%;padding:7px 8px;border:1px solid #ddd;border-radius:6px;font-size:.85rem"/>
+                        <label class="imbel-label-standalone">Observação</label>
+                        <input type="text" id="imbel_prod_obs" placeholder="Observação" class="imbel-input-compacto"/>
                     </div>
-                    <div style="grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end">
-                        <button type="button" class="btn btn-outline imbel-modal-cancel" style="margin-top:16px">Cancelar</button>
-                        <button type="button" id="imbel_prod_salvar" class="btn btn-primary" style="margin-top:16px">Salvar</button>
+                    <div class="imbel-form-acoes">
+                        <button type="button" class="btn btn-outline imbel-modal-cancel">Cancelar</button>
+                        <button type="button" id="imbel_prod_salvar" class="btn btn-primary">Salvar</button>
                     </div>
                 </div>
             </div>
@@ -3722,54 +3720,54 @@
                 <h3>Registrar Movimentação</h3>
                 <button class="imbel-modal-close">&times;</button>
             </div>
-                        <div class="imbel-modal-body" style="padding:20px;display:flex;flex-direction:column;gap:14px;max-height:80vh;overflow-y:auto">
+                        <div class="imbel-modal-body imbel-form-flex imbel-form-rolavel">
 
     <input type="hidden" id="imbel_mov_edit_id">
 
     <!-- BLOCO 1: PESSOA -->
-    <div style="font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid #f1f5f9;padding-bottom:6px">
+    <div class="imbel-section-heading imbel-section-heading--primeira">
         👤 Dados do Destinatário
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="form-group" style="margin:0;grid-column:1/-1">
-            <label style="font-size:0.82rem;color:#64748b;font-weight:600">Nome / Destinatário <span style="color:#dc2626">*</span></label>
-            <input type="text" id="imbel_mov_dest" placeholder="Nome completo ou organização" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.9rem">
+    <div class="imbel-grid-2col">
+        <div class="form-group imbel-fg-full">
+            <label class="imbel-label-compacto">Nome / Destinatário <span class="imbel-obrigatorio">*</span></label>
+            <input type="text" id="imbel_mov_dest" placeholder="Nome completo ou organização" class="imbel-input-form">
         </div>
 
-        <div class="form-group" style="margin:0">
-            <label style="font-size:0.82rem;color:#64748b;font-weight:600">CPF / CNPJ</label>
-            <input type="text" id="imbel_mov_cpf" placeholder="000.000.000-00" maxlength="18" oninput="this.value = formatCpfCnpjMask(this.value)" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.9rem">
+        <div class="form-group imbel-fg-tight">
+            <label class="imbel-label-compacto">CPF / CNPJ</label>
+            <input type="text" id="imbel_mov_cpf" placeholder="000.000.000-00" maxlength="18" oninput="this.value = formatCpfCnpjMask(this.value)" class="imbel-input-form">
         </div>
 
-        <div class="form-group" style="margin:0">
-            <label style="font-size:0.82rem;color:#64748b;font-weight:600">Telefone</label>
-            <input type="text" id="imbel_mov_tel" placeholder="(00) 00000-0000" maxlength="15" oninput="this.value = formatPhoneMask(this.value)" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.9rem">
+        <div class="form-group imbel-fg-tight">
+            <label class="imbel-label-compacto">Telefone</label>
+            <input type="text" id="imbel_mov_tel" placeholder="(00) 00000-0000" maxlength="15" oninput="this.value = formatPhoneMask(this.value)" class="imbel-input-form">
         </div>
 
-        <div class="form-group" style="margin:0">
-            <label style="font-size:0.82rem;color:#64748b;font-weight:600">E-mail</label>
-            <input type="email" id="imbel_mov_email" placeholder="email@exemplo.com" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.9rem">
+        <div class="form-group imbel-fg-tight">
+            <label class="imbel-label-compacto">E-mail</label>
+            <input type="email" id="imbel_mov_email" placeholder="email@exemplo.com" class="imbel-input-form">
         </div>
 
-        <div class="form-group" style="margin:0;grid-column:1/-1">
-            <label style="font-size:0.82rem;color:#64748b;font-weight:600">Endereço</label>
-            <input type="text" id="imbel_mov_endereco" placeholder="Logradouro, número, complemento, CEP, cidade/UF" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.9rem">
+        <div class="form-group imbel-fg-full">
+            <label class="imbel-label-compacto">Endereço</label>
+            <input type="text" id="imbel_mov_endereco" placeholder="Logradouro, número, complemento, CEP, cidade/UF" class="imbel-input-form">
         </div>
     </div>
 
     <!-- BLOCO 2: MOVIMENTAÇÃO -->
-    <div style="font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid #f1f5f9;padding-bottom:6px;margin-top:4px">📋 Dados da Movimentação</div>
+    <div class="imbel-section-heading">📋 Dados da Movimentação</div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="form-group" style="margin:0">
-            <label style="font-size:0.82rem;color:#64748b;font-weight:600">Data <span style="color:#dc2626">*</span></label>
-            <input type="date" id="imbel_mov_data" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.9rem">
+    <div class="imbel-grid-2col">
+        <div class="form-group imbel-fg-tight">
+            <label class="imbel-label-compacto">Data <span class="imbel-obrigatorio">*</span></label>
+            <input type="date" id="imbel_mov_data" class="imbel-input-form">
         </div>
 
-        <div class="form-group" style="margin:0">
-            <label style="font-size:0.82rem;color:#64748b;font-weight:600">Tipo <span style="color:#dc2626">*</span></label>
-            <select id="imbel_mov_tipo" onchange="onImbelTipoChange()" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.9rem">
+        <div class="form-group imbel-fg-tight">
+            <label class="imbel-label-compacto">Tipo <span class="imbel-obrigatorio">*</span></label>
+            <select id="imbel_mov_tipo" onchange="onImbelTipoChange()" class="imbel-input-form">
                 <optgroup label="── ENTRADAS ──">
                     <option value="RECEBIMENTO_FABRICA">📦 Recebimento Fábrica</option>
                     <option value="RETORNO_MARKETING">↩️ Retorno Marketing</option>
@@ -3786,30 +3784,30 @@
     </div>
 
     <!-- Preço de referência (aparece só para VENDA) -->
-    <div id="imbel_mov_preco_ref" style="display:none;background:#fffbf0;border:1px solid #fcd34d;border-radius:6px;padding:8px 12px;font-size:0.84rem;color:#92400e"></div>
+    <div id="imbel_mov_preco_ref" class="imbel-alerta-preco"></div>
 
     <!-- Evento marketing (aparece só para SAIDA/RETORNO MARKETING) -->
-    <div id="imbel_mov_marketing_ctx" style="display:none">
-        <div class="form-group" style="margin:0">
-            <label style="font-size:0.82rem;color:#64748b;font-weight:600">Ação / Evento de Marketing</label>
-            <input type="text" id="imbel_mov_evento" placeholder="Ex: Feira de Caça e Pesca 2026..." style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.9rem">
+    <div id="imbel_mov_marketing_ctx" class="imbel-oculto">
+        <div class="form-group imbel-fg-tight">
+            <label class="imbel-label-compacto">Ação / Evento de Marketing</label>
+            <input type="text" id="imbel_mov_evento" placeholder="Ex: Feira de Caça e Pesca 2026..." class="imbel-input-form">
         </div>
     </div>
 
     <!-- BLOCO 3: PRODUTOS -->
-    <div style="font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid #f1f5f9;padding-bottom:6px;margin-top:4px">📦 Itens da Movimentação</div>
+    <div class="imbel-section-heading">📦 Itens da Movimentação</div>
 
-    <div id="imbel_mov_itens_container" style="display:flex;flex-direction:column;gap:8px">
+    <div id="imbel_mov_itens_container" class="imbel-itens-lista">
         <!-- rows injected by JS -->
     </div>
 
-    <button type="button" onclick="adicionarItemMovImbel()" class="btn btn-outline btn-sm" style="align-self:flex-start">+ Adicionar Item</button>
+    <button type="button" onclick="adicionarItemMovImbel()" class="btn btn-outline btn-sm imbel-btn-add-item">+ Adicionar Item</button>
 
     <!-- BLOCO 4: OBSERVAÇÕES -->
-    <div style="font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid #f1f5f9;padding-bottom:6px;margin-top:4px">💬 Observações</div>
+    <div class="imbel-section-heading">💬 Observações</div>
 
-    <div class="form-group" style="margin:0">
-        <textarea id="imbel_mov_obs" rows="2" placeholder="Observações internas..." style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.9rem;resize:vertical"></textarea>
+    <div class="form-group imbel-fg-tight">
+        <textarea id="imbel_mov_obs" rows="2" placeholder="Observações internas..." class="imbel-input-form imbel-resize-v"></textarea>
     </div>
 
 </div>
@@ -3822,36 +3820,36 @@
 
             <div id="imbel_preco_modal" class="imbel-modal" style="display:none">
                 <div class="imbel-modal-backdrop"></div>
-                <div class="imbel-modal-content" style="max-width:480px">
+                <div class="imbel-modal-content imbel-modal-content--estreito">
                     <div class="imbel-modal-header">
                         <span class="imbel-modal-title">💰 Definir Preço</span>
                         <button class="imbel-modal-close">×</button>
                     </div>
-                    <div class="imbel-modal-body" style="padding:20px;display:flex;flex-direction:column;gap:14px">
+                    <div class="imbel-modal-body imbel-form-flex">
 
                         <input type="hidden" id="imbel_preco_edit_id">
 
                         <div class="form-group">
                             <label>Produto</label>
-                            <select id="imbel_preco_produto" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.9rem">
+                            <select id="imbel_preco_produto" class="imbel-input-form">
                                 <option value="">Selecione o produto</option>
                             </select>
                         </div>
 
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div class="imbel-grid-2col">
                             <div class="form-group">
                                 <label>Ano</label>
-                                <input type="number" id="imbel_preco_ano" min="2020" max="2099" step="1" placeholder="2026" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.9rem;text-align:center">
+                                <input type="number" id="imbel_preco_ano" min="2020" max="2099" step="1" placeholder="2026" class="imbel-input-form imbel-alinhar-centro">
                             </div>
                             <div class="form-group">
                                 <label>Valor (R$)</label>
-                                <input type="number" id="imbel_preco_valor" min="0" step="0.01" placeholder="0,00" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.9rem;text-align:right">
+                                <input type="number" id="imbel_preco_valor" min="0" step="0.01" placeholder="0,00" class="imbel-input-form imbel-alinhar-direita">
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label>Observação (opcional)</label>
-                            <input type="text" id="imbel_preco_obs" placeholder="Ex: Preço aprovado em reunião jan/2026" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.9rem">
+                            <input type="text" id="imbel_preco_obs" placeholder="Ex: Preço aprovado em reunião jan/2026" class="imbel-input-form">
                         </div>
 
                     </div>
@@ -4956,30 +4954,32 @@
         </div>
     </div>
 
-    <script src="lazy-loader.js?v=1"></script>
-    <script src="debounce.js?v=1"></script>
-    <script src="app2.js?v=37"></script>
-    <script src="icms-regras.js?v=1"></script>
+    <script src="lazy-loader.js?v=c242e874"></script>
+    <script src="asset-loader.js?v=46401e5e"></script>
+    <script src="modal-a11y.js?v=90653483"></script>
+    <script src="debounce.js?v=513ecf7a"></script>
+    <script src="app2.js?v=7ce06360"></script>
+    <script src="icms-regras.js?v=edeb04f9"></script>
 
-    <script src="estoque-calculos.js?v=1"></script>
+    <script src="estoque-calculos.js?v=73cdd7e6"></script>
 
-    <script src="crm-model.js?v=11"></script>
-    <script src="crm-calculos.js?v=6"></script>
-    <script src="crm-compat.js?v=1"></script>
-    <script src="crm-store.js?v=7"></script>
-    <script src="crm-kanban.js?v=1"></script>
-    <script src="crm-ui.js?v=40"></script>
-    <script src="google-calendar-sync.js?v=16"></script>
-    <link rel="stylesheet" href="crm.css?v=25">
+    <script src="crm-model.js?v=a047290b"></script>
+    <script src="crm-calculos.js?v=e5fd804a"></script>
+    <script src="crm-compat.js?v=27c19cee"></script>
+    <script src="crm-store.js?v=f4ce48dd"></script>
+    <script src="crm-kanban.js?v=0d285955"></script>
+    <script src="crm-ui.js?v=9ff8fd45"></script>
+    <script src="google-calendar-sync.js?v=7d8a5f6e"></script>
+    <link rel="stylesheet" href="crm.css?v=2d3b85ed">
 
-    <script src="ponto-model.js?v=2"></script>
-    <script src="ponto-calculos.js?v=1"></script>
-    <script src="ponto-store.js?v=1"></script>
-    <script src="ponto-timesheet.js?v=3"></script>
-    <script src="ponto-ui.js?v=15"></script>
-    <link rel="stylesheet" href="ponto.css?v=17">
+    <script src="ponto-model.js?v=d90170db"></script>
+    <script src="ponto-calculos.js?v=d09f238d"></script>
+    <script src="ponto-store.js?v=71fd7120"></script>
+    <script src="ponto-timesheet.js?v=d5e22232"></script>
+    <script src="ponto-ui.js?v=015aae50"></script>
+    <link rel="stylesheet" href="ponto.css?v=bc613eaf">
 
-    <script src="fluxo-nav.js?v=3"></script>
+    <script src="fluxo-nav.js?v=fa46bcbf"></script>
 
     <script>
     (function matchSubtitleWidth(){

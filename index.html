@@ -5089,7 +5089,11 @@
          nível de módulo (ex.: initControleImbel() logo após ser definida) que
          precisam de window.EstoqueCalculos já disponível nesse momento. -->
     <script src="estoque-calculos.js?v=e346bd93"></script>
-    <script src="app2.js?v=cb386b85"></script>
+    <!-- cloud-store.js: persistência em nuvem por módulo, usada por
+         salvarNoCloud/carregarDoCloud em app2.js. Carrega antes por coerência
+         com estoque-calculos.js. -->
+    <script src="cloud-store.js?v=634e9fc0"></script>
+    <script src="app2.js?v=71aca044"></script>
     <script src="icms-regras.js?v=edeb04f9"></script>
 
     <script src="crm-model.js?v=a047290b"></script>

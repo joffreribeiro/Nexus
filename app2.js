@@ -2602,8 +2602,13 @@ async function salvarNoCloud() {
             if (imbelDataToSave) estoque._imbelData = imbelDataToSave;
         } catch (e) { /* ignore */ }
         const docRef = window.firestoreDB.collection('app_data').doc('latest');
-        await docRef.set({
-            estado: estoque,
+        // Escrita dupla (ver cloud-store.js): grava os três documentos por
+        // módulo — app_data/estoque, /crm, /ponto — e também o legado
+        // app_data/latest, no formato exato de antes. Enquanto o legado
+        // continuar sendo escrito, voltar ao código anterior é seguro e não
+        // perde nada. Os campos abaixo já vivem dentro de `estado`; seguem
+        // replicados no topo do documento legado só por compatibilidade.
+        await CloudStore.salvarComEscritaDupla(window.firestoreDB, firebase, estoque, {
             precificacao,
             precificacoesCliente: precificacoesCliente || [],
             tabelaAliquotas,
@@ -2611,8 +2616,7 @@ async function salvarNoCloud() {
             categoriaPorProduto,
             impostosEditaveis: impostosEditaveis || {},
             icmsEditavelPJ: icmsEditavelPJ || {},
-            icmsEditavelPF: icmsEditavelPF || {},
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            icmsEditavelPF: icmsEditavelPF || {}
         });
         // ler o documento para obter o updatedAt do servidor
             try {
@@ -2711,18 +2715,20 @@ async function carregarDoCloud({confirmOverwrite=true} = {}) {
     }
     window._carregandoDoCloud = true;
     try {
-        const docRef = window.firestoreDB.collection('app_data').doc('latest');
-        const doc = await docRef.get();
-        if (!doc.exists) {
+        // Lê da fonte mais recente (documentos por módulo ou o legado),
+        // sempre no mesmo formato de antes — ver lerEstadoCompativel em
+        // cloud-store.js. O restante desta função não muda.
+        const { data, origem } = await CloudStore.lerEstadoCompativel(window.firestoreDB);
+        if (!data) {
             console.warn('Nenhum backup encontrado no Firestore.');
             updateFirestoreStatus(true, null, 'Cloud: pronto (sem backup)');
             return false;
         }
-        const data = doc.data();
-        if (!data || !data.estado) {
+        if (!data.estado) {
             console.warn('Documento encontrado não contém campo estado.');
             return false;
         }
+        console.debug('carregarDoCloud: dados vindos de', origem);
         // obter timestamp de atualização remoto se disponível
         try {
             const updatedAt = data.updatedAt ? data.updatedAt.toDate() : null;
@@ -2848,10 +2854,9 @@ async function carregarDoCloudAuto() {
     }
     window._carregandoDoCloud = true;
     try {
-        const docRef = window.firestoreDB.collection('app_data').doc('latest');
-        const doc = await docRef.get();
-        if (!doc.exists) { window._carregandoDoCloud = false; return false; }
-        const data = doc.data();
+        // Mesma troca de fonte de carregarDoCloud (ver cloud-store.js).
+        const { data } = await CloudStore.lerEstadoCompativel(window.firestoreDB);
+        if (!data || !data.estado) { window._carregandoDoCloud = false; return false; }
         const remoteUpdated = data.updatedAt ? data.updatedAt.toDate().getTime() : null;
         const localUpdated = estoque._localUpdatedAt ? new Date(estoque._localUpdatedAt).getTime() : 0;
         // Não sobrescrever se há alterações locais pendentes não sincronizadas
@@ -25356,10 +25361,12 @@ if (window.firebase && firebase.auth) {
                 try {
                     if (window.firestoreDB) {
                         try {
-                            const doc = await window.firestoreDB.collection('app_data').doc('latest').get();
-                            if (doc && doc.exists) {
-                                const data = doc.data();
-                                const updatedAt = data && data.updatedAt ? data.updatedAt.toDate() : null;
+                            // Usa a mesma resolução de fonte do resto do app,
+                            // para o indicador continuar correto quando a
+                            // escrita no documento legado for removida.
+                            const { data } = await CloudStore.lerEstadoCompativel(window.firestoreDB);
+                            if (data) {
+                                const updatedAt = data.updatedAt ? data.updatedAt.toDate() : null;
                                 updateFirestoreStatus(true, updatedAt, 'Cloud: pronto');
                             } else {
                                 updateFirestoreStatus(true, null, 'Cloud: pronto (sem backup)');
@@ -25384,12 +25391,14 @@ if (window.firebase && firebase.auth) {
                         // Registrar listener em tempo real para detectar atualizações remotas
                         try {
                             if (window.firestoreDB && !window.__firestoreAppDataUnsubscribe) {
-                                const docRef = window.firestoreDB.collection('app_data').doc('latest');
-                                window.__firestoreAppDataUnsubscribe = docRef.onSnapshot(async (doc) => {
+                                // Observa a COLEÇÃO inteira, não mais um único
+                                // documento: assim o listener detecta alteração
+                                // em qualquer módulo (estoque, crm ou ponto),
+                                // além do legado.
+                                const colRef = window.firestoreDB.collection('app_data');
+                                window.__firestoreAppDataUnsubscribe = colRef.onSnapshot(async (snap) => {
                                     try {
-                                        if (!doc || !doc.exists) return;
-                                        const data = doc.data();
-                                        const remoteUpdated = data && data.updatedAt ? data.updatedAt.toDate().getTime() : null;
+                                        const remoteUpdated = CloudStore.timestampMaisRecenteDeSnapshot(snap);
                                         const localUpdated = estoque && estoque._localUpdatedAt ? new Date(estoque._localUpdatedAt).getTime() : 0;
                                         if (!remoteUpdated) return;
                                         // Ignorar se o remoto não é mais recente que o local

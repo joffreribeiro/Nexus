@@ -26,19 +26,26 @@ service cloud.firestore {
     //
     // O segundo braço replica o fallback por e-mail que existe em app2.js
     // ("Fallback por email (temporário)") — sem ele, publicar estas regras
-    // tiraria o acesso de escrita do dono caso a claim ainda não esteja
-    // definida na conta. Assim que `admin: true` estiver confirmada, remova
-    // o fallback aqui e a linha correspondente no app2.js.
-    // `email_verified` evita que uma conta criada com o mesmo endereço, mas
-    // sem confirmação, herde o privilégio.
+    // tira o acesso de escrita do dono enquanto a claim não estiver definida
+    // na conta. Assim que `admin: true` estiver confirmada, remova o fallback
+    // aqui e a linha correspondente no app2.js.
+    //
+    // NÃO exigir `email_verified` aqui é deliberado. A primeira versão destas
+    // regras exigia, e o resultado foi bloquear justamente o dono: a conta
+    // dele existe com `emailVerified: false`, então nem a claim (ainda não
+    // definida) nem o fallback funcionavam — ninguém conseguia gravar.
+    // A proteção que `email_verified` daria (impedir que alguém registre uma
+    // conta com este mesmo e-mail para herdar privilégio) já é garantida pelo
+    // próprio Firebase Auth: o endereço está tomado pela conta real e o
+    // provedor de senha não permite duplicata.
+    //
     // `token.get(chave, padrão)` em vez de `token.admin`: contas sem a claim
     // não têm a propriedade, e o acesso direto gera ruído de "Property admin
     // is undefined" na avaliação.
     function ehAdmin() {
       return autenticado() && (
         request.auth.token.get('admin', false) == true
-        || (request.auth.token.get('email', '') == 'joffre.ribeiro@gmail.com'
-            && request.auth.token.get('email_verified', false) == true)
+        || request.auth.token.get('email', '') == 'joffre.ribeiro@gmail.com'
       );
     }
 

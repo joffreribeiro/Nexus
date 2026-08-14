@@ -106,10 +106,14 @@ describe('fallback por e-mail do dono', () => {
         await assertSucceeds(setDoc(docLatest(comoDonoPorEmail()), payload));
     });
 
-    // Impede que uma conta criada com o mesmo endereço, mas sem confirmação,
-    // herde o privilégio.
-    it('nega escrita para o mesmo e-mail se não estiver verificado', async () => {
-        await assertFails(setDoc(docLatest(comoDonoEmailNaoVerificado()), payload));
+    // REGRESSÃO: a primeira versão destas regras exigia `email_verified` no
+    // fallback, e isso bloqueou o dono — a conta real dele tem
+    // `emailVerified: false` e a custom claim ainda não estava definida, então
+    // nenhum dos dois caminhos passava e todo save falhava com
+    // permission-denied. Este teste trava esse comportamento: o e-mail do dono
+    // grava mesmo sem verificação.
+    it('permite escrita para o e-mail do dono mesmo com e-mail não verificado', async () => {
+        await assertSucceeds(setDoc(docLatest(comoDonoEmailNaoVerificado()), payload));
     });
 });
 

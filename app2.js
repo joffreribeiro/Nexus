@@ -25318,15 +25318,15 @@ if (window.firebase && firebase.auth) {
                     if (banner) banner.style.display = 'none';
                 } catch (e) { _catchSilencioso(e, 'signOut'); }
 
-                // Verifica claims para habilitar controles de admin
+                // Verifica claims para habilitar controles de admin.
+                // O fallback por e-mail que existia aqui (e nas regras do
+                // Firestore/Storage) foi removido em 2026-08-13, depois de
+                // confirmar a claim admin:true funcionando em produção.
                 let isAdmin = false;
                 try {
                     const idt = await user.getIdTokenResult();
                     isAdmin = !!idt.claims && !!idt.claims.admin;
                 } catch (e) { /* ignore */ }
-
-                // Fallback por email (temporário) — remove se preferir depender apenas da claim
-                if (!isAdmin && user.email === 'joffre.ribeiro@gmail.com') isAdmin = true;
 
                 if (isAdmin) {
                     document.body.classList.add('is-admin');

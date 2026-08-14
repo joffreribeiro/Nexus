@@ -99,21 +99,16 @@ describe('app_data — escrita', () => {
     });
 });
 
-describe('fallback por e-mail do dono', () => {
-    // Sem este braço, publicar as regras tiraria a escrita do dono caso a
-    // custom claim ainda não esteja definida na conta.
-    it('permite escrita para o e-mail do dono quando verificado', async () => {
-        await assertSucceeds(setDoc(docLatest(comoDonoPorEmail()), payload));
-    });
-
-    // REGRESSÃO: a primeira versão destas regras exigia `email_verified` no
-    // fallback, e isso bloqueou o dono — a conta real dele tem
-    // `emailVerified: false` e a custom claim ainda não estava definida, então
-    // nenhum dos dois caminhos passava e todo save falhava com
-    // permission-denied. Este teste trava esse comportamento: o e-mail do dono
-    // grava mesmo sem verificação.
-    it('permite escrita para o e-mail do dono mesmo com e-mail não verificado', async () => {
-        await assertSucceeds(setDoc(docLatest(comoDonoEmailNaoVerificado()), payload));
+describe('fallback por e-mail (removido)', () => {
+    // O fallback por e-mail existiu temporariamente enquanto a custom claim
+    // não estava confirmada em produção (ver histórico deste arquivo — chegou
+    // a ter dois formatos: com e sem exigir email_verified). Confirmada a
+    // claim funcionando em 2026-08-13, o fallback foi removido daqui, de
+    // storage.rules e de app2.js. Este teste é o inverso do que existia antes:
+    // trava que só a claim concede admin agora, mesmo para o e-mail do dono.
+    it('e-mail do dono sozinho, sem a claim, NÃO grava mais', async () => {
+        await assertFails(setDoc(docLatest(comoDonoPorEmail()), payload));
+        await assertFails(setDoc(docLatest(comoDonoEmailNaoVerificado()), payload));
     });
 });
 

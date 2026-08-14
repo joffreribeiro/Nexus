@@ -17,12 +17,8 @@ service firebase.storage {
     }
 
     // Mesma definição usada em firestore.rules — manter as duas em sincronia.
-    // Sobre não exigir `email_verified`, ver o comentário longo lá.
     function ehAdmin() {
-      return autenticado() && (
-        request.auth.token.get('admin', false) == true
-        || request.auth.token.get('email', '') == 'joffre.ribeiro@gmail.com'
-      );
+      return autenticado() && request.auth.token.get('admin', false) == true;
     }
 
     match /crm/{entidade}/{entidadeId}/{arquivo} {

@@ -1,0 +1,2369 @@
+{
+  "unidade": "DVMNA-FI",
+  "fonte": "SEI - Controle de Processos + Acompanhamento Especial",
+  "geradoEm": "2026-08-19",
+  "marcadoresExistentesNoSEI": [
+    "Acompanhamento",
+    "Força Armada",
+    "Geral",
+    "Mercado Interno",
+    "P&D",
+    "Pessoal",
+    "Plano de Produção",
+    "Projetos - FI",
+    "Representantes",
+    "S&OP",
+    "TED",
+    "TED em tratativas",
+    "TED encerrados"
+  ],
+  "processos": [
+    {
+      "numero": "65251.004709/2025-34",
+      "assunto": "Plano de Negócios 2026",
+      "tipoProcesso": "Planejamento Estratégico: Elaboração do Plano Estratégico",
+      "marcadores": [
+        "Acompanhamento"
+      ],
+      "acompanhamentoEspecial": [
+        "Consultas Importantes"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65512.000953/2025-18",
+      "assunto": "RP de IPI",
+      "tipoProcesso": "Orçamento: Programação Orçamentária",
+      "marcadores": [
+        "Acompanhamento"
+      ],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.000384/2025-11",
+      "assunto": "Reuniões UP - DRIND",
+      "tipoProcesso": "Gestão e Controle: Coordenação - Demandas Internas",
+      "marcadores": [
+        "Acompanhamento"
+      ],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.000440/2026-06",
+      "assunto": "Plano de Produção",
+      "tipoProcesso": "Planejamento Estratégico: Acompanhamento do Plano Operacional",
+      "marcadores": [
+        "Acompanhamento",
+        "Geral"
+      ],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.000034/2026-35",
+      "assunto": "SO&P",
+      "tipoProcesso": "Planejamento Estratégico: Acompanhamento do Plano Operacional",
+      "marcadores": [
+        "Acompanhamento",
+        "S&OP"
+      ],
+      "acompanhamentoEspecial": [
+        "Consultas Importantes"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.000625/2026-11",
+      "assunto": null,
+      "tipoProcesso": "Demanda Externa: Outros Orgãos Públicos",
+      "marcadores": [
+        "Força Armada"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.001253/2025-51",
+      "assunto": "Fuzil SNIPER",
+      "tipoProcesso": "Gestão de Projetos: Planejamento e Execução",
+      "marcadores": [
+        "Força Armada"
+      ],
+      "acompanhamentoEspecial": [
+        "Força Armada"
+      ],
+      "observacao": "Sinalizado com alerta de prazo no SEI",
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.004178/2025-80",
+      "assunto": "Protótipo da Pistola 9 TC MD1",
+      "tipoProcesso": "INOVAÇÃO: Pesquisa e Desenvolvimento",
+      "marcadores": [
+        "Geral"
+      ],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65512.001004/2025-47",
+      "assunto": "LEP - recursos para pagamento",
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "Geral"
+      ],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": "Atribuído ao usuário 91821444191",
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.001143/2026-70",
+      "assunto": null,
+      "tipoProcesso": "INOVAÇÃO: Pesquisa e Desenvolvimento",
+      "marcadores": [
+        "Geral"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": "Sinalizado com alerta de prazo no SEI",
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.000656/2026-63",
+      "assunto": "Faturamento REPI",
+      "tipoProcesso": "Contabilidade: Análise Contábil",
+      "marcadores": [
+        "Geral"
+      ],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.003361/2025-68",
+      "assunto": "DFA Defense",
+      "tipoProcesso": "Gestão Comercial: Novos Negócios",
+      "marcadores": [
+        "Mercado Interno"
+      ],
+      "acompanhamentoEspecial": [
+        "Mercado Interno"
+      ],
+      "observacao": "Anotação no SEI: Produção das Amostras finalizadas em NOV/25 - Solicitado à FI contato com a DFA para retirada das amostras (FEV/26) - 04/02/2026 Amostras enviadas para DFA (Abril/2026)",
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.001525/2025-12",
+      "assunto": null,
+      "tipoProcesso": "INOVAÇÃO: Pesquisa e Desenvolvimento",
+      "marcadores": [
+        "P&D"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.002087/2026-91",
+      "assunto": "Certificados",
+      "tipoProcesso": "Pessoal: Curso Promovido por outra Instituição",
+      "marcadores": [
+        "Pessoal"
+      ],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.002514/2026-31",
+      "assunto": null,
+      "tipoProcesso": "Pessoal: Plano de Capacitação",
+      "marcadores": [
+        "Pessoal"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.002697/2026-94",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "Pessoal"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.002224/2026-97",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "Pessoal"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.000994/2026-03",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Marketing",
+      "marcadores": [
+        "Pessoal"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.002463/2026-47",
+      "assunto": null,
+      "tipoProcesso": "Gestão de Contrato: Acompanhamento da Execução",
+      "marcadores": [
+        "Plano de Produção"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": "Processo destacado em vermelho no SEI (prazo vencido)",
+      "origem": "marcado"
+    },
+    {
+      "numero": "65512.000712/2025-61",
+      "assunto": null,
+      "tipoProcesso": "Gestão de Projetos: Planejamento e Execução",
+      "marcadores": [
+        "Projetos - FI"
+      ],
+      "acompanhamentoEspecial": [
+        "Projetos - FI"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65512.000722/2025-04",
+      "assunto": null,
+      "tipoProcesso": "Gestão de Projetos: Planejamento e Execução",
+      "marcadores": [
+        "Projetos - FI"
+      ],
+      "acompanhamentoEspecial": [
+        "Projetos - FI"
+      ],
+      "observacao": "Sinalizado com alerta de prazo no SEI",
+      "origem": "marcado"
+    },
+    {
+      "numero": "65512.000704/2025-14",
+      "assunto": null,
+      "tipoProcesso": "Gestão de Projetos: Planejamento e Execução",
+      "marcadores": [
+        "Projetos - FI"
+      ],
+      "acompanhamentoEspecial": [
+        "Projetos - FI"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.004698/2025-92",
+      "assunto": "Rescisão Contratual JMS",
+      "tipoProcesso": "Gestão de Contrato: Rescisão Contratual",
+      "marcadores": [
+        "Representantes"
+      ],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": "Sinalizado com alerta de prazo no SEI",
+      "origem": "marcado"
+    },
+    {
+      "numero": "65512.000575/2026-45",
+      "assunto": "Pagamento comissões - Maio/2026",
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "Representantes"
+      ],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65512.000688/2026-41",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "Representantes"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.002574/2026-53",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "Representantes"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.002572/2026-64",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "Representantes"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.002570/2026-75",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "Representantes"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65512.000797/2026-68",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "Representantes"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.000571/2025-02",
+      "assunto": "S&OP",
+      "tipoProcesso": "Planejamento Estratégico: Acompanhamento do Plano Operacional",
+      "marcadores": [
+        "S&OP"
+      ],
+      "acompanhamentoEspecial": [
+        "Consultas Importantes"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65512.001353/2025-69",
+      "assunto": null,
+      "tipoProcesso": "Gestão da Informação: Gestão Documental",
+      "marcadores": [
+        "TED"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.000416/2026-69",
+      "assunto": null,
+      "tipoProcesso": "Gestão de Contrato: Acompanhamento da Execução",
+      "marcadores": [
+        "TED"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.005395/2025-97",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "TED"
+      ],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.001872/2025-45",
+      "assunto": "TED 01/2025 - DIRMAB - Fz",
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "TED"
+      ],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": "Atribuído ao usuário 91821444191; processo em trânsito",
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.000621/2025-43",
+      "assunto": "TED 24-EME-013 - Fz",
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "TED"
+      ],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": "Atribuído ao usuário 91821444191",
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.003834/2025-27",
+      "assunto": "P Trab 007/2025 - Pç Armamento",
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "TED em tratativas"
+      ],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.001770/2025-20",
+      "assunto": "P Trab 012/2025 - Fz 5,56",
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "TED em tratativas"
+      ],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.001164/2025-12",
+      "assunto": "P Trab 006/2025 - Pst 9mm (400)",
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "TED em tratativas"
+      ],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": "Atribuído ao usuário 91821444191",
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.000617/2025-85",
+      "assunto": "TED 22-EME-013 - Pç Armt",
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [
+        "TED encerrados"
+      ],
+      "acompanhamentoEspecial": [
+        "TED encerrados"
+      ],
+      "observacao": null,
+      "origem": "marcado"
+    },
+    {
+      "numero": "65251.000034/2025-54",
+      "assunto": "Pagamento de Comissões - Novembro/2024",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000039/2025-87",
+      "assunto": "Barraca",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Acompanhar\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000054/2026-14",
+      "assunto": "Auditoria 2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000158/2026-11",
+      "assunto": "NCM FI",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000242/2026-34",
+      "assunto": "Partes Relacionadas",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000298/2026-99",
+      "assunto": "Insumos Críticos",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000363/2025-03",
+      "assunto": "Solicitação de Detalhamento dos Recursos dos TEDs para 2025",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"TED\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000369/2026-53",
+      "assunto": "Participação em Licitações",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000400/2025-75",
+      "assunto": "Relatório Produção Trimestral",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000607/2026-21",
+      "assunto": "Férias",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000613/2026-88",
+      "assunto": "Visita técnica COLOG - FI",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"TED\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000615/2025-96",
+      "assunto": "TED 22-EME-004 - Fz",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "TED encerrados"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"TED encerrados\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000687/2026-14",
+      "assunto": "Abono - Acordo Coletivo",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000699/2025-68",
+      "assunto": "Exame de contra-cheque",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000821/2025-04",
+      "assunto": "Simulacro para simulador de tiro - EBTS",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Acompanhar\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000904/2026-76",
+      "assunto": "Abono - trabalho fds AMAN",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.001019/2025-23",
+      "assunto": "Investimentos do TED 22 - FI",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"TED\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.001029/2025-69",
+      "assunto": "Descentralizações TED - COLOG",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"TED\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.001128/2025-41",
+      "assunto": "Fire Eagle",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Mercado Interno"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Mercado Interno\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.001138/2026-67",
+      "assunto": "Shot Fair",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.001219/2025-86",
+      "assunto": "Desenvolvimento Armt Cal 12",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Acompanhar\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.001228/2026-58",
+      "assunto": "Abono - LAAD",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.001267/2025-74",
+      "assunto": "Férias",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.001284/2026-92",
+      "assunto": "NF KOLTE - Fevereiro/2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.001285/2026-37",
+      "assunto": "NF ISA - Fevereiro/2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.001286/2026-81",
+      "assunto": "NF ADES - Fevereiro/2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.001370/2025-14",
+      "assunto": "Abono Justificado",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.001848/2026-97",
+      "assunto": "NF ISA - Março/2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.001849/2026-31",
+      "assunto": "NF KOLTE - Março/2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.001881/2026-17",
+      "assunto": "NF ADES - Março/2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002140/2025-72",
+      "assunto": "SLI",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002163/2025-87",
+      "assunto": "Recolhimento Fz AMAN",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Acompanhar\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002180/2025-14",
+      "assunto": "Pst 9mm TC MD6 - Gabinete",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Força Armada"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Força Armada\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002220/2025-28",
+      "assunto": "TED Fz 7,62",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"TED\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002361/2025-41",
+      "assunto": "Empenhos TED",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Acompanhar",
+        "TED"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Acompanhar\" (hoje só existe como grupo de Acompanhamento Especial); Aplicar marcador já existente \"TED\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002448/2025-18",
+      "assunto": "Passagem de carga",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002502/2025-25",
+      "assunto": "Relatório de desempenho Fz 5,56",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002523/2026-21",
+      "assunto": "Portaria substituição",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002601/2025-15",
+      "assunto": "LAAD 2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002648/2025-71",
+      "assunto": "EBTS",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Mercado Interno"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Mercado Interno\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002687/2025-78",
+      "assunto": "Cobrança TED (Fz, Pst, Pç Armt)",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"TED\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002744/2025-19",
+      "assunto": "Fornecimento de Pç Atirador",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002758/2025-32",
+      "assunto": "Compensação de Horário",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002847/2025-89",
+      "assunto": "Visita FI",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002861/2025-82",
+      "assunto": "Impactos cortes orçamento nos TED",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002897/2025-66",
+      "assunto": "Pst 9mm TC MD6 - Gabinete",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Força Armada"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Força Armada\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.002944/2025-71",
+      "assunto": "Alteração Plano de Produção - Pst 9 TC MD6 - Gabinete",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Acompanhar\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003038/2025-94",
+      "assunto": "Estágio capacitação - AMAN",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Assistência/Garantia"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Assistência/Garantia\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003052/2025-98",
+      "assunto": "Reparo Coronha PARAFAL",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Força Armada"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Força Armada\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003131/2025-07",
+      "assunto": "Salário substituição",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003168/2025-27",
+      "assunto": "Carta cliente Filipe - sugestão de armamento",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003190/2025-77",
+      "assunto": "Solicitação Machadinha",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003433/2025-77",
+      "assunto": "Relatório Auditoria - FI",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003438/2025-08",
+      "assunto": "Visita EME à FI",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Acompanhar\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003480/2025-11",
+      "assunto": "Prêmio IMBEL",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Premiação EB",
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Premiação EB\" (hoje só existe como grupo de Acompanhamento Especial); Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003556/2025-16",
+      "assunto": "Serviço de Pentest - AGTIC",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003595/2025-13",
+      "assunto": "3º RCC",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Assistência/Garantia"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Assistência/Garantia\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003625/2025-83",
+      "assunto": "CMS",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Assistência/Garantia"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Assistência/Garantia\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003672/2025-27",
+      "assunto": "Atualização PECS",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003716/2025-19",
+      "assunto": "Faca IA2 50 anos para Venda",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Mercado Interno"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Mercado Interno\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003726/2025-54",
+      "assunto": "Calendário Atividades 2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Acompanhar\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003816/2025-45",
+      "assunto": "Baraca - nacionalização",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Acompanhar\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003892/2025-51",
+      "assunto": "LEP",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.003985/2025-85",
+      "assunto": "Preenchimento anexo 4 de Diárias",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"TED\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004002/2025-28",
+      "assunto": "Faca IA2 trincheira",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004011/2025-19",
+      "assunto": "Semana Material Bélico - AMAN",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004036/2025-12",
+      "assunto": "Venda Facas Comemorativas 2025",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004138/2025-38",
+      "assunto": "Pst 9 MD6",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004139/2025-82",
+      "assunto": "Fiscalização TED | TED 01/2025-DORMAB - Fiscalização",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal",
+        "TED"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"; Aplicar marcador já existente \"TED\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004250/2025-79",
+      "assunto": "Pedido de Facas para Venda",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Mercado Interno"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Mercado Interno\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004255/2025-00",
+      "assunto": "Avaliação de Desempenho",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004256/2025-46",
+      "assunto": "Cotação Pst Strike Fire - Marinha",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Força Armada"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Força Armada\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004476/2025-70",
+      "assunto": "Declaração Exclusividade FI | Declaração Exclusividade - FI",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral",
+        "Consultas Importantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"; Criar novo marcador \"Consultas Importantes\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004567/2025-13",
+      "assunto": "TOTVS - Curso",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004571/2025-73",
+      "assunto": "Ficha Técnica de Produtos",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004572/2025-18",
+      "assunto": "Expediente Natal e Ano Novo 2025",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004620/2025-78",
+      "assunto": "Fuzil 5,56 4º RCC",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Assistência/Garantia"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Assistência/Garantia\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004660/2025-10",
+      "assunto": "Salário Substituição",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004717/2025-81",
+      "assunto": "Plano de Ação 2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Consultas Importantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Consultas Importantes\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004794/2025-31",
+      "assunto": "Gestão de Riscos",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004826/2025-06",
+      "assunto": "SISCAPED",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004916/2025-99",
+      "assunto": "Participação em Licitações",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.004986/2025-47",
+      "assunto": "Preço Obturador Fuzil",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Força Armada"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Força Armada\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005062/2025-68",
+      "assunto": "Entregas DCT",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005087/2025-61",
+      "assunto": "Plano de Produção 2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Consultas Importantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Consultas Importantes\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005166/2025-72",
+      "assunto": "Plano de Negócios - 2025",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Acompanhar\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005196/2025-89",
+      "assunto": "Visita COLOG na FI",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005234/2025-01",
+      "assunto": "Empenho",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"TED\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005238/2025-81",
+      "assunto": "Viagem Fiscalização TED - não autorizada VPRESI",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005312/2025-60",
+      "assunto": "Auditoria 2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005345/2025-18",
+      "assunto": "Evolução Funcional",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005346/2025-54",
+      "assunto": "Evolução Funcional",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005361/2025-01",
+      "assunto": "Férias",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005367/2025-70",
+      "assunto": "Plano de Investimento - FI 2026",
+      "tipoProcesso": "Planejamento Estratégico: Gestão do Plano Estratégico",
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005397/2025-86",
+      "assunto": null,
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005408/2025-28",
+      "assunto": "Viagem - Olimpíadas Acadêmicas - AMAN",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005425/2025-65",
+      "assunto": "Curso Exportação",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Pessoal"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Pessoal\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005481/2025-08",
+      "assunto": "Emails Funcionais",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Consultas Importantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Consultas Importantes\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005509/2025-07",
+      "assunto": "Auditoria 2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005610/2025-50",
+      "assunto": "Pagamento KOLTE - Outubro e Novembro/2025",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005612/2025-49",
+      "assunto": "Pagamento ISA - Outubro e Novembro/2025",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005623/2025-29",
+      "assunto": "Relatório de Gestão 2025",
+      "tipoProcesso": "Planejamento Estratégico: Gestão do Plano Estratégico",
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Consultas Importantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Consultas Importantes\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.005664/2025-15",
+      "assunto": null,
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000066/2025-31",
+      "assunto": "TED 22-EME-004 - Necessidade Diárias",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"TED\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000090/2025-71",
+      "assunto": "Pagamento de Comissões - Dezembro/2024",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000294/2026-92",
+      "assunto": "Pagamento Comissões - Dezembro/2025 e Fevereiro/2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000344/2025-51",
+      "assunto": "Produção abrigos",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Acompanhar\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000393/2026-74",
+      "assunto": "Pagamento Comissões - Março/2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000408/2025-13",
+      "assunto": "Simulacro Fz 5,56 Blue Gun",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Acompanhar\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000424/2025-14",
+      "assunto": "Pagamento de Comissões - Fevereiro/2025",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000455/2025-67",
+      "assunto": "Divergência faturamento de 2024",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000480/2026-21",
+      "assunto": "Pagamento de comissões - Abril/2026",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000554/2025-49",
+      "assunto": "Pagamento ICMS - Março/2025",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000665/2025-55",
+      "assunto": "Visita FI à EMAG - Alemanha",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000684/2025-81",
+      "assunto": "Fuzil AMAN - recolhimento",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Acompanhar\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000749/2025-99",
+      "assunto": "TED 24-EME-013 - empenho imediato",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"TED\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000918/2025-91",
+      "assunto": "LEP",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Acompanhar"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Acompanhar\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000962/2025-09",
+      "assunto": "SENAPEN",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Mercado Interno"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Mercado Interno\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.000981/2025-27",
+      "assunto": "Antecipação ICMS - TED",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "TED"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"TED\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.001240/2025-63",
+      "assunto": "4º RCC",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Assistência/Garantia"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Criar novo marcador \"Assistência/Garantia\" (hoje só existe como grupo de Acompanhamento Especial)",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.001277/2025-91",
+      "assunto": "Desmontagem/Reaproveitamento pistolas descontinuadas",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.001422/2025-34",
+      "assunto": "LEP",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Geral"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Geral\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65512.001834/2025-74",
+      "assunto": "Pagamento de Comissões - Outubro e Novembro/2025",
+      "tipoProcesso": null,
+      "marcadores": [],
+      "acompanhamentoEspecial": [
+        "Representantes"
+      ],
+      "observacao": null,
+      "sugestaoMarcador": "Aplicar marcador já existente \"Representantes\"",
+      "origem": "sem_marcador"
+    },
+    {
+      "numero": "65251.000178/2025-19",
+      "assunto": null,
+      "tipoProcesso": "Gestão da Informação: Normatização Interna",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.000366/2026-10",
+      "assunto": null,
+      "tipoProcesso": "Pessoal: Folha de Pagamento",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.000742/2026-76",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.000932/2026-93",
+      "assunto": null,
+      "tipoProcesso": "Gestão da Informação: Gestão Documental",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.000989/2026-92",
+      "assunto": null,
+      "tipoProcesso": "Demanda Externa: Outros Orgãos Públicos",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.000995/2026-40",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Marketing",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.001049/2026-11",
+      "assunto": null,
+      "tipoProcesso": "Demanda Externa: Outros Orgãos Públicos",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.001206/2026-98",
+      "assunto": null,
+      "tipoProcesso": "Orçamento: Acompanhamento de Despesa Mensal",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.001220/2026-91",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.001566/2026-90",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.001688/2026-86",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.001694/2026-33",
+      "assunto": null,
+      "tipoProcesso": "Demanda Externa: Outros Orgãos Públicos",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.001726/2026-09",
+      "assunto": null,
+      "tipoProcesso": "Demanda Externa: Outros Orgãos Públicos",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.001788/2026-11",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Novos Negócios",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.001810/2026-14",
+      "assunto": null,
+      "tipoProcesso": "Demanda Externa: Outros Orgãos Públicos",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.001825/2026-82",
+      "assunto": null,
+      "tipoProcesso": "Pessoal: Plano de Capacitação",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.001828/2026-16",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Marketing",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.001877/2026-59",
+      "assunto": null,
+      "tipoProcesso": "Gestão de Contrato: Acompanhamento da Execução",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.001958/2026-59",
+      "assunto": null,
+      "tipoProcesso": "Pessoal: Curso de Pós-Graduação",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.001976/2026-31",
+      "assunto": null,
+      "tipoProcesso": "Demanda Externa: Outros Orgãos Públicos",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.002046/2026-02",
+      "assunto": null,
+      "tipoProcesso": "Pessoal: Plano de Capacitação",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.002124/2026-61",
+      "assunto": null,
+      "tipoProcesso": "Demanda Externa: Outros Orgãos Públicos",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.002170/2026-60",
+      "assunto": null,
+      "tipoProcesso": "Demanda Externa: Outros Orgãos Públicos",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.002231/2026-99",
+      "assunto": null,
+      "tipoProcesso": "Gestão de Contrato: Outras Alterações Contratuais não Relacionadas",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.002339/2025-09",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Marketing",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.002364/2026-65",
+      "assunto": null,
+      "tipoProcesso": "Gestão e Controle: Coordenação - Demandas Externas",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.002440/2026-32",
+      "assunto": null,
+      "tipoProcesso": "Contabilidade: Encerramento do Exercício",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.002484/2026-62",
+      "assunto": null,
+      "tipoProcesso": "Gestão da Informação: Gestão Documental",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.002496/2026-97",
+      "assunto": null,
+      "tipoProcesso": "Demanda Externa: Outros Orgãos Públicos",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.002701/2026-14",
+      "assunto": null,
+      "tipoProcesso": "Pessoal: Horário de Expediente - Definição",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.002720/2026-41",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.002726/2026-18",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.002821/2026-11",
+      "assunto": null,
+      "tipoProcesso": "INOVAÇÃO: Pesquisa e Desenvolvimento",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.002868/2026-85",
+      "assunto": null,
+      "tipoProcesso": "Gestão e Controle: Coordenação - Demandas Internas",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.003538/2025-26",
+      "assunto": null,
+      "tipoProcesso": "Gestão e Controle: Coordenação - Demandas Internas",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.004581/2025-17",
+      "assunto": null,
+      "tipoProcesso": "Gestão Comercial: Vendas",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65251.005368/2025-14",
+      "assunto": null,
+      "tipoProcesso": "Demanda Externa: Outros Orgãos Públicos",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65512.000527/2025-76",
+      "assunto": null,
+      "tipoProcesso": "INOVAÇÃO: Pesquisa e Desenvolvimento",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    },
+    {
+      "numero": "65512.001639/2025-44",
+      "assunto": null,
+      "tipoProcesso": "Gestão de Projetos: Planejamento e Execução",
+      "marcadores": [],
+      "acompanhamentoEspecial": [],
+      "observacao": null,
+      "sugestaoMarcador": "Processo ainda não triado (sem marcador e sem Acompanhamento Especial) — avaliar necessidade de classificação",
+      "origem": "nao_triado"
+    }
+  ]
+}

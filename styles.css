@@ -1560,14 +1560,13 @@ th.col-produto {
     color: white;
 }
 
-/* Herdar cores dos representantes nos sub-headers (cada grupo de 3) */
-thead tr:nth-child(2) th:nth-child(3n+1):nth-child(-n+3) { background: #3d5a80; }  /* KOLTE */
-thead tr:nth-child(2) th:nth-child(n+4):nth-child(-n+6) { background: #5c4d7d; }   /* ISA */
-thead tr:nth-child(2) th:nth-child(n+7):nth-child(-n+9) { background: #2d6a4f; }   /* LC */
-thead tr:nth-child(2) th:nth-child(n+10):nth-child(-n+12) { background: #9c4a1a; } /* ADES */
-thead tr:nth-child(2) th:nth-child(n+13):nth-child(-n+15) { background: #7b2d26; } /* FL */
-thead tr:nth-child(2) th:nth-child(n+16):nth-child(-n+18) { background: #1e3a5f; } /* IMBEL */
-thead tr:nth-child(2) th:nth-child(n+19):nth-child(-n+21) { background: var(--primary-dark); } /* CONSOLIDADO */
+/* Cor dos sub-headers (DIST/VENDA/SALDO) por representante: aplicada inline por
+   app2.js (renderizarTabela) usando a cor de cada representante — nunca por
+   posição de coluna. As antigas regras nth-child fixas (KOLTE=1-3, ISA=4-6...)
+   presumiam uma ordem de representantes e uma contagem de colunas que não
+   batem com a coluna PRODUTOS extra da 2ª linha do thead, deslocando a cor de
+   cada grupo para o grupo anterior — removidas (havia mais duas cópias do
+   mesmo bloco legado mais abaixo neste arquivo, também removidas). */
 
 /* Segunda linha do header (Disp/Venda/Saldo) precisa de top offset para sticky funcionar */
 thead tr:first-child th {
@@ -3010,34 +3009,9 @@ tr.total-row:hover {
     text-transform: uppercase;
 }
 
-/* Cores de fundo levemente tonais por representante, com contraste maior */
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(1),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(2),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(3) { background: rgba(61, 90, 128, 0.22); color: #12324a; }
-
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(4),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(5),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(6) { background: rgba(92, 77, 125, 0.22); color: #2b1b3b; }
-
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(7),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(8),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(9) { background: rgba(45, 106, 79, 0.18); color: #123822; }
-
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(10),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(11),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(12) { background: rgba(156, 74, 26, 0.18); color: #4a260e; }
-
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(13),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(14),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(15) { background: rgba(123, 45, 38, 0.18); color: #3e1c18; }
-
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(16),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(17),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(18) { background: rgba(30, 58, 95, 0.22); color: #0f2740; }
-
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(19),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(20),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(21) { background: rgba(16, 30, 46, 0.12); color: #0b1a2a; }
+/* Cor por posição de coluna removida daqui também (mesmo problema do bloco
+   marcado no topo do arquivo) — a cor de cada sub-header já vem inline do
+   app2.js, por representante, não por posição. */
 
 /* Melhor contraste para números importantes */
 #tabelaEstoque td.cell-disp { color: #1f2d3d; }
@@ -3252,39 +3226,22 @@ th.header-rep { border-right: 2px solid rgba(255,255,255,0.06); }
 #tabelaEstoque thead th.header-rep.imbel { background: #1e3a5f !important; }
 #tabelaEstoque thead th.header-geral     { background: var(--primary-dark) !important; }
 
-/* Segunda linha (sub-headers Disp/Venda/Saldo) com as mesmas tonalidades por grupo.
-    Aqui usamos seletores por blocos de 3 colunas, começando no primeiro th da segunda linha. */
+/* Segunda linha (sub-headers Disp/Venda/Saldo): cor de fundo vem inline do
+    app2.js por representante — o bloco fixo por posição de coluna (nth-child
+    1-3 = KOLTE, 4-6 = ISA...) que existia aqui foi removido porque, com
+    !important, vencia o inline e pintava cada grupo com a cor do grupo
+    anterior (a 2ª linha do thead tem uma célula extra da coluna PRODUTOS
+    antes do 1º grupo, que essas regras não contavam). */
 #tabelaEstoque thead tr:nth-child(2) th.sub-header { color: #ffffff !important; }
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(1),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(2),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(3) { background: #3d5a80 !important; }
-
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(4),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(5),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(6) { background: #5c4d7d !important; }
-
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(7),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(8),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(9) { background: #2d6a4f !important; }
-
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(10),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(11),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(12) { background: #9c4a1a !important; }
-
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(13),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(14),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(15) { background: #7b2d26 !important; }
-
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(16),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(17),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(18) { background: #1e3a5f !important; }
-
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(19),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(20),
-#tabelaEstoque thead tr:nth-child(2) th:nth-child(21) { background: var(--primary-dark) !important; }
 
 /* Reforçar texto branco nas células do thead da tabela de inventário */
 #tabelaEstoque thead th { color: #ffffff !important; }
+
+/* Nomes dos representantes (1ª linha) centralizados — sobrescreve o
+   text-align:left !important genérico de .est-v2-table thead th (styles.css
+   ~linha 1490), que vale pra todas as tabelas .est-v2-table e não deveria
+   ganhar aqui por ser mais específico só na origem, não no seletor. */
+#tabelaEstoque thead tr.est-hdr-group th { text-align: center !important; }
 
 /* Linha com saldo consolidado zerado */
 tr.row-saldo-zero {

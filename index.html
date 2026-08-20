@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css?v=ae533593">
-    <link rel="stylesheet" href="imbel.css?v=59a1ca6a">
+    <link rel="stylesheet" href="imbel.css?v=a740bd22">
     <link rel="stylesheet" href="fluxo-nav.css?v=294ab8aa">
     <link id="favicon" rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2248%22%20fill%3D%22%230b1723%22%3E%3C%2Fcircle%3E%0A%20%20%3Cline%20x1%3D%2250%22%20y1%3D%2250%22%20x2%3D%2250%22%20y2%3D%2220%22%20stroke%3D%22%23e5a128%22%20stroke-width%3D%226%22%20stroke-linecap%3D%22round%22%3E%3C%2Fline%3E%0A%20%20%3Cline%20x1%3D%2250%22%20y1%3D%2250%22%20x2%3D%2276%22%20y2%3D%2265%22%20stroke%3D%22%23e5a128%22%20stroke-width%3D%226%22%20stroke-linecap%3D%22round%22%3E%3C%2Fline%3E%0A%20%20%3Cline%20x1%3D%2250%22%20y1%3D%2250%22%20x2%3D%2224%22%20y2%3D%2265%22%20stroke%3D%22%23e5a128%22%20stroke-width%3D%226%22%20stroke-linecap%3D%22round%22%3E%3C%2Fline%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2212%22%20fill%3D%22%23ffd700%22%3E%3C%2Fcircle%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2220%22%20r%3D%228%22%20fill%3D%22%23f6c84c%22%3E%3C%2Fcircle%3E%0A%20%20%3Ccircle%20cx%3D%2276%22%20cy%3D%2265%22%20r%3D%228%22%20fill%3D%22%23f6c84c%22%3E%3C%2Fcircle%3E%0A%20%20%3Ccircle%20cx%3D%2224%22%20cy%3D%2265%22%20r%3D%228%22%20fill%3D%22%23f6c84c%22%3E%3C%2Fcircle%3E%0A%3C%2Fsvg%3E">
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
@@ -2076,6 +2076,18 @@
                     <h2 class="section-title">Ponto</h2>
                 </div>
                 <div id="pontoConteudo"></div>
+            </div>
+        </div>
+
+        <!-- ========================================
+             ABA: PROCESSOS (administrativos SEI - DVMNA-FI)
+             ======================================== -->
+        <div class="tab-content" id="tab-processos">
+            <div class="content-area">
+                <div class="section-header" style="padding-bottom:0">
+                    <h2 class="section-title">Processos</h2>
+                </div>
+                <div id="processosConteudo"></div>
             </div>
         </div>
 
@@ -5081,38 +5093,43 @@
         </div>
     </div>
 
-    <script src="lazy-loader.js?v=c242e874"></script>
+    <script src="lazy-loader.js?v=376b80b3"></script>
     <script src="asset-loader.js?v=46401e5e"></script>
-    <script src="modal-a11y.js?v=90653483"></script>
-    <script src="debounce.js?v=513ecf7a"></script>
+    <script src="modal-a11y.js?v=b47df769"></script>
+    <script src="debounce.js?v=1d007bda"></script>
     <!-- estoque-calculos.js carrega antes de app2.js: app2.js tem chamadas de
          nível de módulo (ex.: initControleImbel() logo após ser definida) que
          precisam de window.EstoqueCalculos já disponível nesse momento. -->
-    <script src="estoque-calculos.js?v=e346bd93"></script>
+    <script src="estoque-calculos.js?v=f17e3ea1"></script>
     <!-- cloud-store.js: persistência em nuvem por módulo, usada por
          salvarNoCloud/carregarDoCloud em app2.js. Carrega antes por coerência
          com estoque-calculos.js. -->
-    <script src="cloud-store.js?v=634e9fc0"></script>
-    <script src="app2.js?v=ff8fcd81"></script>
-    <script src="icms-regras.js?v=edeb04f9"></script>
+    <script src="cloud-store.js?v=4cdb57cf"></script>
+    <script src="app2.js?v=e0d2ccee"></script>
+    <script src="icms-regras.js?v=4b4c0334"></script>
 
     <script src="crm-model.js?v=a047290b"></script>
     <script src="crm-calculos.js?v=e5fd804a"></script>
-    <script src="crm-compat.js?v=27c19cee"></script>
+    <script src="crm-compat.js?v=577ffbfa"></script>
     <script src="crm-store.js?v=f4ce48dd"></script>
-    <script src="crm-kanban.js?v=0d285955"></script>
+    <script src="crm-kanban.js?v=c7d41a8f"></script>
     <script src="crm-ui.js?v=9ff8fd45"></script>
-    <script src="google-calendar-sync.js?v=7d8a5f6e"></script>
+    <script src="google-calendar-sync.js?v=2701b541"></script>
     <link rel="stylesheet" href="crm.css?v=2d3b85ed">
 
-    <script src="ponto-model.js?v=d90170db"></script>
-    <script src="ponto-calculos.js?v=d09f238d"></script>
-    <script src="ponto-store.js?v=71fd7120"></script>
-    <script src="ponto-timesheet.js?v=d5e22232"></script>
-    <script src="ponto-ui.js?v=015aae50"></script>
+    <script src="ponto-model.js?v=5f025cd1"></script>
+    <script src="ponto-calculos.js?v=fe889b53"></script>
+    <script src="ponto-store.js?v=89e12c27"></script>
+    <script src="ponto-timesheet.js?v=cc4494cf"></script>
+    <script src="ponto-ui.js?v=a826e2d5"></script>
     <link rel="stylesheet" href="ponto.css?v=bc613eaf">
 
-    <script src="fluxo-nav.js?v=fa46bcbf"></script>
+    <script src="processos-model.js?v=dcfee76c"></script>
+    <script src="processos-store.js?v=883fe8d9"></script>
+    <script src="processos-ui.js?v=3023aa64"></script>
+    <link rel="stylesheet" href="processos.css?v=3de7249f">
+
+    <script src="fluxo-nav.js?v=08d6e3dc"></script>
 
     <script>
     (function matchSubtitleWidth(){

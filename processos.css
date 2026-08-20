@@ -1,0 +1,146 @@
+/**
+ * processos.css - Estilos da aba de Processos (SEI)
+ * Não define paleta própria — reaproveita os tokens de styles.css e as
+ * classes utilitárias de crm.css/ponto.css (crm-lista-table, ponto-toolbar,
+ * ponto-modal-*, crm-btn-mini), mesma convenção de ponto.css.
+ */
+
+/* ── Painel-resumo ── */
+.procs-resumo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.procs-resumo-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.procs-resumo-stats .procs-stat {
+    background: var(--bg-light);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    min-width: 120px;
+}
+
+.procs-stat span { display: block; font-size: 11.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .02em; }
+.procs-stat strong { font-size: 18px; color: var(--text-primary); }
+.procs-stat-marcado strong { color: var(--success-color); }
+.procs-stat-aviso strong { color: #b45309; }
+
+.procs-resumo-marcadores { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.procs-tag-resumo {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 3px 9px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+}
+.procs-tag-resumo b { color: var(--text-primary); font-weight: 700; }
+
+/* ── Toolbar: chips de origem + busca ── */
+.procs-toolbar { align-items: center; }
+
+.procs-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.procs-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--bg-white);
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.procs-chip span {
+    background: var(--bg-light);
+    border-radius: 999px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.procs-chip:hover { border-color: var(--primary-color); color: var(--text-primary); }
+.procs-chip.active { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
+.procs-chip.active span { background: rgba(255, 255, 255, .25); color: #fff; }
+
+/* ── Tabela ── */
+.procs-lista-wrapper { max-height: 65vh; overflow-y: auto; }
+.procs-tabela thead th { position: sticky; top: 0; z-index: 1; background: var(--bg-light); }
+
+.procs-col-numero { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.procs-col-tipo { min-width: 160px; max-width: 220px; font-size: 12px; color: var(--text-secondary); }
+.procs-col-sugestao { min-width: 160px; max-width: 240px; font-size: 12px; color: #92400e; }
+.procs-col-obs { min-width: 140px; max-width: 220px; font-size: 12px; color: var(--text-muted); }
+
+.procs-row-alerta { background: #fffbeb; }
+.procs-row-alerta:hover { background: #fef3c7 !important; }
+
+.procs-vazio { color: var(--text-muted); font-style: italic; font-size: 12px; }
+
+.procs-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #eef2ff;
+    color: #3730a3;
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    margin: 1px 2px 1px 0;
+}
+.procs-tag-grupo { background: #f0fdf4; color: #166534; }
+
+.procs-tag-editavel button {
+    background: none;
+    border: none;
+    color: inherit;
+    opacity: .6;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    padding: 0;
+}
+.procs-tag-editavel button:hover { opacity: 1; }
+
+/* ── Badge de origem ── */
+.procs-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.procs-badge-marcado { background: #dcfce7; color: #166534; }
+.procs-badge-sem_marcador { background: #fef3c7; color: #92400e; }
+.procs-badge-nao_triado { background: #fee2e2; color: #991b1b; }
+
+/* ── Modal de edição/classificação ── */
+.ponto-modal.procs-modal { max-width: 560px; }
+
+.procs-tags-lista { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+
+.procs-add-linha { display: flex; gap: 6px; flex-wrap: wrap; }
+.procs-add-linha select,
+.procs-add-linha input {
+    flex: 1 1 160px;
+    padding: 6px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 12.5px;
+    background: var(--bg-white);
+    color: var(--text-primary);
+}
+
+.procs-sugestao-texto { font-size: 13px; color: #92400e; background: #fffbeb; border-radius: var(--radius-sm); padding: 6px 8px; display: block; }

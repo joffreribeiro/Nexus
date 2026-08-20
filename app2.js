@@ -1104,6 +1104,7 @@ async function inicializar() {
     carregarDados();
     try { if (window.CrmStore) window.CrmStore.ensureCrmDefault(); } catch (e) { console.error('CRM ensureCrmDefault:', e); }
     try { if (window.PontoStore) window.PontoStore.ensurePontoDefault(); } catch (e) { console.error('Ponto ensurePontoDefault:', e); }
+    try { if (window.ProcessosStore) window.ProcessosStore.ensureProcessosDefault(); } catch (e) { console.error('Processos ensureProcessosDefault:', e); }
     try { renderizarListaRepresentantesConfig(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
     // Load contract config into Configurações tab
     try {
@@ -2741,6 +2742,7 @@ async function carregarDoCloud({confirmOverwrite=true} = {}) {
         estoque = data.estado;
         try { if (window.CrmStore) window.CrmStore.ensureCrmDefault(); } catch (e) { console.error('CRM ensureCrmDefault (cloud):', e); }
         try { if (window.PontoStore) window.PontoStore.ensurePontoDefault(); } catch (e) { console.error('Ponto ensurePontoDefault (cloud):', e); }
+        try { if (window.ProcessosStore) window.ProcessosStore.ensureProcessosDefault(); } catch (e) { console.error('Processos ensureProcessosDefault (cloud):', e); }
         // Sincronizar _localUpdatedAt com o timestamp remoto para evitar re-trigger do onSnapshot
         try {
             const tsRemoto = data.updatedAt ? data.updatedAt.toDate().toISOString() : new Date().toISOString();
@@ -2866,6 +2868,7 @@ async function carregarDoCloudAuto() {
             estoque = data.estado;
             try { if (window.CrmStore) window.CrmStore.ensureCrmDefault(); } catch (e) { console.error('CRM ensureCrmDefault (cloud auto):', e); }
             try { if (window.PontoStore) window.PontoStore.ensurePontoDefault(); } catch (e) { console.error('Ponto ensurePontoDefault (cloud auto):', e); }
+            try { if (window.ProcessosStore) window.ProcessosStore.ensureProcessosDefault(); } catch (e) { console.error('Processos ensureProcessosDefault (cloud auto):', e); }
             // Sincronizar _localUpdatedAt com o timestamp remoto
             try { estoque._localUpdatedAt = data.updatedAt.toDate().toISOString(); } catch (e) { _catchSilencioso(e, 'carregarDoCloudAuto'); }
             // Restaurar dados IMBEL salvos no backup principal (se existirem)
@@ -3650,6 +3653,8 @@ function trocarAba(aba) {
             try { if (window.Crm) Crm.renderizar(); } catch (e) { console.error('relacionamento:', e); if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
         } else if (aba === 'ponto') {
             try { if (window.PontoUI) PontoUI.renderizar(); } catch (e) { console.error('ponto:', e); if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
+        } else if (aba === 'processos') {
+            try { if (window.ProcessosUI) ProcessosUI.renderizar(); } catch (e) { console.error('processos:', e); if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
         } else if (aba === 'estoque') {
             try { renderizarTabela(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
         } else if (aba === 'configuracoes') {

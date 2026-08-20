@@ -91,6 +91,7 @@
                     '<button class="ws-btn relacionamento" data-ws="relacionamento" type="button">' + I.heart + '<span>Relacionamento</span></button>' +
                     '<button class="ws-btn imbel" data-ws="imbel" type="button">' + I.shield + '<span>IMBEL</span></button>' +
                     '<button class="ws-btn ponto" data-ws="ponto" type="button" style="border-left: 1px solid var(--sidebar-border)">' + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' + '<span>Ponto</span></button>' +
+                    '<button class="ws-btn processos" data-ws="processos" type="button">' + I.file + '<span>Processos</span></button>' +
                 '</div>' +
                 '<div class="flow-status"></div>' +
             '</div>' +
@@ -280,8 +281,9 @@
         var imbel = (ws === 'imbel');
         var relacionamento = (ws === 'relacionamento');
         var ponto = (ws === 'ponto');
-        els.pipebar.style.display = (imbel || relacionamento || ponto) ? 'none' : '';
-        els.refbar.style.display = (imbel || relacionamento || ponto) ? 'none' : '';
+        var processos = (ws === 'processos');
+        els.pipebar.style.display = (imbel || relacionamento || ponto || processos) ? 'none' : '';
+        els.refbar.style.display = (imbel || relacionamento || ponto || processos) ? 'none' : '';
         try { localStorage.setItem(LS_WS, ws); } catch (e) {}
 
         if (imbel) {
@@ -296,6 +298,10 @@
             clearRefActive();
             stepBtns.forEach(function (b) { b.classList.remove('active'); });
             try { if (typeof window.trocarAba === 'function') window.trocarAba('ponto'); } catch (e) {}
+        } else if (processos) {
+            clearRefActive();
+            stepBtns.forEach(function (b) { b.classList.remove('active'); });
+            try { if (typeof window.trocarAba === 'function') window.trocarAba('processos'); } catch (e) {}
         } else {
             goStep(currentStep);
         }
@@ -335,7 +341,7 @@
             var s = parseInt(localStorage.getItem(LS_STEP), 10);
             if (!isNaN(s) && s >= 0 && s < STEPS.length) savedStep = s;
             var w = localStorage.getItem(LS_WS);
-            if (w === 'imbel' || w === 'operacao' || w === 'relacionamento' || w === 'ponto') savedWs = w;
+            if (w === 'imbel' || w === 'operacao' || w === 'relacionamento' || w === 'ponto' || w === 'processos') savedWs = w;
             if (w === 'negocio') savedWs = 'relacionamento'; // migração do nome antigo do workspace
         } catch (e) {}
         currentStep = savedStep;

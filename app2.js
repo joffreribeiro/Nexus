@@ -7864,9 +7864,9 @@ function renderControleImbelEstoque() {
 
     // ── Renderização da tabela ──
     const thStyle = 'padding:6px 10px;background:#0f1e31;color:#e2e8f0;font-family:var(--tv-font-display);font-size:0.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;border:1px solid #1e3a5f;cursor:pointer;user-select:none';
-    const thNum   = thStyle + ';text-align:right';
+    const thNum   = thStyle + ';text-align:center';
     const tdBase  = 'padding:5px 10px;border:1px solid #e2e8f0;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.78rem';
-    const tdNum   = tdBase + ';text-align:right;font-family:var(--tv-font-mono)';
+    const tdNum   = tdBase + ';text-align:center;font-family:var(--tv-font-mono)';
     const tdCtr   = tdBase + ';text-align:center';
 
     const COLS = [
@@ -7958,16 +7958,10 @@ function renderControleImbelEstoque() {
             tdSa.textContent = r.saidas ? '−' + fmtN(r.saidas) : '—';
             tr.appendChild(tdSa);
 
-            // Saldo atual (número + barra)
+            // Saldo atual (apenas número, centralizado, preto)
             const tdSd = document.createElement('td');
-            tdSd.setAttribute('style', tdNum + ';min-width:160px');
-            tdSd.innerHTML = `
-              <div style="display:flex;align-items:baseline;justify-content:flex-end">
-                <span style="font-size:0.9rem;font-weight:700;color:${st.cor}">${fmtN(r.saldo)}</span>
-              </div>
-              <div style="position:relative;width:100%;height:5px;background:#e2e8f0;border-radius:3px;overflow:hidden;margin-top:4px">
-                <div style="position:absolute;left:0;top:0;bottom:0;width:${pct}%;background:${st.bar};border-radius:3px"></div>
-              </div>`;
+            tdSd.setAttribute('style', tdNum + ';min-width:160px;text-align:center');
+            tdSd.innerHTML = `<span style="font-size:0.9rem;font-weight:700;color:#1f2937">${fmtN(r.saldo)}</span>`;
             tr.appendChild(tdSd);
 
             // Valor unit

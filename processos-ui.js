@@ -16,6 +16,7 @@
     var _filtroOrigem = 'todos';
     var _busca = '';
     var _processoForm = null; // draft de edição (assunto/tipo/marcadores/grupos/observação) | null
+    var _helpAberto = false;
 
     function podeEditar() {
         return typeof requireAdminOrNotify !== 'function' || requireAdminOrNotify();
@@ -61,6 +62,38 @@
             if (_filtroOrigem !== 'todos' && p.origem !== _filtroOrigem) return false;
             return processoBate(p, buscaLower);
         }).sort(function (a, b) { return (a.numero || '').localeCompare(b.numero || ''); });
+    }
+
+    // ── Header com botão de help ──
+    function renderizarHeader() {
+        return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e5e7eb">' +
+            '<h2 style="margin:0;font-size:1.25rem;font-weight:600;color:#1f2937">📋 Processos (SEI)</h2>' +
+            '<button type="button" data-processos-action="abrirHelp" style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;padding:0;transition:background 0.2s" title="Como usar a extensão Claude para verificar novos processos">' +
+            '?' +
+            '</button>' +
+            '</div>';
+    }
+
+    function renderizarHelpModal() {
+        if (!_helpAberto) return '';
+        return '<div class="procs-modal-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000" data-processos-action="fecharHelpOverlay">' +
+            '<div class="procs-help-modal" style="background:white;border-radius:8px;max-width:500px;width:90%;padding:24px;box-shadow:0 20px 25px rgba(0,0,0,0.15);max-height:80vh;overflow-y:auto">' +
+            '<h3 style="margin:0 0 16px 0;font-size:1.125rem;font-weight:600;color:#1f2937">🚀 Como Verificar Novos Processos</h3>' +
+            '<ol style="margin:0 0 20px 0;padding-left:20px;color:#374151;line-height:1.6">' +
+            '<li style="margin-bottom:12px"><strong>Abra a aba do SEI</strong> no Chrome (já logada na unidade DVMNA-FI)</li>' +
+            '<li style="margin-bottom:12px"><strong>Clique no ícone do Claude</strong> (extensão, canto superior direito)</li>' +
+            '<li style="margin-bottom:12px"><strong>Cole esta mensagem</strong> na janela que abrir:</li>' +
+            '</ol>' +
+            '<div style="background:#f0f9ff;border:1px solid #0284c7;border-radius:6px;padding:12px;margin-bottom:20px">' +
+            '<code style="font-family:monospace;font-size:0.875rem;color:#0c4a6e;word-break:break-word">Verifica novos processos</code>' +
+            '<button type="button" data-processos-action="copiarMensagem" style="display:block;margin-top:8px;background:#0284c7;color:white;border:none;border-radius:4px;padding:6px 12px;cursor:pointer;font-size:0.875rem;transition:background 0.2s" onmouseover="this.style.background=\'#0369a1\'" onmouseout="this.style.background=\'#0284c7\'">Copiar mensagem</button>' +
+            '</div>' +
+            '<p style="margin:0 0 16px 0;color:#4b5563;font-size:0.875rem"><strong>O que vai acontecer:</strong> Vou ler a página do SEI, comparar com o que já temos no Nexus (por número do processo) e listar os novos encontrados.</p>' +
+            '<div style="display:flex;gap:8px">' +
+            '<button type="button" data-processos-action="fecharHelp" style="flex:1;background:#e5e7eb;border:1px solid #d1d5db;border-radius:6px;padding:8px 12px;cursor:pointer;font-weight:500;color:#1f2937;transition:background 0.2s" onmouseover="this.style.background=\'#d1d5db\'" onmouseout="this.style.background=\'#e5e7eb\'">Fechar</button>' +
+            '</div>' +
+            '</div>' +
+            '</div>';
     }
 
     // ── Painel-resumo ──
@@ -229,6 +262,27 @@
 
         modalCancelar: function () { _processoForm = null; renderizar(); },
 
+        abrirHelp: function () { _helpAberto = true; renderizar(); },
+        fecharHelp: function () { _helpAberto = false; renderizar(); },
+        fecharHelpOverlay: function (el) { if (el.className.indexOf('procs-modal-overlay') !== -1) { _helpAberto = false; renderizar(); } },
+
+        copiarMensagem: function () {
+            var msg = 'Verifica novos processos';
+            if (window.navigator && window.navigator.clipboard) {
+                window.navigator.clipboard.writeText(msg).then(function () {
+                    if (window.Notifications) Notifications.success('Mensagem copiada para a área de transferência! Cole na extensão do Claude.');
+                });
+            } else {
+                var textarea = document.createElement('textarea');
+                textarea.value = msg;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                if (window.Notifications) Notifications.success('Mensagem copiada!');
+            }
+        },
+
         modalSalvar: function () {
             if (!podeEditar()) return;
             sincronizarModalDraft();
@@ -327,7 +381,7 @@
         var porOrigem = contarPorOrigem(todos);
         var lista = listaFiltrada(todos);
 
-        el.innerHTML = renderizarResumo(todos, porOrigem) + renderizarToolbar(porOrigem) + renderizarTabela(lista) + renderizarModal();
+        el.innerHTML = renderizarHeader() + renderizarResumo(todos, porOrigem) + renderizarToolbar(porOrigem) + renderizarTabela(lista) + renderizarModal() + renderizarHelpModal();
     }
 
     window.ProcessosUI = {

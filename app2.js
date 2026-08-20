@@ -7036,9 +7036,9 @@ function ocultarTooltipSaida() {
 
 // Migrar movimentações antigas para novos tipos (executar uma vez no carregamento)
 function initControleImbel() {
-    // mostrar dashboard por padrão quando a aba for aberta
-    // hook: chamar trocarSubAbaControleImbel('dashboard') para inicializar
-    try { trocarSubAbaControleImbel('dashboard'); } catch (e) { _catchSilencioso(e, 'initControleImbel'); }
+    // mostrar estoque por padrão quando a aba for aberta
+    // hook: chamar trocarSubAbaControleImbel('estoque') para inicializar
+    try { trocarSubAbaControleImbel('estoque'); } catch (e) { _catchSilencioso(e, 'initControleImbel'); }
 }
 
 function trocarSubAbaControleImbel(sub) {
@@ -7056,7 +7056,6 @@ function trocarSubAbaControleImbel(sub) {
     if (sub === 'estoque') renderControleImbelEstoque();
     else if (sub === 'cadastro') renderControleImbelCadastro();
     else if (sub === 'movimentacao') renderControleImbelMovimentacao();
-    else if (sub === 'dashboard') renderControleImbelDashboard();
     else if (sub === 'precos') renderControleImbelPrecos();
     else if (sub === 'auditoria') renderControleImbelAuditoria();
 }
@@ -7996,7 +7995,7 @@ function renderControleImbelEstoque() {
             const totEn    = rows.reduce((s, r) => s + r.entradas, 0);
             const totSa    = rows.reduce((s, r) => s + r.saidas, 0);
             const totVe    = rows.reduce((s, r) => s + r.valorEstoque, 0);
-            const tfTd = (txt, align = 'right') =>
+            const tfTd = (txt, align = 'center') =>
                 `<td style="padding:8px 10px;background:#0f1e31;color:#fff;border-top:2px solid #d97706;font-family:var(--tv-font-mono);font-weight:700;font-size:0.78rem;text-align:${align}">${txt}</td>`;
             trF.innerHTML =
                 tfTd('', 'center') +

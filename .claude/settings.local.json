@@ -17,7 +17,9 @@
       "Bash(node test_roundtrip_armamento.js)",
       "Bash(node test_migracao.js)",
       "Bash(npx serve *)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5183/)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5183/)",
+      "Bash(node scripts/stamp-versions.js --check)",
+      "Bash(node scripts/stamp-versions.js)"
     ]
   }
 }

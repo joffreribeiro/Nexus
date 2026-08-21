@@ -47,23 +47,28 @@
     // sub: quando informado, reaproveita a Precificação e troca a sub-aba.
     var REFS = [
         { label: 'Painel', tab: 'dashboard', icon: I.grid },
-        { label: 'Clientes', tab: 'clientes', icon: I.users },
         { sep: true },
-        { label: 'Impostos', tab: 'precificacao', sub: 'impostos', icon: I.receipt },
+        { label: 'Cadastro', icon: I.file, items: [
+            { label: 'Clientes', tab: 'clientes', icon: I.users },
+            { label: 'Distribuição', tab: 'distribuicao', icon: I.truck },
+            { label: 'Produtos', tab: 'cadastro-produtos', icon: I.file },
+            { label: 'Impostos', tab: 'precificacao', sub: 'impostos', icon: I.receipt },
+            { sep: true },
+            { label: 'Dados do Contrato', tab: 'cadastro', icon: I.file }
+        ] },
+        { sep: true },
         { label: 'Rastreabilidade', tab: 'precificacao', sub: 'rastreabilidade', icon: I.link },
         { label: 'CI', tab: 'precificacao', sub: 'tabelaci', icon: I.dollar },
         { sep: true },
-        { label: 'Produtos', tab: 'cadastro-produtos', icon: I.file },
-        { label: 'Distribuição', tab: 'distribuicao', icon: I.truck },
-        { label: 'Relatórios', tab: 'relatorios', icon: I.chart },
-        { label: 'Configurações', tab: 'configuracoes', icon: I.gear }
+        { label: 'Relatórios', tab: 'relatorios', icon: I.chart }
     ];
 
     var currentStep = 0;      // índice em STEPS
     var workspace = 'operacao';
     var els = {};             // refs de DOM
     var stepBtns = [];
-    var refBtns = [];         // { el, ref }
+    var refBtns = [];         // { el, ref, parentEl? }
+    var refDropdowns = [];    // wrappers .ref-dropdown, para fechar ao clicar fora
 
     // ══════════════════════════════════════════════════════════
     //  Construção do DOM
@@ -155,6 +160,10 @@
                 els.refbar.appendChild(sep);
                 return;
             }
+            if (r.items) {
+                buildRefDropdown(r);
+                return;
+            }
             var btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'ref-btn';
@@ -162,6 +171,71 @@
             btn.addEventListener('click', function () { goRef(r); });
             els.refbar.appendChild(btn);
             refBtns.push({ el: btn, ref: r });
+        });
+    }
+
+    // Grupo suspenso na faixa de referência (ex.: "Cadastro" reunindo Clientes/Impostos/Produtos).
+    // O menu é anexado ao <body> (não ao .refbar) e posicionado via position:fixed, porque o
+    // .refbar tem overflow-x:auto — o que força overflow-y para 'auto' também (regra do CSS2.1)
+    // e cortaria um menu posicionado absoluto dentro dele.
+    function buildRefDropdown(group) {
+        var wrap = document.createElement('div');
+        wrap.className = 'ref-dropdown';
+
+        var toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'ref-btn ref-dropdown-toggle';
+        toggle.innerHTML = (group.icon || '') + '<span>' + group.label + '</span>' + I.chevron;
+        wrap.appendChild(toggle);
+
+        var menu = document.createElement('div');
+        menu.className = 'ref-dropdown-menu';
+        group.items.forEach(function (item) {
+            if (item.sep) {
+                var isep = document.createElement('div');
+                isep.className = 'ref-dropdown-sep';
+                menu.appendChild(isep);
+                return;
+            }
+            var itemBtn = document.createElement('button');
+            itemBtn.type = 'button';
+            itemBtn.className = 'ref-dropdown-item';
+            itemBtn.innerHTML = (item.icon || '') + '<span>' + item.label + '</span>';
+            itemBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                closeAllRefDropdowns();
+                goRef(item);
+            });
+            menu.appendChild(itemBtn);
+            refBtns.push({ el: itemBtn, ref: item, parentEl: toggle });
+        });
+        document.body.appendChild(menu);
+
+        function positionMenu() {
+            var r = toggle.getBoundingClientRect();
+            menu.style.left = Math.round(r.left) + 'px';
+            menu.style.top = Math.round(r.bottom + 6) + 'px';
+        }
+
+        toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var wasOpen = wrap.classList.contains('open');
+            closeAllRefDropdowns();
+            if (!wasOpen) {
+                positionMenu();
+                wrap.classList.add('open');
+                menu.classList.add('open');
+            }
+        });
+
+        els.refbar.appendChild(wrap);
+        refDropdowns.push({ wrap: wrap, menu: menu });
+    }
+
+    function closeAllRefDropdowns() {
+        refDropdowns.forEach(function (d) {
+            d.wrap.classList.remove('open');
+            d.menu.classList.remove('open');
         });
     }
 
@@ -180,6 +254,22 @@
             '<div class="flow-actions-drop"></div>';
         var toggle = menu.querySelector('.flow-actions-toggle');
         var drop = menu.querySelector('.flow-actions-drop');
+
+        // Atalho para a tela de Configurações (antes ficava solto na faixa de Referência)
+        var cfgBtn = document.createElement('button');
+        cfgBtn.type = 'button';
+        cfgBtn.className = 'sidebar-action-btn';
+        cfgBtn.innerHTML = I.gear + '<span class="nav-text">Configurações</span>';
+        cfgBtn.addEventListener('click', function () {
+            menu.classList.remove('open');
+            clearRefActive();
+            try { if (typeof window.trocarAba === 'function') window.trocarAba('configuracoes'); } catch (e) {}
+        });
+        drop.appendChild(cfgBtn);
+
+        var cfgSep = document.createElement('div');
+        cfgSep.className = 'flow-actions-sep';
+        drop.appendChild(cfgSep);
 
         if (actions) {
             // Move todos os botões de ação (cloud/backup/verificar) e o painel de auth
@@ -224,7 +314,10 @@
     //  Navegação
     // ══════════════════════════════════════════════════════════
     function clearRefActive() {
-        refBtns.forEach(function (rb) { rb.el.classList.remove('active'); });
+        refBtns.forEach(function (rb) {
+            rb.el.classList.remove('active');
+            if (rb.parentEl) rb.parentEl.classList.remove('active');
+        });
         document.body.classList.remove('flow-ref-precif');
     }
 
@@ -259,8 +352,13 @@
 
     function goRef(r) {
         clearRefActive();
-        // Marca o botão clicado
-        refBtns.forEach(function (rb) { if (rb.ref === r) rb.el.classList.add('active'); });
+        // Marca o botão clicado (e o grupo suspenso pai, se houver)
+        refBtns.forEach(function (rb) {
+            if (rb.ref === r) {
+                rb.el.classList.add('active');
+                if (rb.parentEl) rb.parentEl.classList.add('active');
+            }
+        });
 
         try {
             if (typeof window.trocarAba === 'function') window.trocarAba(r.tab);
@@ -268,6 +366,16 @@
                 // Reaproveita a tela Precificação como container, sem a barra de sub-abas
                 document.body.classList.add('flow-ref-precif');
                 if (typeof window.trocarSubabaPrecif === 'function') window.trocarSubabaPrecif(r.sub);
+            }
+            if (r.anchor) {
+                // Aguarda a troca de aba tornar o painel visível antes de rolar até ele
+                setTimeout(function () {
+                    var el = document.getElementById(r.anchor);
+                    if (!el) return;
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    el.classList.add('cfg-anchor-flash');
+                    setTimeout(function () { el.classList.remove('cfg-anchor-flash'); }, 1600);
+                }, 60);
             }
         } catch (e) {}
     }
@@ -347,10 +455,13 @@
         currentStep = savedStep;
 
         document.addEventListener('keydown', onKey);
+        document.addEventListener('click', closeAllRefDropdowns);
         els.wsBtns.forEach(function (b) {
             b.addEventListener('click', function () { setWorkspace(b.getAttribute('data-ws')); });
         });
         window.addEventListener('resize', adjustHeaderHeight);
+        window.addEventListener('resize', closeAllRefDropdowns);
+        window.addEventListener('scroll', closeAllRefDropdowns, true);
 
         // Aplica workspace inicial (dispara a navegação da etapa/aba correta)
         setWorkspace(savedWs);

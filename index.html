@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css?v=f402a4db">
     <link rel="stylesheet" href="imbel.css?v=a740bd22">
-    <link rel="stylesheet" href="fluxo-nav.css?v=294ab8aa">
+    <link rel="stylesheet" href="fluxo-nav.css?v=ea717506">
     <link id="favicon" rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2248%22%20fill%3D%22%230b1723%22%3E%3C%2Fcircle%3E%0A%20%20%3Cline%20x1%3D%2250%22%20y1%3D%2250%22%20x2%3D%2250%22%20y2%3D%2220%22%20stroke%3D%22%23e5a128%22%20stroke-width%3D%226%22%20stroke-linecap%3D%22round%22%3E%3C%2Fline%3E%0A%20%20%3Cline%20x1%3D%2250%22%20y1%3D%2250%22%20x2%3D%2276%22%20y2%3D%2265%22%20stroke%3D%22%23e5a128%22%20stroke-width%3D%226%22%20stroke-linecap%3D%22round%22%3E%3C%2Fline%3E%0A%20%20%3Cline%20x1%3D%2250%22%20y1%3D%2250%22%20x2%3D%2224%22%20y2%3D%2265%22%20stroke%3D%22%23e5a128%22%20stroke-width%3D%226%22%20stroke-linecap%3D%22round%22%3E%3C%2Fline%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2212%22%20fill%3D%22%23ffd700%22%3E%3C%2Fcircle%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2220%22%20r%3D%228%22%20fill%3D%22%23f6c84c%22%3E%3C%2Fcircle%3E%0A%20%20%3Ccircle%20cx%3D%2276%22%20cy%3D%2265%22%20r%3D%228%22%20fill%3D%22%23f6c84c%22%3E%3C%2Fcircle%3E%0A%20%20%3Ccircle%20cx%3D%2224%22%20cy%3D%2265%22%20r%3D%228%22%20fill%3D%22%23f6c84c%22%3E%3C%2Fcircle%3E%0A%3C%2Fsvg%3E">
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -294,49 +294,6 @@
                     </div>
                 </div>
 
-                <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:20px;">
-                    <article class="kpi-card-v2 kpi-info">
-                        <div class="kpi-v2-top">
-                            <div class="kpi-v2-body">
-                                <div class="kpi-v2-label">Total de Produtos</div>
-                                <div class="kpi-v2-value" id="cadProdTotal">0</div>
-                                <div class="kpi-v2-subtitle">Itens cadastrados</div>
-                            </div>
-                            <div class="kpi-v2-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
-                            </div>
-                        </div>
-                    </article>
-                    <article class="kpi-card-v2 kpi-success">
-                        <div class="kpi-v2-top">
-                            <div class="kpi-v2-body">
-                                <div class="kpi-v2-label">Com CI Definido</div>
-                                <div class="kpi-v2-value" id="cadProdComCI">0</div>
-                                <div class="kpi-v2-subtitle">Prontos para cálculo</div>
-                            </div>
-                            <div class="kpi-v2-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                            </div>
-                        </div>
-                        <div class="kpi-progress-wrap">
-                            <div class="kpi-progress-bar"><div class="kpi-progress-fill" id="cadProdCIProgressBar" style="width:0%"></div></div>
-                            <div class="kpi-progress-label" id="cadProdCIProgressLabel">0%</div>
-                        </div>
-                    </article>
-                    <article class="kpi-card-v2 kpi-danger">
-                        <div class="kpi-v2-top">
-                            <div class="kpi-v2-body">
-                                <div class="kpi-v2-label">Sem CI</div>
-                                <div class="kpi-v2-value" id="cadProdSemCI">0</div>
-                                <div class="kpi-v2-subtitle">Requer preenchimento</div>
-                            </div>
-                            <div class="kpi-v2-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                            </div>
-                        </div>
-                    </article>
-                </div>
-
                 <div class="table-container" id="cadastroProdutosTabelaWrap">
                     <div class="table-wrapper">
                         <table class="dashboard-table" id="tabelaCadastroProdutos">
@@ -489,50 +446,6 @@
                             <span class="btn-icon">🖨️</span> Imprimir
                         </button>
                     </div>
-                </div>
-
-                <!-- KPI row v2 -->
-                <div class="kpi-grid" style="grid-template-columns: repeat(3,1fr); gap:12px; margin-bottom:20px;">
-                    <article class="kpi-card-v2 kpi-info">
-                        <div class="kpi-v2-top">
-                            <div class="kpi-v2-body">
-                                <div class="kpi-v2-label">Total de Clientes</div>
-                                <div class="kpi-v2-value" id="kpiTotalClientes">0</div>
-                                <div class="kpi-v2-subtitle">Cadastrados</div>
-                            </div>
-                            <div class="kpi-v2-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            </div>
-                        </div>
-                    </article>
-                    <article class="kpi-card-v2 kpi-success">
-                        <div class="kpi-v2-top">
-                            <div class="kpi-v2-body">
-                                <div class="kpi-v2-label">Com Compras</div>
-                                <div class="kpi-v2-value" id="kpiClientesAtivos">0</div>
-                                <div class="kpi-v2-subtitle">Compraram ao menos 1×</div>
-                            </div>
-                            <div class="kpi-v2-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                            </div>
-                        </div>
-                        <div class="kpi-progress-wrap">
-                            <div class="kpi-progress-bar"><div class="kpi-progress-fill" id="kpiClientesAtivosBar" style="width:0%"></div></div>
-                            <div class="kpi-progress-label" id="kpiClientesAtivosLabel">0%</div>
-                        </div>
-                    </article>
-                    <article class="kpi-card-v2 kpi-accent-v2">
-                        <div class="kpi-v2-top">
-                            <div class="kpi-v2-body">
-                                <div class="kpi-v2-label">Ticket Médio</div>
-                                <div class="kpi-v2-value kpi-v2-value--sm" id="kpiTicketMedio">R$ 0,00</div>
-                                <div class="kpi-v2-subtitle">Por cliente com compras</div>
-                            </div>
-                            <div class="kpi-v2-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                            </div>
-                        </div>
-                    </article>
                 </div>
 
                 <div class="table-container">
@@ -1570,50 +1483,6 @@
                     </div>
                 </div>
 
-                <!-- KPI row v2 -->
-                <div class="kpi-grid" style="grid-template-columns: repeat(3,1fr); gap:12px; margin-bottom:20px;">
-                    <article class="kpi-card-v2 kpi-info">
-                        <div class="kpi-v2-top">
-                            <div class="kpi-v2-body">
-                                <div class="kpi-v2-label">Total de Registros</div>
-                                <div class="kpi-v2-value" id="kpiDistribTotal">0</div>
-                                <div class="kpi-v2-subtitle">Distribuições + devoluções</div>
-                            </div>
-                            <div class="kpi-v2-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                            </div>
-                        </div>
-                    </article>
-                    <article class="kpi-card-v2 kpi-success">
-                        <div class="kpi-v2-top">
-                            <div class="kpi-v2-body">
-                                <div class="kpi-v2-label">Unidades Distribuídas</div>
-                                <div class="kpi-v2-value" id="kpiDistribUnidades">0</div>
-                                <div class="kpi-v2-subtitle">Saldo líquido (dist − dev)</div>
-                            </div>
-                            <div class="kpi-v2-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                            </div>
-                        </div>
-                        <div class="kpi-progress-wrap">
-                            <div class="kpi-progress-bar"><div class="kpi-progress-fill" id="kpiDistribProgressBar" style="width:0%"></div></div>
-                            <div class="kpi-progress-label" id="kpiDistribProgressLabel">0 dist / 0 dev</div>
-                        </div>
-                    </article>
-                    <article class="kpi-card-v2 kpi-accent-v2">
-                        <div class="kpi-v2-top">
-                            <div class="kpi-v2-body">
-                                <div class="kpi-v2-label">Produtos Distintos</div>
-                                <div class="kpi-v2-value" id="kpiDistribProdutos">0</div>
-                                <div class="kpi-v2-subtitle">Itens diferentes movimentados</div>
-                            </div>
-                            <div class="kpi-v2-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-                            </div>
-                        </div>
-                    </article>
-                </div>
-
                 <div style="margin-bottom:12px">
                     <button class="btn btn-outline btn-sm" onclick="togglePainelSaldoProduto()">
                         <span id="iconSaldoProduto">&#9658;</span> Saldo por Produto
@@ -2508,6 +2377,270 @@
         </div>
 
         <!-- ========================================
+             ABA: CADASTRO (Vendedor, Representantes, Testemunhas, Email)
+             Reúne os cadastros que antes ficavam soltos em Configurações.
+             Acessível pelo menu "Cadastro" na faixa de Referência.
+             ======================================== -->
+        <div class="tab-content" id="tab-cadastro">
+            <div class="content-area" style="background:#f0f2f5;min-height:100%">
+                <div class="cfg-page">
+                    <!-- Cabeçalho -->
+                    <div class="cfg-page-header">
+                        <div class="cfg-page-title">
+                            <div class="cfg-page-title-icon">🗂️</div>
+                            <div>
+                                <h2>Cadastro</h2>
+                                <p>Vendedor · Representantes · Testemunhas · Email de Pedidos</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SEÇÃO: CADASTROS -->
+                    <div class="cfg-section-label">Dados &amp; Contratos</div>
+                    <div class="cfg-grid">
+
+                        <!-- Dados do Vendedor -->
+                        <div class="cfg-panel cfg-grid-full" id="cfgPanelVendedor">
+                            <div class="cfg-panel-head">
+                                <div class="cfg-panel-head-icon blue">🏭</div>
+                                <div>
+                                    <div class="cfg-panel-head-title">Dados do Vendedor — IMBEL / Fábrica de Itajubá</div>
+                                    <div class="cfg-panel-head-sub">Informações utilizadas na emissão de contratos</div>
+                                </div>
+                            </div>
+                            <div class="cfg-panel-body">
+                                <div class="cfg-field-grid cols2">
+                                    <div class="cfg-field span2">
+                                        <label>Nome / Razão Social</label>
+                                        <input type="text" id="cfgVend_nomeEmpresa" placeholder="Indústria de Material Bélico do Brasil – IMBEL">
+                                    </div>
+                                    <div class="cfg-field">
+                                        <label>CNPJ</label>
+                                        <input type="text" id="cfgVend_cnpj" maxlength="18" oninput="this.value=formatCpfCnpjMask(this.value)">
+                                    </div>
+                                    <div class="cfg-field">
+                                        <label>Inscrição Estadual</label>
+                                        <input type="text" id="cfgVend_inscricaoEstadual">
+                                    </div>
+                                    <div class="cfg-field span2">
+                                        <label>Endereço</label>
+                                        <input type="text" id="cfgVend_endereco" placeholder="Av. Cel. Aventino Ribeiro, 1099">
+                                    </div>
+                                    <div class="cfg-field">
+                                        <label>Bairro</label>
+                                        <input type="text" id="cfgVend_bairro" placeholder="IMBEL">
+                                    </div>
+                                    <div class="cfg-field">
+                                        <label>Cidade</label>
+                                        <input type="text" id="cfgVend_cidade" placeholder="Itajubá">
+                                    </div>
+                                    <div class="cfg-field">
+                                        <label>UF</label>
+                                        <input type="text" id="cfgVend_uf" maxlength="2" placeholder="MG" oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase">
+                                    </div>
+                                    <div class="cfg-field">
+                                        <label>CEP</label>
+                                        <input type="text" id="cfgVend_cep" maxlength="9" placeholder="00000-000">
+                                    </div>
+                                    <div class="cfg-field">
+                                        <label>Registro no EB</label>
+                                        <input type="text" id="cfgVend_registroEB">
+                                    </div>
+                                    <div class="cfg-field">
+                                        <label>Nome do Responsável Legal</label>
+                                        <input type="text" id="cfgVend_nomeResponsavel">
+                                    </div>
+                                    <div class="cfg-field">
+                                        <label>CPF do Responsável Legal</label>
+                                        <input type="text" id="cfgVend_cpfResponsavel" maxlength="14" oninput="this.value=formatCpfCnpjMask(this.value)" style="max-width:220px">
+                                    </div>
+                                    <div class="cfg-field span2">
+                                        <label>Cargo do Responsável (aparece na assinatura)</label>
+                                        <input type="text" id="cfgVend_cargoResponsavel" placeholder="Ex: Diretor Comercial da IMBEL">
+                                    </div>
+                                </div>
+                                <div style="margin-top:6px">
+                                    <button class="cfg-btn cfg-btn-primary" onclick="salvarConfigVendedorForm()">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                        Salvar dados do vendedor
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Representantes Comerciais (form detalhado) -->
+                        <div class="cfg-panel cfg-grid-full" id="cfgPanelRepresentantesDados">
+                            <div class="cfg-panel-head">
+                                <div class="cfg-panel-head-icon green">🤝</div>
+                                <div>
+                                    <div class="cfg-panel-head-title">Dados dos Representantes Comerciais</div>
+                                    <div class="cfg-panel-head-sub">Cadastro completo por representante</div>
+                                </div>
+                            </div>
+                            <div class="cfg-panel-body">
+                                <div style="margin-bottom:16px">
+                                    <div class="cfg-field" style="max-width:300px">
+                                        <label>Selecionar Representante</label>
+                                        <select id="configRepSelect" onchange="carregarFormRep(this.value)">
+                                            <option value="">Selecione o representante</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="configRepForm" style="display:none">
+                                    <div class="cfg-field-grid cols2">
+                                        <div class="cfg-field span2">
+                                            <label>Razão Social</label>
+                                            <input type="text" id="cfgRep_razaoSocial">
+                                        </div>
+                                        <div class="cfg-field">
+                                            <label>Nome Fantasia</label>
+                                            <input type="text" id="cfgRep_nomeFantasia">
+                                        </div>
+                                        <div class="cfg-field">
+                                            <label>CNPJ</label>
+                                            <input type="text" id="cfgRep_cnpj" maxlength="18" oninput="this.value=formatCpfCnpjMask(this.value)">
+                                        </div>
+                                        <div class="cfg-field">
+                                            <label>Nº CORE</label>
+                                            <input type="text" id="cfgRep_nrCore">
+                                        </div>
+                                        <div class="cfg-field">
+                                            <label>UF CORE</label>
+                                            <input type="text" id="cfgRep_ufCore" maxlength="2" oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase">
+                                        </div>
+                                        <div class="cfg-field">
+                                            <label>Nome do Responsável</label>
+                                            <input type="text" id="cfgRep_nomeResponsavel">
+                                        </div>
+                                        <div class="cfg-field">
+                                            <label>Telefone</label>
+                                            <input type="text" id="cfgRep_telefone" maxlength="15" oninput="this.value=formatPhoneMask(this.value)">
+                                        </div>
+                                        <div class="cfg-field span2">
+                                            <label>E-mail</label>
+                                            <input type="email" id="cfgRep_email" style="max-width:320px">
+                                        </div>
+                                    </div>
+                                    <button class="cfg-btn cfg-btn-primary" onclick="salvarFormRep()">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                        Salvar dados do representante
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Representantes (gerenciamento rápido) -->
+                        <div class="cfg-panel" id="cfgPanelRepresentantes">
+                            <div class="cfg-panel-head">
+                                <div class="cfg-panel-head-icon green">👥</div>
+                                <div>
+                                    <div class="cfg-panel-head-title">Representantes</div>
+                                    <div class="cfg-panel-head-sub">Adicionar ou remover representantes</div>
+                                </div>
+                            </div>
+                            <div class="cfg-panel-body">
+                                <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:14px">
+                                    <div class="cfg-field" style="margin:0;flex:1">
+                                        <label>Nome do Representante</label>
+                                        <input type="text" id="novoRepresentante" placeholder="Ex: KOLTE">
+                                    </div>
+                                    <button class="cfg-btn cfg-btn-green" onclick="adicionarRepresentante()" style="flex-shrink:0;margin-bottom:1px">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                        Adicionar
+                                    </button>
+                                </div>
+                                <div id="listaRepresentantesConfig" style="display:flex;gap:8px;flex-wrap:wrap;min-height:32px"></div>
+                                <div class="cfg-hint">ℹ️ Remover um representante não apaga seu histórico de vendas.</div>
+                            </div>
+                        </div>
+
+                        <!-- Testemunhas do Contrato -->
+                        <div class="cfg-panel cfg-grid-full" id="cfgPanelTestemunhas">
+                            <div class="cfg-panel-head">
+                                <div class="cfg-panel-head-icon violet">✍️</div>
+                                <div>
+                                    <div class="cfg-panel-head-title">Testemunhas do Contrato</div>
+                                    <div class="cfg-panel-head-sub">Aparecem na assinatura de todo contrato gerado</div>
+                                </div>
+                            </div>
+                            <div class="cfg-panel-body">
+                                <div class="cfg-field-grid cols2">
+                                    <div class="cfg-field span2">
+                                        <label>Testemunha 1 — Nome</label>
+                                        <input type="text" id="cfgTest1_nome" placeholder="Ex: Weslley Vilas Boas Costa">
+                                    </div>
+                                    <div class="cfg-field">
+                                        <label>Testemunha 1 — Cargo</label>
+                                        <input type="text" id="cfgTest1_linha1" placeholder="Ex: Coordenador da Seção de Mercado">
+                                    </div>
+                                    <div class="cfg-field">
+                                        <label>Testemunha 1 — Departamento/Local</label>
+                                        <input type="text" id="cfgTest1_linha2" placeholder="Ex: IMBEL – Fábrica de Itajubá">
+                                    </div>
+                                    <div class="cfg-field span2">
+                                        <label>Testemunha 2 — Nome</label>
+                                        <input type="text" id="cfgTest2_nome" placeholder="Ex: Joffre Mozart Parada Ribeiro">
+                                    </div>
+                                    <div class="cfg-field">
+                                        <label>Testemunha 2 — Cargo</label>
+                                        <input type="text" id="cfgTest2_linha1" placeholder="Ex: Departamento de Vendas de Mercado Nacional">
+                                    </div>
+                                    <div class="cfg-field">
+                                        <label>Testemunha 2 — Departamento/Local</label>
+                                        <input type="text" id="cfgTest2_linha2" placeholder="Ex: Diretoria Comercial - DRCOM/ Sede Brasília">
+                                    </div>
+                                </div>
+                                <div style="margin-top:6px">
+                                    <button class="cfg-btn cfg-btn-primary" onclick="salvarConfigTestemunhasForm()">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                        Salvar testemunhas
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- SEÇÃO: EMAIL / ZIMBRA -->
+                    <div class="cfg-section-label" style="margin-top:32px">Email de Pedidos</div>
+                    <div class="cfg-panel" id="cfgPanelEmail">
+                        <div class="cfg-panel-head">
+                            <div class="cfg-panel-head-icon">✉️</div>
+                            <div>
+                                <div class="cfg-panel-head-title">Configuração de Email — Zimbra</div>
+                                <div class="cfg-panel-head-sub">Destinatário e remetente padrão para envio de pedidos ao confirmar venda.</div>
+                            </div>
+                        </div>
+                        <div class="cfg-panel-body">
+                            <div class="cfg-field-grid cols2">
+                                <div class="cfg-field">
+                                    <label>Destinatário padrão</label>
+                                    <input type="email" id="cfgEmailDest" placeholder="pedidos.fi@imbel.gov.br" value="pedidos.fi@imbel.gov.br">
+                                </div>
+                                <div class="cfg-field">
+                                    <label>Seu email (remetente no assunto)</label>
+                                    <input type="email" id="cfgEmailRemetente" placeholder="seu.email@imbel.gov.br">
+                                </div>
+                                <div class="cfg-field">
+                                    <label>CC padrão (com cópia)</label>
+                                    <input type="text" id="cfgEmailCC" placeholder="email@imbel.gov.br; outro@imbel.gov.br">
+                                </div>
+                                <div class="cfg-field span2">
+                                    <label>Assinatura padrão da mensagem</label>
+                                    <textarea id="cfgEmailAssinatura" rows="3" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-control);font-size:.88rem;resize:vertical;box-sizing:border-box" placeholder="Atenciosamente,&#10;Nexus — Operações Conectadas"></textarea>
+                                </div>
+                            </div>
+                            <div class="cfg-btn-row" style="margin-top:12px">
+                                <button class="cfg-btn cfg-btn-primary" onclick="salvarConfigEmail()">Salvar Configurações de Email</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================
              ABA: CONFIGURAÇÕES
              ======================================== -->
         <div class="tab-content" id="tab-configuracoes">
@@ -2707,7 +2840,7 @@
                             <div class="cfg-page-title-icon">⚙️</div>
                             <div>
                                 <h2>Configurações</h2>
-                                <p>Parâmetros do sistema · Dados cadastrais · Importação &amp; Exportação</p>
+                                <p>Parâmetros do sistema · Numeração de contratos · Importação &amp; Exportação</p>
                             </div>
                         </div>
                         <button class="cfg-btn cfg-btn-outline" onclick="imprimirRelatorioAba('configuracoes')">
@@ -2915,159 +3048,10 @@
                     </div>
 
                     <!-- SEÇÃO: CADASTROS -->
+                    <!-- Dados do Vendedor, Representantes e Testemunhas foram movidos para a aba
+                         "Cadastro" (tab-cadastro) — ver Referência ▸ Cadastro na barra superior. -->
                     <div class="cfg-section-label">Cadastros</div>
                     <div class="cfg-grid">
-
-                        <!-- Dados do Vendedor -->
-                        <div class="cfg-panel cfg-grid-full">
-                            <div class="cfg-panel-head">
-                                <div class="cfg-panel-head-icon blue">🏭</div>
-                                <div>
-                                    <div class="cfg-panel-head-title">Dados do Vendedor — IMBEL / Fábrica de Itajubá</div>
-                                    <div class="cfg-panel-head-sub">Informações utilizadas na emissão de contratos</div>
-                                </div>
-                            </div>
-                            <div class="cfg-panel-body">
-                                <div class="cfg-field-grid cols2">
-                                    <div class="cfg-field span2">
-                                        <label>Nome / Razão Social</label>
-                                        <input type="text" id="cfgVend_nomeEmpresa" placeholder="Indústria de Material Bélico do Brasil – IMBEL">
-                                    </div>
-                                    <div class="cfg-field">
-                                        <label>CNPJ</label>
-                                        <input type="text" id="cfgVend_cnpj" maxlength="18" oninput="this.value=formatCpfCnpjMask(this.value)">
-                                    </div>
-                                    <div class="cfg-field">
-                                        <label>Inscrição Estadual</label>
-                                        <input type="text" id="cfgVend_inscricaoEstadual">
-                                    </div>
-                                    <div class="cfg-field span2">
-                                        <label>Endereço</label>
-                                        <input type="text" id="cfgVend_endereco" placeholder="Av. Cel. Aventino Ribeiro, 1099">
-                                    </div>
-                                    <div class="cfg-field">
-                                        <label>Bairro</label>
-                                        <input type="text" id="cfgVend_bairro" placeholder="IMBEL">
-                                    </div>
-                                    <div class="cfg-field">
-                                        <label>Cidade</label>
-                                        <input type="text" id="cfgVend_cidade" placeholder="Itajubá">
-                                    </div>
-                                    <div class="cfg-field">
-                                        <label>UF</label>
-                                        <input type="text" id="cfgVend_uf" maxlength="2" placeholder="MG" oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase">
-                                    </div>
-                                    <div class="cfg-field">
-                                        <label>CEP</label>
-                                        <input type="text" id="cfgVend_cep" maxlength="9" placeholder="00000-000">
-                                    </div>
-                                    <div class="cfg-field">
-                                        <label>Registro no EB</label>
-                                        <input type="text" id="cfgVend_registroEB">
-                                    </div>
-                                    <div class="cfg-field">
-                                        <label>Nome do Responsável Legal</label>
-                                        <input type="text" id="cfgVend_nomeResponsavel">
-                                    </div>
-                                    <div class="cfg-field span2">
-                                        <label>CPF do Responsável Legal</label>
-                                        <input type="text" id="cfgVend_cpfResponsavel" maxlength="14" oninput="this.value=formatCpfCnpjMask(this.value)" style="max-width:220px">
-                                    </div>
-                                </div>
-                                <div style="margin-top:6px">
-                                    <button class="cfg-btn cfg-btn-primary" onclick="salvarConfigVendedorForm()">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                                        Salvar dados do vendedor
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Representantes Comerciais (form detalhado) -->
-                        <div class="cfg-panel cfg-grid-full">
-                            <div class="cfg-panel-head">
-                                <div class="cfg-panel-head-icon green">🤝</div>
-                                <div>
-                                    <div class="cfg-panel-head-title">Dados dos Representantes Comerciais</div>
-                                    <div class="cfg-panel-head-sub">Cadastro completo por representante</div>
-                                </div>
-                            </div>
-                            <div class="cfg-panel-body">
-                                <div style="margin-bottom:16px">
-                                    <div class="cfg-field" style="max-width:300px">
-                                        <label>Selecionar Representante</label>
-                                        <select id="configRepSelect" onchange="carregarFormRep(this.value)">
-                                            <option value="">Selecione o representante</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div id="configRepForm" style="display:none">
-                                    <div class="cfg-field-grid cols2">
-                                        <div class="cfg-field span2">
-                                            <label>Razão Social</label>
-                                            <input type="text" id="cfgRep_razaoSocial">
-                                        </div>
-                                        <div class="cfg-field">
-                                            <label>Nome Fantasia</label>
-                                            <input type="text" id="cfgRep_nomeFantasia">
-                                        </div>
-                                        <div class="cfg-field">
-                                            <label>CNPJ</label>
-                                            <input type="text" id="cfgRep_cnpj" maxlength="18" oninput="this.value=formatCpfCnpjMask(this.value)">
-                                        </div>
-                                        <div class="cfg-field">
-                                            <label>Nº CORE</label>
-                                            <input type="text" id="cfgRep_nrCore">
-                                        </div>
-                                        <div class="cfg-field">
-                                            <label>UF CORE</label>
-                                            <input type="text" id="cfgRep_ufCore" maxlength="2" oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase">
-                                        </div>
-                                        <div class="cfg-field">
-                                            <label>Nome do Responsável</label>
-                                            <input type="text" id="cfgRep_nomeResponsavel">
-                                        </div>
-                                        <div class="cfg-field">
-                                            <label>Telefone</label>
-                                            <input type="text" id="cfgRep_telefone" maxlength="15" oninput="this.value=formatPhoneMask(this.value)">
-                                        </div>
-                                        <div class="cfg-field span2">
-                                            <label>E-mail</label>
-                                            <input type="email" id="cfgRep_email" style="max-width:320px">
-                                        </div>
-                                    </div>
-                                    <button class="cfg-btn cfg-btn-primary" onclick="salvarFormRep()">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                                        Salvar dados do representante
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Representantes (gerenciamento rápido) -->
-                        <div class="cfg-panel">
-                            <div class="cfg-panel-head">
-                                <div class="cfg-panel-head-icon green">👥</div>
-                                <div>
-                                    <div class="cfg-panel-head-title">Representantes</div>
-                                    <div class="cfg-panel-head-sub">Adicionar ou remover representantes</div>
-                                </div>
-                            </div>
-                            <div class="cfg-panel-body">
-                                <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:14px">
-                                    <div class="cfg-field" style="margin:0;flex:1">
-                                        <label>Nome do Representante</label>
-                                        <input type="text" id="novoRepresentante" placeholder="Ex: KOLTE">
-                                    </div>
-                                    <button class="cfg-btn cfg-btn-green" onclick="adicionarRepresentante()" style="flex-shrink:0;margin-bottom:1px">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                        Adicionar
-                                    </button>
-                                </div>
-                                <div id="listaRepresentantesConfig" style="display:flex;gap:8px;flex-wrap:wrap;min-height:32px"></div>
-                                <div class="cfg-hint">ℹ️ Remover um representante não apaga seu histórico de vendas.</div>
-                            </div>
-                        </div>
 
                         <!-- Histórico de Alterações -->
                         <div class="cfg-panel">
@@ -3141,40 +3125,7 @@
                         </div>
                     </div>
 
-                    <!-- SEÇÃO: EMAIL / ZIMBRA -->
-                    <div class="cfg-section-label" style="margin-top:32px">Email de Pedidos</div>
-                    <div class="cfg-panel">
-                        <div class="cfg-panel-head">
-                            <div class="cfg-panel-head-icon">✉️</div>
-                            <div>
-                                <div class="cfg-panel-head-title">Configuração de Email — Zimbra</div>
-                                <div class="cfg-panel-head-sub">Destinatário e remetente padrão para envio de pedidos ao confirmar venda.</div>
-                            </div>
-                        </div>
-                        <div class="cfg-panel-body">
-                            <div class="cfg-field-grid cols2">
-                                <div class="cfg-field">
-                                    <label>Destinatário padrão</label>
-                                    <input type="email" id="cfgEmailDest" placeholder="pedidos.fi@imbel.gov.br" value="pedidos.fi@imbel.gov.br">
-                                </div>
-                                <div class="cfg-field">
-                                    <label>Seu email (remetente no assunto)</label>
-                                    <input type="email" id="cfgEmailRemetente" placeholder="seu.email@imbel.gov.br">
-                                </div>
-                                <div class="cfg-field">
-                                    <label>CC padrão (com cópia)</label>
-                                    <input type="text" id="cfgEmailCC" placeholder="email@imbel.gov.br; outro@imbel.gov.br">
-                                </div>
-                                <div class="cfg-field span2">
-                                    <label>Assinatura padrão da mensagem</label>
-                                    <textarea id="cfgEmailAssinatura" rows="3" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-control);font-size:.88rem;resize:vertical;box-sizing:border-box" placeholder="Atenciosamente,&#10;Nexus — Operações Conectadas"></textarea>
-                                </div>
-                            </div>
-                            <div class="cfg-btn-row" style="margin-top:12px">
-                                <button class="cfg-btn cfg-btn-primary" onclick="salvarConfigEmail()">Salvar Configurações de Email</button>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Email de Pedidos foi movido para a aba "Cadastro" (tab-cadastro) -->
 
                     <!-- SEÇÃO: ZONA DE PERIGO -->
                     <div class="cfg-section-label" style="margin-top:32px">Zona de Perigo</div>
@@ -5099,7 +5050,7 @@
          salvarNoCloud/carregarDoCloud em app2.js. Carrega antes por coerência
          com estoque-calculos.js. -->
     <script src="cloud-store.js?v=4cdb57cf"></script>
-    <script src="app2.js?v=8288cdc4"></script>
+    <script src="app2.js?v=e7bd9a1f"></script>
     <script src="icms-regras.js?v=4b4c0334"></script>
 
     <script src="crm-model.js?v=a047290b"></script>
@@ -5123,7 +5074,7 @@
     <script src="processos-ui.js?v=4fd69575"></script>
     <link rel="stylesheet" href="processos.css?v=3de7249f">
 
-    <script src="fluxo-nav.js?v=08d6e3dc"></script>
+    <script src="fluxo-nav.js?v=2f17dd67"></script>
 
     <script>
     (function matchSubtitleWidth(){

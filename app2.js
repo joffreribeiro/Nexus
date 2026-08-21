@@ -1900,7 +1900,7 @@ async function gerarDocxProposta() {
     const tabelaCabecalho = new Table({
         width: { size: TW, type: WidthType.DXA },
         columnWidths: [1134, TW - 1134],
-        borders: { top: noTableBorder, bottom: noTableBorder, left: noTableBorder, right: noTableBorder, insideH: noTableBorder, insideV: noTableBorder },
+        borders: { top: noTableBorder, bottom: noTableBorder, left: noTableBorder, right: noTableBorder, insideHorizontal: noTableBorder, insideVertical: noTableBorder },
         rows: [new TableRow({ children: [
             new TableCell({ children: [new Paragraph({ children: [logoBlack], spacing:{before:0,after:0} })], borders: { top: noTableBorder, bottom: noTableBorder, left: noTableBorder, right: noTableBorder }, verticalAlign: VerticalAlign.CENTER, width:{size:1134,type:WidthType.DXA} }),
             new TableCell({ children: [
@@ -3660,7 +3660,9 @@ function trocarAba(aba) {
         } else if (aba === 'configuracoes') {
             try { atualizarPreviaContrato(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
             try { renderizarAuditoria(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
+        } else if (aba === 'cadastro') {
             try { renderizarConfigVendedor(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
+            try { renderizarConfigTestemunhas(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
             try { renderizarSelectConfigRep(); } catch (e) { if (window.__showRuntimeErrorOverlay) window.__showRuntimeErrorOverlay(e); }
             try { renderizarListaRepresentantesConfig(); } catch (e) { _catchSilencioso(e, 'trocarAba'); }
             try { carregarConfigEmail(); } catch (e) { _catchSilencioso(e, 'trocarAba'); }
@@ -10835,7 +10837,7 @@ function renderizarConfigVendedor() {
     const fields = [
         'nomeEmpresa','cnpj','inscricaoEstadual','endereco',
         'bairro','cidade','uf','cep','registroEB',
-        'nomeResponsavel','cpfResponsavel'
+        'nomeResponsavel','cpfResponsavel','cargoResponsavel'
     ];
     fields.forEach(f => {
         const el = document.getElementById('cfgVend_' + f);
@@ -10847,7 +10849,7 @@ function salvarConfigVendedorForm() {
     const fields = [
         'nomeEmpresa','cnpj','inscricaoEstadual','endereco',
         'bairro','cidade','uf','cep','registroEB',
-        'nomeResponsavel','cpfResponsavel'
+        'nomeResponsavel','cpfResponsavel','cargoResponsavel'
     ];
     const dados = {};
     fields.forEach(f => {
@@ -10855,6 +10857,59 @@ function salvarConfigVendedorForm() {
     });
     salvarConfigVendedor(dados);
     mostrarNotificacao('Dados do vendedor salvos!', 'success');
+}
+
+// ================================
+// CONFIGURAÇÃO: TESTEMUNHAS (assinatura dos contratos)
+// Chave localStorage: 'configTestemunhas'
+// ================================
+
+const TESTEMUNHAS_PADRAO = {
+    t1: { nome: 'Weslley Vilas Boas Costa', linha1: 'Coordenador da Seção de Mercado', linha2: 'IMBEL – Fábrica de Itajubá' },
+    t2: { nome: 'Joffre Mozart Parada Ribeiro', linha1: 'Departamento de Vendas de Mercado Nacional', linha2: 'Diretoria Comercial - DRCOM/ Sede Brasília' }
+};
+
+function carregarConfigTestemunhas() {
+    try {
+        const salvo = JSON.parse(localStorage.getItem('configTestemunhas') || '{}');
+        return {
+            t1: { ...TESTEMUNHAS_PADRAO.t1, ...(salvo.t1 || {}) },
+            t2: { ...TESTEMUNHAS_PADRAO.t2, ...(salvo.t2 || {}) }
+        };
+    } catch (e) {
+        return TESTEMUNHAS_PADRAO;
+    }
+}
+
+function salvarConfigTestemunhas(dados) {
+    try {
+        localStorage.setItem('configTestemunhas', JSON.stringify(dados || {}));
+    } catch (e) {
+        console.error('Falha ao salvar configTestemunhas', e);
+    }
+}
+
+function renderizarConfigTestemunhas() {
+    const dados = carregarConfigTestemunhas();
+    ['t1', 't2'].forEach((chave, i) => {
+        const n = i + 1;
+        ['nome', 'linha1', 'linha2'].forEach(campo => {
+            const el = document.getElementById(`cfgTest${n}_${campo}`);
+            if (el) el.value = dados[chave][campo] || '';
+        });
+    });
+}
+
+function salvarConfigTestemunhasForm() {
+    const dados = { t1: {}, t2: {} };
+    ['t1', 't2'].forEach((chave, i) => {
+        const n = i + 1;
+        ['nome', 'linha1', 'linha2'].forEach(campo => {
+            dados[chave][campo] = document.getElementById(`cfgTest${n}_${campo}`)?.value.trim() || '';
+        });
+    });
+    salvarConfigTestemunhas(dados);
+    mostrarNotificacao('Testemunhas salvas!', 'success');
 }
 
 function abrirModalVendaDetalhada(vendaId = null, propostaId = null) {
@@ -12358,8 +12413,6 @@ async function gerarContratoVenda(vendaId) {
         return new Date(d + 'T12:00:00');
     };
     const dataVenda = _parseDataVenda(venda.data);
-    const dataFim   = new Date(dataVenda);
-    dataFim.setMonth(dataFim.getMonth() + 6);
 
     const fmtDate  = d => d.toLocaleDateString('pt-BR');
     const fmtMoeda = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -12375,6 +12428,10 @@ async function gerarContratoVenda(vendaId) {
     const regEBCli    = clienteObj?.registroEB || '';
     const emailCli    = clienteObj?.email    || '';
     const nomeFantCli = clienteObj?.nomeFantasia || '';
+    const contatoCli  = clienteObj?.contato  || '';
+
+    // Venda direta pela IMBEL (sem representante) — omite tabela/assinatura do representante
+    const isVendaDireta = (venda.representante || '').toString().trim().toUpperCase() === 'IMBEL';
 
     // Só baixa a biblioteca (~2,3 MB) depois das validações acima — não adianta
     // pagar o download para descobrir em seguida que a venda não tem itens.
@@ -12404,6 +12461,7 @@ async function gerarContratoVenda(vendaId) {
     const thinBot  = { top: { style: BorderStyle.NONE }, bottom: border, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } };
 
     const B  = (text, sz=SZ, color=undefined) => new TextRun({ text, bold: true, size: sz, font: 'Calibri', ...(color ? { color } : {}) });
+    const BU = (text, sz=SZ, color=undefined) => B(String(text||'').toUpperCase(), sz, color);
     const N  = (text, sz=SZ, color=undefined) => new TextRun({ text, size: sz, font: 'Calibri', ...(color ? { color } : {}) });
     const It = (text, sz=SZ) => new TextRun({ text, italics: true, size: sz, font: 'Calibri' });
 
@@ -12507,19 +12565,19 @@ async function gerarContratoVenda(vendaId) {
         columnWidths: [2340, 2340, 2340, 2340],
         rows: [
             new TableRow({ children: [spanCell([PT([B('VENDEDOR', SZ_H, 'FFFFFF')])], TW, 4, false, true)] }),
-            new TableRow({ children: [spanCell([PT([B('Nome: '), N(vendedor.nomeEmpresa||'')])], TW, 4)] }),
+            new TableRow({ children: [spanCell([PT([B('Nome: '), BU(vendedor.nomeEmpresa||'')])], TW, 4)] }),
             new TableRow({ children: [
-                spanCell([PT([B('CNPJ/MF: '), N(vendedor.cnpj||'')])], 4680, 2),
-                spanCell([PT([B('Inscrição estadual: '), N(vendedor.inscricaoEstadual||'')])], 4680, 2),
+                spanCell([PT([B('CNPJ/MF: '), BU(vendedor.cnpj||'')])], 4680, 2),
+                spanCell([PT([B('Inscrição estadual: '), BU(vendedor.inscricaoEstadual||'')])], 4680, 2),
             ]}),
-            new TableRow({ children: [spanCell([PT([B('Endereço: '), N(vendedor.endereco||'')])], TW, 4)] }),
+            new TableRow({ children: [spanCell([PT([B('Endereço: '), BU(vendedor.endereco||'')])], TW, 4)] }),
             new TableRow({ children: [
-                cell([PT([B('Bairro: '), N(vendedor.bairro||'')])], 2340),
-                cell([PT([B('Cidade: '), N(vendedor.cidade||'')])], 2340),
-                cell([PT([B('UF: '),     N(vendedor.uf||'')])],     2340),
-                cell([PT([B('CEP: '),    N(vendedor.cep||'')])],    2340),
+                cell([PT([B('Bairro: '), BU(vendedor.bairro||'')])], 2340),
+                cell([PT([B('Cidade: '), BU(vendedor.cidade||'')])], 2340),
+                cell([PT([B('UF: '),     BU(vendedor.uf||'')])],     2340),
+                cell([PT([B('CEP: '),    BU(vendedor.cep||'')])],    2340),
             ]}),
-            new TableRow({ children: [spanCell([PT([B('Registro no EB: '), N(vendedor.registroEB||'')])], TW, 4)] }),
+            new TableRow({ children: [spanCell([PT([B('Registro no EB: '), BU(vendedor.registroEB||'')])], TW, 4)] }),
         ]
     });
 
@@ -12529,22 +12587,22 @@ async function gerarContratoVenda(vendaId) {
         columnWidths: [2340, 2340, 2340, 2340],
         rows: [
             new TableRow({ children: [spanCell([PT([B('COMPRADOR', SZ_H, 'FFFFFF')])], TW, 4, false, true)] }),
-            new TableRow({ children: [spanCell([PT([B('Nome: '), N(venda.loja||'')])], TW, 4)] }),
-            new TableRow({ children: [spanCell([PT([B('Nome Fantasia: '), N(nomeFantCli)])], TW, 4)] }),
+            new TableRow({ children: [spanCell([PT([B('Nome: '), BU(venda.loja||'')])], TW, 4)] }),
+            new TableRow({ children: [spanCell([PT([B('Nome Fantasia: '), BU(nomeFantCli)])], TW, 4)] }),
             new TableRow({ children: [
-                spanCell([PT([B('CNPJ/CPF: '), N(cnpjCliente)])], 4680, 2),
-                spanCell([PT([B('Inscrição estadual: '), N(ieCliente)])], 4680, 2),
+                spanCell([PT([B('CNPJ/CPF: '), BU(cnpjCliente)])], 4680, 2),
+                spanCell([PT([B('Inscrição estadual: '), BU(ieCliente)])], 4680, 2),
             ]}),
-            new TableRow({ children: [spanCell([PT([B('Endereço: '), N(endCliente)])], TW, 4)] }),
+            new TableRow({ children: [spanCell([PT([B('Endereço: '), BU(endCliente)])], TW, 4)] }),
             new TableRow({ children: [
-                cell([PT([B('Bairro: '), N(bairCliente)])], 2340),
-                cell([PT([B('Cidade: '), N(cidCliente)])],  2340),
-                cell([PT([B('UF: '),     N(ufCliente)])],   2340),
-                cell([PT([B('CEP: '),    N(cepCliente)])],  2340),
+                cell([PT([B('Bairro: '), BU(bairCliente)])], 2340),
+                cell([PT([B('Cidade: '), BU(cidCliente)])],  2340),
+                cell([PT([B('UF: '),     BU(ufCliente)])],   2340),
+                cell([PT([B('CEP: '),    BU(cepCliente)])],  2340),
             ]}),
             new TableRow({ children: [
-                spanCell([PT([B('Registro no EB: '), N(regEBCli)])], 4680, 2),
-                spanCell([PT([B('E-mail: '),         N(emailCli)])], 4680, 2),
+                spanCell([PT([B('Registro no EB: '), BU(regEBCli)])], 4680, 2),
+                spanCell([PT([B('E-mail: '),         BU(emailCli)])], 4680, 2),
             ]}),
         ]
     });
@@ -12555,17 +12613,17 @@ async function gerarContratoVenda(vendaId) {
         columnWidths: [3120, 1560, 2340, 2340],
         rows: [
             new TableRow({ children: [spanCell([PT([B('REPRESENTANTE COMERCIAL AUTORIZADO', SZ_H, 'FFFFFF')])], TW, 4, false, true)] }),
-            new TableRow({ children: [spanCell([PT([B('Razão Social: '),    N(rep.razaoSocial||'')])], TW, 4)] }),
-            new TableRow({ children: [spanCell([PT([B('Nome Fantasia: '),   N(rep.nomeFantasia||'')])], TW, 4)] }),
+            new TableRow({ children: [spanCell([PT([B('Razão Social: '),    BU(rep.razaoSocial||'')])], TW, 4)] }),
+            new TableRow({ children: [spanCell([PT([B('Nome Fantasia: '),   BU(rep.nomeFantasia||'')])], TW, 4)] }),
             new TableRow({ children: [
-                cell([PT([B('CNPJ: '),    N(rep.cnpj||'')])],   3120),
-                cell([PT([B('N.º CORE: '),N(rep.nrCore||'')])], 1560),
-                spanCell([PT([B('UF: '),  N(rep.ufCore||'')])], 4680, 2),
+                cell([PT([B('CNPJ: '),    BU(rep.cnpj||'')])],   3120),
+                cell([PT([B('N.º CORE: '),BU(rep.nrCore||'')])], 1560),
+                spanCell([PT([B('UF: '),  BU(rep.ufCore||'')])], 4680, 2),
             ]}),
-            new TableRow({ children: [spanCell([PT([B('Nome do responsável: '), N(rep.nomeResponsavel||'')])], TW, 4)] }),
+            new TableRow({ children: [spanCell([PT([B('Nome do responsável: '), BU(rep.nomeResponsavel||'')])], TW, 4)] }),
             new TableRow({ children: [
-                spanCell([PT([B('Telefone: '), N(rep.telefone||'')])], 4680, 2),
-                spanCell([PT([B('E-mail: '),   N(rep.email||'')])],    4680, 2),
+                spanCell([PT([B('Telefone: '), BU(rep.telefone||'')])], 4680, 2),
+                spanCell([PT([B('E-mail: '),   BU(rep.email||'')])],    4680, 2),
             ]}),
         ]
     });
@@ -12576,7 +12634,17 @@ async function gerarContratoVenda(vendaId) {
     const contratoNum = /\/\d{4}$/.test(contratoRaw)
         ? contratoRaw
         : contratoRaw + '/' + String(dataVenda.getFullYear());
-    const objetoItens = itens.map(it => it.produtoNome||it.produto||'').filter(Boolean).join(', ');
+
+    // ── ASSINATURAS: helpers e testemunhas fixas ──
+    const noBord   = { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } };
+    const sigCell  = (children) => new TableCell({ children, borders: noBord, width: { size: TW, type: WidthType.DXA } });
+    const sigRow   = (children) => new TableRow({ children: [sigCell(children)] });
+    const sigLinha = () => PC([N('__________________________________________________')]);
+    const sigNome  = (v) => v ? BU(v) : N('Nome do Responsável Legal');
+
+    const configTestemunhas = carregarConfigTestemunhas();
+    const TESTEMUNHA_1 = { nome: (configTestemunhas.t1.nome || '').toUpperCase(), linha1: configTestemunhas.t1.linha1 || '', linha2: configTestemunhas.t1.linha2 || '' };
+    const TESTEMUNHA_2 = { nome: (configTestemunhas.t2.nome || '').toUpperCase(), linha1: configTestemunhas.t2.linha1 || '', linha2: configTestemunhas.t2.linha2 || '' };
 
     const doc = new Document({
         sections: [{
@@ -12600,8 +12668,8 @@ async function gerarContratoVenda(vendaId) {
                         bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
                         left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
                         right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-                        insideH: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
-                        insideV: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' }
+                        insideHorizontal: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+                        insideVertical: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' }
                     },
                     rows: [new TableRow({ children: [
                         // Coluna logo
@@ -12639,15 +12707,15 @@ async function gerarContratoVenda(vendaId) {
 
                 new Paragraph({ children: [B('VENDEDOR: '), N(vendedor.nomeEmpresa || 'INDÚSTRIA DE MATERIAL BÉLICO DO BRASIL – IMBEL – FÁBRICA DE ITAJUBÁ')], alignment: AlignmentType.LEFT, spacing: { before: 80, after: 80 }, indent: { left: 4876, hanging: 1 } }),
                 new Paragraph({ children: [B('COMPRADOR: '), N(venda.loja||'')], alignment: AlignmentType.LEFT, spacing: { before: 80, after: 80 }, indent: { left: 4876, hanging: 1 } }),
-                new Paragraph({ children: [B('REPRESENTANTE COMERCIAL AUTORIZADO: '), N(rep.razaoSocial || venda.representante || '')], alignment: AlignmentType.LEFT, spacing: { before: 80, after: 80 }, indent: { left: 4876, hanging: 1 } }),
-                new Paragraph({ children: [B('OBJETO: '), N('Compra e venda de armamento, peças e acessórios do portfólio da Fábrica de Itajubá da IMBEL® (FI/IMBEL®), em especial: ' + objetoItens + '.')], alignment: AlignmentType.LEFT, spacing: { before: 80, after: 80 }, indent: { left: 4876, hanging: 1 } }),
-                new Paragraph({ children: [B('VIGÊNCIA DO CONTRATO: '), N(fmtDate(dataVenda) + ' a ' + fmtDate(dataFim) + '.')], alignment: AlignmentType.LEFT, spacing: { before: 80, after: 80 }, indent: { left: 4876, hanging: 1 } }),
+                ...(isVendaDireta ? [] : [new Paragraph({ children: [B('REPRESENTANTE COMERCIAL AUTORIZADO: '), N(rep.razaoSocial || venda.representante || '')], alignment: AlignmentType.LEFT, spacing: { before: 80, after: 80 }, indent: { left: 4876, hanging: 1 } })]),
+                new Paragraph({ children: [B('OBJETO: '), N('Compra e venda de armamento, peças e acessórios do portfólio da Fábrica de Itajubá da IMBEL® (FI/IMBEL®).')], alignment: AlignmentType.LEFT, spacing: { before: 80, after: 80 }, indent: { left: 4876, hanging: 1 } }),
+                new Paragraph({ children: [B('VIGÊNCIA DO CONTRATO: '), N('6 (seis) meses a partir da última assinatura.')], alignment: AlignmentType.LEFT, spacing: { before: 80, after: 80 }, indent: { left: 4876, hanging: 1 } }),
                 E(),
                 PC([B('PREÂMBULO', 22)], { before: 120, after: 120 }),
 
                 tabelaVendedor, E(),
                 tabelaComprador, E(),
-                tabelaRep, E(),
+                ...(isVendaDireta ? [] : [tabelaRep, E()]),
 
                 // ── CORPO DO CONTRATO ──
                 P([N('Pelo presente instrumento e na melhor forma de direito, as partes acima qualificadas celebram o '),
@@ -12738,86 +12806,57 @@ async function gerarContratoVenda(vendaId) {
                 new Table({
                     width: { size: TW, type: WidthType.DXA },
                     columnWidths: [TW],
-                    borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE }, insideH: { style: BorderStyle.NONE }, insideV: { style: BorderStyle.NONE } },
+                    borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE }, insideHorizontal: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE } },
                     rows: [
                         // Comprador
-                        new TableRow({ children: [new TableCell({
-                            children: [PC([B('COMPRADOR')])],
-                            borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
-                            width: { size: TW, type: WidthType.DXA },
-                        })] }),
-                        new TableRow({ children: [new TableCell({
-                            children: [PC([N('__________________________________________________')])],
-                            borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
-                            width: { size: TW, type: WidthType.DXA },
-                        })] }),
-                        new TableRow({ children: [new TableCell({
-                            children: [PC([N('Nome do Responsável Legal')]), PC([N(cnpjCliente ? 'CPF/CNPJ: ' + cnpjCliente : 'CPF/CNPJ')])],
-                            borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
-                            width: { size: TW, type: WidthType.DXA },
-                        })] }),
-                        new TableRow({ children: [new TableCell({ children: [E()], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }, width: { size: TW, type: WidthType.DXA } })] }),
-                        new TableRow({ children: [new TableCell({ children: [E()], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }, width: { size: TW, type: WidthType.DXA } })] }),
-                        // Representante
-                        new TableRow({ children: [new TableCell({
-                            children: [PC([B('REPRESENTANTE COMERCIAL DA IMBEL')])],
-                            borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
-                            width: { size: TW, type: WidthType.DXA },
-                        })] }),
-                        new TableRow({ children: [new TableCell({
-                            children: [PC([N('__________________________________________________')])],
-                            borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
-                            width: { size: TW, type: WidthType.DXA },
-                        })] }),
-                        new TableRow({ children: [new TableCell({
-                            children: [PC([N(rep.nomeResponsavel || 'Nome do Responsável Legal')]), PC([N(rep.cnpj ? 'CPF/CNPJ: ' + rep.cnpj : 'CPF/CNPJ')])],
-                            borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
-                            width: { size: TW, type: WidthType.DXA },
-                        })] }),
-                        new TableRow({ children: [new TableCell({ children: [E()], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }, width: { size: TW, type: WidthType.DXA } })] }),
-                        new TableRow({ children: [new TableCell({ children: [E()], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }, width: { size: TW, type: WidthType.DXA } })] }),
+                        sigRow([PC([B('COMPRADOR')])]),
+                        sigRow([sigLinha()]),
+                        sigRow([PC([sigNome(venda.loja)]), PC([sigNome(contatoCli)])]),
+                        sigRow([E()]),
+                        sigRow([E()]),
+                        // Representante (omitido em venda direta pela IMBEL)
+                        ...(isVendaDireta ? [] : [
+                            sigRow([PC([B('REPRESENTANTE COMERCIAL DA IMBEL')])]),
+                            sigRow([sigLinha()]),
+                            sigRow([PC([sigNome(rep.razaoSocial)]), PC([sigNome(rep.nomeResponsavel)])]),
+                            sigRow([E()]),
+                            sigRow([E()]),
+                        ]),
                         // Vendedor
-                        new TableRow({ children: [new TableCell({
-                            children: [PC([B('VENDEDOR')])],
-                            borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
-                            width: { size: TW, type: WidthType.DXA },
-                        })] }),
-                        new TableRow({ children: [new TableCell({
-                            children: [PC([N('__________________________________________________')])],
-                            borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
-                            width: { size: TW, type: WidthType.DXA },
-                        })] }),
-                        new TableRow({ children: [new TableCell({
-                            children: [PC([B('INDÚSTRIA DE MATERIAL BÉLICO DO BRASIL')])],
-                            borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
-                            width: { size: TW, type: WidthType.DXA },
-                        })] }),
-                        new TableRow({ children: [new TableCell({ children: [E()], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }, width: { size: TW, type: WidthType.DXA } })] }),
-                        new TableRow({ children: [new TableCell({ children: [E()], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }, width: { size: TW, type: WidthType.DXA } })] }),
+                        sigRow([PC([B('VENDEDOR')])]),
+                        sigRow([sigLinha()]),
+                        sigRow([
+                            PC([sigNome(vendedor.nomeEmpresa || 'INDÚSTRIA DE MATERIAL BÉLICO DO BRASIL')]),
+                            PC([sigNome(vendedor.nomeResponsavel)]),
+                            ...(vendedor.cargoResponsavel ? [PC([N(vendedor.cargoResponsavel)])] : []),
+                        ]),
+                        sigRow([E()]),
+                        sigRow([E()]),
                         // Testemunhas
-                        new TableRow({ children: [new TableCell({
-                            children: [PC([B('TESTEMUNHAS')])],
-                            borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
-                            width: { size: TW, type: WidthType.DXA },
-                        })] }),
+                        sigRow([PC([B('TESTEMUNHAS')])]),
                     ]
                 }),
                 E(),
                 // Linha de testemunhas lado a lado
                 new Table({
                     width: { size: TW, type: WidthType.DXA },
-                    columnWidths: [4500, 360, 4500],
-                    borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE }, insideH: { style: BorderStyle.NONE }, insideV: { style: BorderStyle.NONE } },
+                    columnWidths: [5175, 342, 5175],
+                    borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE }, insideHorizontal: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE } },
                     rows: [
                         new TableRow({ children: [
-                            new TableCell({ children: [new Paragraph({ children: [N('___________________________________________')], alignment: AlignmentType.LEFT, spacing: { before: 80, after: 20 } })], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }, width: { size: 4500, type: WidthType.DXA } }),
-                            new TableCell({ children: [E()], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }, width: { size: 360, type: WidthType.DXA } }),
-                            new TableCell({ children: [new Paragraph({ children: [N('___________________________________________')], alignment: AlignmentType.RIGHT, spacing: { before: 80, after: 20 } })], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }, width: { size: 4500, type: WidthType.DXA } }),
-                        ]}),
-                        new TableRow({ children: [
-                            new TableCell({ children: [PL([B('Melquisedeque da Silva Vieira')])], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }, width: { size: 4500, type: WidthType.DXA } }),
-                            new TableCell({ children: [E()], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }, width: { size: 360, type: WidthType.DXA } }),
-                            new TableCell({ children: [new Paragraph({ children: [B('Carla Cunha Melo')], alignment: AlignmentType.RIGHT })], borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }, width: { size: 4500, type: WidthType.DXA } }),
+                            new TableCell({ children: [
+                                PL([N('___________________________________________')], { before: 80, after: 20 }),
+                                PL([B(TESTEMUNHA_1.nome || 'Nome da Testemunha')]),
+                                ...(TESTEMUNHA_1.linha1 ? [PL([N(TESTEMUNHA_1.linha1)])] : []),
+                                ...(TESTEMUNHA_1.linha2 ? [PL([N(TESTEMUNHA_1.linha2)])] : []),
+                            ], borders: noBord, width: { size: 5175, type: WidthType.DXA } }),
+                            new TableCell({ children: [E()], borders: noBord, width: { size: 342, type: WidthType.DXA } }),
+                            new TableCell({ children: [
+                                PL([N('___________________________________________')], { before: 80, after: 20 }),
+                                PL([B(TESTEMUNHA_2.nome || 'Nome da Testemunha')]),
+                                ...(TESTEMUNHA_2.linha1 ? [PL([N(TESTEMUNHA_2.linha1)])] : []),
+                                ...(TESTEMUNHA_2.linha2 ? [PL([N(TESTEMUNHA_2.linha2)])] : []),
+                            ], borders: noBord, width: { size: 5175, type: WidthType.DXA } }),
                         ]}),
                     ]
                 }),
@@ -13574,6 +13613,7 @@ function salvarProduto(event) {
             descontoMaximo
         };
         if (categoria) categoriaPorProduto[nome] = categoria;
+        try { registrarHistoricoCI(nome, ci, 'Editado pelo Cadastro de Produto'); } catch (e) { _catchSilencioso(e, 'salvarProduto'); }
 
         try { registrarAuditoria('edicao-produto', { nome: nomeAnterior }, { nome, estoqueConsolidado: Number(estoqueTotal) || 0 }, `Produto "${nome}" editado`); } catch (e) { _catchSilencioso(e, 'salvarProduto'); }
         atualizarSelectsProdutos();
@@ -13644,6 +13684,7 @@ function salvarProduto(event) {
         descMax: descontoMaximo
     };
     if (categoria) categoriaPorProduto[nome] = categoria;
+    try { registrarHistoricoCI(nome, ci, 'Definido no cadastro do produto'); } catch (e) { _catchSilencioso(e, 'salvarProduto'); }
 
     estoque.produtos.push(novoProduto);
     try { registrarAuditoria('cadastro-produto', null, { id: novoProduto.id, nome, categoria, estoqueConsolidado: Number(estoqueConsolidado) || 0 }, `Produto "${nome}" cadastrado`); } catch (e) { _catchSilencioso(e, 'salvarProduto'); }
@@ -14295,6 +14336,7 @@ function importarEstoque(event) {
                     if (!precificacao[produto.nome]) precificacao[produto.nome] = {};
                     precificacao[produto.nome].ci = ciCsv;
                     precificacao[produto.nome].ciAtualizadoEm = new Date().toISOString();
+                    try { registrarHistoricoCI(produto.nome, ciCsv, 'Importado via planilha (Estoque)'); } catch (e) { _catchSilencioso(e, 'importarEstoque'); }
                 }
                 // Atualizar PN se veio no CSV e produto não tinha
                 if (pnCsv && !produto.pn) {
@@ -14334,6 +14376,7 @@ function importarEstoque(event) {
                         if (p.ci > 0) {
                             if (!precificacao[p.nome]) precificacao[p.nome] = {};
                             precificacao[p.nome].ci = p.ci;
+                            try { registrarHistoricoCI(p.nome, p.ci, 'Importado via planilha (Estoque) — produto novo'); } catch (e) { _catchSilencioso(e, 'importarEstoque'); }
                         }
                         estoque.produtos.push(novoProduto);
                         criados.push(p.nome);
@@ -20641,7 +20684,7 @@ function abrirDetalhePrecoVenda(nomeProduto, uf, tipoPessoa) {
     }
 
     const rows = [
-        linha('CI (Custo de Importação)', fmt(r.ci)),
+        linha('CI (Custo de Industrialização)', fmt(r.ci)),
         linha(`Taxa (${r.taxa}%) ${badge(taxaFonte)}`, fmt(r.ci * r.taxa / 100)),
         linha(`ROI (${r.roi}%) ${badge(roiFonte)}`, fmt(r.ci * r.roi / 100)),
         linha('Valor Base  [CI × (1 + Taxa% + ROI%)]', fmt(r.valorBase), true),
@@ -20702,6 +20745,31 @@ function popularSelectProdutosCI() {
         sel.appendChild(opt);
     });
     if (cur) sel.value = cur;
+}
+
+/**
+ * Registra uma entrada no histórico de CI (estoque.tabelaCI) sempre que o valor
+ * mudar de fato, para que a aba "Tabela de CI" nunca fique desatualizada em
+ * relação ao que foi editado pelo Cadastro de Produto ou pela Tabela de Preço.
+ * Não duplica entrada se o CI não mudou em relação ao último registro.
+ */
+function registrarHistoricoCI(nomeProduto, novoCI, origem) {
+    if (!nomeProduto || !(Number(novoCI) > 0)) return;
+    if (!Array.isArray(estoque.tabelaCI)) estoque.tabelaCI = [];
+
+    const ultimoRegistro = estoque.tabelaCI
+        .filter(r => r.produtoNome === nomeProduto)
+        .sort((a, b) => new Date(b.data) - new Date(a.data))[0];
+
+    if (ultimoRegistro && Number(ultimoRegistro.ci) === Number(novoCI)) return;
+
+    estoque.tabelaCI.push({
+        id: Date.now(),
+        produtoNome: nomeProduto,
+        ci: Number(novoCI),
+        data: new Date().toISOString(),
+        observacao: origem || ''
+    });
 }
 
 function salvarNovoCI() {

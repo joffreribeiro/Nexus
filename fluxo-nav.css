@@ -121,6 +121,7 @@ body.flow-nav-on .content-area { max-width: none !important; }
 .flow-actions-drop .sidebar-action-btn svg { width: 15px; height: 15px; flex: none; opacity: .85; }
 .flow-actions-drop .nav-text { display: inline !important; }
 .flow-actions-drop .auth-panel { display: block; margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--fn-navy-800); }
+.flow-actions-sep { height: 1px; background: var(--fn-navy-800); margin: 4px 2px; flex: none; }
 
 /* ── Esteira de etapas (Operação) ─────────────────────────── */
 .pipebar {
@@ -199,8 +200,33 @@ body.flow-nav-on .content-area { max-width: none !important; }
 .ref-btn:hover, .ref-btn.active { background: var(--fn-navy-800); color: var(--fn-amber-400); }
 .refbar-sep { width: 1px; align-self: center; height: 18px; background: var(--fn-navy-800); margin: 0 6px; flex: none; }
 
+/* Grupo suspenso na faixa de referência (ex.: "Cadastro") */
+.ref-dropdown { position: relative; flex: none; }
+.ref-dropdown-toggle svg:last-child { width: 11px; height: 11px; margin-left: 1px; transition: transform .12s; transform: rotate(90deg); }
+.ref-dropdown.open .ref-dropdown-toggle svg:last-child { transform: rotate(-90deg); }
+.ref-dropdown-menu {
+    position: fixed;
+    background: var(--fn-navy-900); border: 1px solid var(--fn-navy-700);
+    border-radius: 6px; padding: 6px; min-width: 170px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.45); display: none; flex-direction: column; gap: 2px;
+    z-index: 2200;
+}
+.ref-dropdown-menu.open { display: flex; }
+.ref-dropdown-item {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    background: transparent; border: none; color: var(--fn-navy-200);
+    padding: 8px 10px; border-radius: 4px; font-size: 12.5px; font-weight: 500;
+    cursor: pointer; text-align: left; white-space: nowrap;
+}
+.ref-dropdown-item svg { width: 14px; height: 14px; flex: none; }
+.ref-dropdown-item:hover, .ref-dropdown-item.active { background: var(--fn-navy-800); color: var(--fn-amber-400); }
+.ref-dropdown-sep { height: 1px; background: var(--fn-navy-700); margin: 4px 2px; flex: none; }
+
 /* Em telas de referência que reaproveitam a Precificação, esconder a barra de sub-abas */
 body.flow-ref-precif .precif-subnav { display: none !important; }
+
+/* Destaque temporário ao rolar até um painel de Configurações a partir da faixa de referência */
+.cfg-anchor-flash { box-shadow: 0 0 0 2px var(--fn-amber-500) !important; transition: box-shadow .2s; }
 
 /* ── Tela placeholder (Envio em desenvolvimento) ──────────── */
 #tab-envio .flow-placeholder {

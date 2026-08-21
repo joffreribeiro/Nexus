@@ -19,7 +19,11 @@
       "Bash(npx serve *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5183/)",
       "Bash(node scripts/stamp-versions.js --check)",
-      "Bash(node scripts/stamp-versions.js)"
+      "Bash(node scripts/stamp-versions.js)",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__claude-in-chrome__navigate",
+      "Bash(netstat -ano)",
+      "Bash(findstr :5181)"
     ]
   }
 }

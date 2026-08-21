@@ -10238,6 +10238,8 @@ function abrirModalProduto() {
     if (header) header.innerHTML = '<span>+</span> Adicionar Novo Produto';
     const submitBtn = document.querySelector('#modalProduto .modal-footer button[type="submit"]');
     if (submitBtn) submitBtn.textContent = 'Salvar Produto';
+    const labelEstoque = document.getElementById('labelEstoqueTotal');
+    if (labelEstoque) labelEstoque.innerHTML = 'Quantidade Inicial (IMBEL) <span class="required">*</span>';
 }
 
 function abrirModalNovoProduto() {
@@ -10256,6 +10258,8 @@ function abrirModalEditarProduto(produtoId) {
     document.getElementById('formProduto').reset();
     document.getElementById('nomeProduto').value = produto.nome || '';
     document.getElementById('estoqueTotal').value = Number(produto.estoqueConsolidado || 0);
+    const labelEstoqueEdit = document.getElementById('labelEstoqueTotal');
+    if (labelEstoqueEdit) labelEstoqueEdit.innerHTML = 'Saldo em Estoque (Consolidado) <span class="required">*</span>';
     const regra = (precificacao && precificacao[produto.nome]) ? precificacao[produto.nome] : {};
     const cat = (categoriaPorProduto && categoriaPorProduto[produto.nome]) || produto.categoria || '';
     const ncmInput = document.getElementById('produtoNCM');
@@ -13521,7 +13525,8 @@ function salvarProduto(event) {
         const nomeAnterior = produto.nome;
         produto.nome = nome;
         produto.estoqueConsolidado = Number(estoqueTotal) || 0;
-        produto.quantidadeInicial = Number(estoqueTotal) || 0;
+        // Não sobrescrever quantidadeInicial em edições: é o valor histórico do cadastro original
+        // (bug anterior: cada edição de produto copiava o saldo atual por cima do saldo inicial)
         produto.ncm = ncm;
         produto.categoria = categoria;
         produto.ci = ci;
@@ -18370,20 +18375,174 @@ function _tvCalcKPIs(produtos, ufs, tipoPessoa, taxaWI, roiWI, ncmOverrides) {
     };
 }
 
+// Armamento da planilha de peças -> produto do catálogo sob o qual as peças devem
+// aninhar. O nome no cabeçalho da planilha ("AGLC") não é o nome comercial do
+// produto ("FUZIL DE ALTA PRECISÃO IMBEL 308 AGLC (COMPLETO)"), então sem esse
+// mapa as peças criariam uma linha-mãe paralela em vez de entrar sob o produto.
+// Chave em UPPERCASE; o valor tem que bater exatamente com o `nome` do produto.
+// Armamento sem entrada aqui vira a própria linha-mãe, com o nome que veio da
+// planilha — é só acrescentar a linha quando o produto correspondente existir.
+const ARMAMENTO_PRODUTO_PAI = {
+    'AGLC': 'FUZIL DE ALTA PRECISÃO IMBEL 308 AGLC (COMPLETO)',
+    'PST 9 GC MD1 ADC': 'PISTOLA 9 GC MD1 S/ ADC'
+};
+
+function _resolverProdutoPaiArmamento(nomeArmamento) {
+    const nome = String(nomeArmamento || '').trim();
+    if (!nome) return '';
+    return ARMAMENTO_PRODUTO_PAI[nome.toUpperCase()] || nome;
+}
+
+// Autocorreção de dados importados antes de as peças de reposição ganharem uma
+// linha-mãe: elas têm `armamentos` preenchido, mas não existe produto com o nome
+// do armamento e o `componente` está vazio — sem pai a peça fica solta no topo
+// da tabela. Cria os pais que faltam e adota o primeiro armamento como parentesco.
+// Idempotente: na segunda passada não encontra nada para fazer e não salva.
+function _tvGarantirPaisArmamento() {
+    const prods = estoque.produtos || [];
+    if (!prods.length) return;
+    const armsDe = p => Array.isArray(p.armamentos) ? p.armamentos
+                      : (typeof p.armamento === 'string' && p.armamento.trim() ? [p.armamento] : []);
+
+    // A marca `ehArmamentoPai` não sobrevive a um round-trip por CSV (o arquivo
+    // não tem essa coluna), então rededuz pela assinatura: categoria ARMAMENTO,
+    // sem PN, sem NCM e sem preço. Só assim a limpeza abaixo volta a reconhecê-la.
+    prods.forEach(p => {
+        if (p.ehArmamentoPai) return;
+        if (String(p.categoria || '').trim().toUpperCase() !== 'ARMAMENTO') return;
+        if (p.pn || p.ncm || Number(p.ci) > 0) return;
+        if (Number((precificacao[p.nome] || {}).ci || 0) > 0) return;
+        p.ehArmamentoPai = true;
+    });
+
+    const nomes = new Set(prods.map(p => (p.nome || '').trim().toUpperCase()));
+    const criar = [];
+    prods.forEach(p => armsDe(p).forEach(a => {
+        // Resolve o apelido antes de decidir criar: "AGLC" já tem produto no
+        // catálogo sob outro nome, e criar a linha-mãe seria um pai duplicado.
+        const nome = _resolverProdutoPaiArmamento(a);
+        const chave = nome.toUpperCase();
+        if (!nome || nomes.has(chave)) return;
+        nomes.add(chave);
+        criar.push(nome);
+    }));
+
+    let mudou = false;
+    criar.forEach((nome, i) => {
+        prods.push({
+            id: Date.now() + i,
+            nome: nome, pn: '', ci: 0, ncm: '', componente: '', nomeFabrica: '',
+            categoria: 'ARMAMENTO', ehArmamentoPai: true, armamentos: [],
+            distribuicao: {}, vendas: {}
+        });
+        mudou = true;
+    });
+
+    prods.forEach(p => {
+        if (p.ehArmamentoPai) return;
+        const comp = String(p.componente || '').trim();
+        const arms = armsDe(p);
+        if (comp && comp !== '-') {
+            // Já tem pai: só reaponta se ele for um armamento que ganhou apelido
+            // (peça migrada antes de o mapa existir aponta para "AGLC", não para
+            // o produto). Parentesco que não é armamento fica intocado.
+            const resolvido = _resolverProdutoPaiArmamento(comp);
+            if (resolvido !== comp && arms.some(a => String(a).trim().toUpperCase() === comp.toUpperCase())) {
+                p.componente = resolvido;
+                mudou = true;
+            }
+            return;
+        }
+        if (!arms.length) return;
+        p.componente = _resolverProdutoPaiArmamento(arms[0]);
+        mudou = true;
+    });
+
+    // Linha-mãe sintética que ficou sem nenhuma peça (caso típico: as peças foram
+    // reapontadas para o produto real do catálogo) vira lixo visual no topo da
+    // tabela. Só remove o que esta migração criou, e só se estiver vazia.
+    const paisComFilhas = new Set();
+    prods.forEach(p => {
+        const comp = String(p.componente || '').trim().toUpperCase();
+        if (comp) paisComFilhas.add(comp);
+        armsDe(p).forEach(a => paisComFilhas.add(_resolverProdutoPaiArmamento(a).toUpperCase()));
+    });
+    for (let i = prods.length - 1; i >= 0; i--) {
+        const p = prods[i];
+        if (!p.ehArmamentoPai) continue;
+        if (paisComFilhas.has((p.nome || '').trim().toUpperCase())) continue;
+        // Qualquer sinal de que virou produto de verdade cancela a remoção
+        if (p.pn || p.ncm || Number(p.ci) > 0) continue;
+        if (Number((precificacao[p.nome] || {}).ci || 0) > 0) continue;
+        prods.splice(i, 1);
+        mudou = true;
+    }
+
+    if (mudou) {
+        try { salvarDados(); } catch (e) { _catchSilencioso(e, '_tvGarantirPaisArmamento'); }
+    }
+}
+
 function renderizarTabelaPrecoVenda() {
     const container = document.getElementById('subaba-precif-tabelavenda');
     if (!container) return;
 
+    _tvGarantirPaisArmamento();
+
     const todosProds = (estoque.produtos || []).filter(p => p.nome);
-    // Produtos principais (sem componente)
-    const produtos = todosProds.filter(p => !p.componente || p.componente.trim() === '' || p.componente.trim() === '-');
-    // Indexar peças por nome do pai (uppercase)
-    const pecasPorPaiTV = {};
-    todosProds.filter(p => p.componente && p.componente.trim() !== '' && p.componente.trim() !== '-').forEach(p => {
-        const pai = p.componente.trim().toUpperCase();
-        if (!pecasPorPaiTV[pai]) pecasPorPaiTV[pai] = [];
-        pecasPorPaiTV[pai].push(p);
+    const temPecasReposicao = todosProds.some(p => {
+        if (Array.isArray(p.armamentos) && p.armamentos.length) return true;
+        if (p.armamento && typeof p.armamento === 'string' && p.armamento.trim()) return true;
+        return false;
     });
+
+    // Pais de uma peça: o produto-pai clássico (campo `componente`, o que faz as
+    // peças da PISTOLA IMBEL 380 GC MD1 aninharem) MAIS todos os armamentos que
+    // ela serve. Peça de reposição com PN compartilhado (PARAFAL/FAL-RJ) tem que
+    // aparecer sob os dois — por isso a lista, e não um pai só.
+    function _tvPaisDaPeca(p) {
+        const pais = [];
+        // Resolve o apelido do armamento para o produto real do catálogo — é o que
+        // põe as peças do AGLC sob o FUZIL, e não sob uma linha-mãe "AGLC".
+        const add = v => {
+            const k = _resolverProdutoPaiArmamento(v).toUpperCase();
+            if (k && k !== '-' && !pais.includes(k)) pais.push(k);
+        };
+        add(p.componente);
+        if (Array.isArray(p.armamentos)) p.armamentos.forEach(add);
+        else if (typeof p.armamento === 'string') add(p.armamento);
+        return pais;
+    }
+
+    // Identidade de uma LINHA (não do produto): a mesma peça aparece uma vez por
+    // armamento que serve, então o pai entra na chave para os ids não colidirem.
+    function _tvRowUid(prod, paiNome) {
+        const base = String(prod.id != null ? prod.id : (prod.nome || '')).replace(/[^A-Za-z0-9]/g, '');
+        const sufixo = String(paiNome || '').replace(/[^A-Za-z0-9]/g, '');
+        return sufixo ? base + '_' + sufixo : base;
+    }
+
+    // Só um nome que existe como produto pode ser pai — do contrário a peça
+    // sumiria da tabela ao ser tirada do topo sem ganhar uma linha-mãe.
+    const nomesProdutosTV = new Set(todosProds.map(p => (p.nome || '').trim().toUpperCase()));
+
+    // Indexar peças por nome do pai (uppercase); uma peça pode entrar em vários.
+    const pecasPorPaiTV = {};
+    const ehFilhaTV = new Set();   // identidade por referência: id pode faltar
+    todosProds.forEach(p => {
+        const nomeU = (p.nome || '').trim().toUpperCase();
+        _tvPaisDaPeca(p).forEach(pai => {
+            if (pai === nomeU) return;                 // nunca filha de si mesma
+            if (!nomesProdutosTV.has(pai)) return;     // pai não cadastrado → fica órfã no topo
+            if (!pecasPorPaiTV[pai]) pecasPorPaiTV[pai] = [];
+            pecasPorPaiTV[pai].push(p);
+            ehFilhaTV.add(p);
+        });
+    });
+
+    // Produtos principais: os que não aninham sob nenhum pai existente. Peça cujo
+    // armamento/componente não está cadastrado continua visível como linha de topo.
+    const produtos = todosProds.filter(p => !ehFilhaTV.has(p));
     const tipoPessoaAtual = container._tipoPessoa || 'PJ';
 
     if (!produtos.length) {
@@ -18391,7 +18550,7 @@ function renderizarTabelaPrecoVenda() {
             <div class="tv-command-bar">
                 <span style="font-size:0.82rem;color:#64748b">Nenhum produto cadastrado.</span>
                 <button class="tv-bar-btn" onclick="document.getElementById('inputImportarTabelaVenda').click()">📥 Importar Excel</button>
-                <input type="file" id="inputImportarTabelaVenda" accept=".xlsx,.xls,.csv" style="display:none" onchange="importarTabelaPrecoVendaExcel(event)">
+                <input type="file" id="inputImportarTabelaVenda" accept=".xlsx,.xls,.ods,.csv" style="display:none" onchange="importarTabelaPrecoVendaExcel(event)">
             </div>`;
         return;
     }
@@ -18449,8 +18608,12 @@ function renderizarTabelaPrecoVenda() {
     const buscaLower = (tvState.busca || '').toLowerCase().trim();
     function _prodPassaFiltro(prod) {
         if (buscaLower) {
-            const haystack = [prod.nome, prod.nomeFabrica, prod.ncm, prod.pn, prod.categoria]
-                .filter(Boolean).join(' ').toLowerCase();
+            const armamentsArray = Array.isArray(prod.armamentos) ? prod.armamentos : (prod.armamento ? [prod.armamento] : []);
+            const haystack = [
+                prod.nome, prod.nomeFabrica, prod.ncm, prod.pn, prod.categoria, prod.pecaRef, ...armamentsArray,
+                // peças de interesse que o conjunto substitui — achar "Porca do para-choque" tem que retornar a Coronha
+                ...(prod.composicao || []).flatMap(c => [c.nome, c.peca])
+            ].filter(Boolean).join(' ').toLowerCase();
             if (!haystack.includes(buscaLower)) return false;
         }
         if (tvState.filtroNCMs.length && !tvState.filtroNCMs.includes(prod.ncm)) return false;
@@ -18636,7 +18799,11 @@ function renderizarTabelaPrecoVenda() {
 
         function passaFiltro(prod) {
             if (bL) {
-                const h = [prod.nome, prod.nomeFabrica, prod.ncm, prod.pn, prod.categoria].filter(Boolean).join(' ').toLowerCase();
+                const armamentsArray = Array.isArray(prod.armamentos) ? prod.armamentos : (prod.armamento ? [prod.armamento] : []);
+                const h = [
+                    prod.nome, prod.nomeFabrica, prod.ncm, prod.pn, prod.categoria, prod.pecaRef, ...armamentsArray,
+                    ...(prod.composicao || []).flatMap(c => [c.nome, c.peca])
+                ].filter(Boolean).join(' ').toLowerCase();
                 if (!h.includes(bL)) return false;
             }
             if (st.filtroNCMs.length && !st.filtroNCMs.includes(prod.ncm)) return false;
@@ -18694,7 +18861,8 @@ function renderizarTabelaPrecoVenda() {
             const ncmAtual = principal.ncm || '—';
 
             if (ncmAtual !== lastNCM) {
-                const ncmProdos = ordem.filter(c => grupos[c][0].ncm === ncmAtual);
+                // mesmo fallback do ncmAtual: sem isso, produto sem NCM conta 0
+                const ncmProdos = ordem.filter(c => (grupos[c][0].ncm || '—') === ncmAtual);
                 const grupoNome = (categoriaPorProduto && categoriaPorProduto[principal.nome]) || principal.categoria || '';
                 rows += `<tr class="tv-ncm-group-row"><td colspan="99">${_escapeHtml(ncmAtual)}${grupoNome ? ' · <strong>' + _escapeHtml(grupoNome.toUpperCase()) + '</strong>' : ''} <span style="opacity:0.55;font-weight:400">${ncmProdos.length} produto${ncmProdos.length>1?'s':''}</span></td></tr>`;
                 lastNCM = ncmAtual;
@@ -18702,9 +18870,10 @@ function renderizarTabelaPrecoVenda() {
 
             const bg = rowIdx % 2 === 0 ? '#fff' : '#fafbfd';
             rows += _tvRenderLinhaHTML(principal, false, bg, tp, ufs, wTaxa, wROI, wOvr);
-            const filhas = pecasPorPaiTV[(principal.nome || '').toUpperCase()] || [];
+            const paiKey = (principal.nome || '').trim().toUpperCase();
+            const filhas = pecasPorPaiTV[paiKey] || [];
             filhas.forEach(peca => {
-                rows += _tvRenderLinhaHTML(peca, true, '#fafbfd', tp, ufs, wTaxa, wROI, wOvr);
+                rows += _tvRenderLinhaHTML(peca, true, '#fafbfd', tp, ufs, wTaxa, wROI, wOvr, paiKey);
             });
             rowIdx++;
         });
@@ -18715,9 +18884,13 @@ function renderizarTabelaPrecoVenda() {
         // Reinjetar botões expand
         ordem.forEach(chave => {
             const principal = grupos[chave][0];
-            const filhas = pecasPorPaiTV[(principal.nome || '').toUpperCase()] || [];
-            if (!filhas.length) return;
-            _tvInjetarBtnExpand(principal, filhas, container);
+            const paiKey = (principal.nome || '').trim().toUpperCase();
+            const filhas = pecasPorPaiTV[paiKey] || [];
+            if (filhas.length) _tvInjetarBtnExpand(principal, filhas, container);
+            if ((principal.composicao || []).length > 0) _tvInjetarBtnExpandComposicao(_tvRowUid(principal, ''), container);
+            filhas.forEach(peca => {
+                if ((peca.composicao || []).length > 0) _tvInjetarBtnExpandComposicao(_tvRowUid(peca, paiKey), container);
+            });
         });
 
         // Atualizar footbar
@@ -18746,15 +18919,23 @@ function renderizarTabelaPrecoVenda() {
         });
     }
 
-    function _tvRenderLinhaHTML(prod, isPeca, bg, tp, ufs, wTaxa, wROI, wOvr) {
+    function _tvRenderLinhaHTML(prod, isPeca, bg, tp, ufs, wTaxa, wROI, wOvr, paiNome) {
         const ci = Number(precificacao[prod.nome]?.ci ?? prod.ci ?? 0);
         const ciStr = ci > 0 ? _fmtMoeda(ci) : '—';
         const pn = prod.pn || '—';
         const nomeFab = prod.nomeFabrica || '—';
         const ncm = prod.ncm || '—';
-        const pecasFilhas = pecasPorPaiTV[(prod.nome || '').toUpperCase()] || [];
+        const pecasFilhas = pecasPorPaiTV[(prod.nome || '').trim().toUpperCase()] || [];
         const temPecas = !isPeca && pecasFilhas.length > 0;
-        const idExpandTV = 'tv-expand-' + Number(prod.id);
+        // A mesma peça pode ser renderizada sob mais de um armamento — o uid
+        // inclui o pai para os ids de DOM não colidirem entre as duas cópias.
+        const rowUid = _tvRowUid(prod, isPeca ? paiNome : '');
+        const idExpandTV = 'tv-expand-' + rowUid;
+        // Peça de reposição também carrega composição (selo "conjunto"); manter
+        // o selo também nas linhas filhas, senão a importação perde a informação.
+        const composicao = Array.isArray(prod.composicao) ? prod.composicao : [];
+        const temComposicao = composicao.length > 0;
+        const idExpandComposicaoTV = 'tv-conjunto-expand-' + rowUid;
 
         // Calcular todos os preços para heatmap
         const precos = {};
@@ -18774,19 +18955,40 @@ function renderizarTabelaPrecoVenda() {
 
         const grupo = (categoriaPorProduto && categoriaPorProduto[prod.nome]) || prod.categoria || '';
         const comp  = prod.componente && prod.componente.trim() !== '' && prod.componente.trim() !== '-' ? prod.componente.trim() : '—';
+        // "Comp." mostra o produto pai (peças filhas de um SKU) ou, na falta desse
+        // parentesco, o armamento de referência de uma peça de reposição importada.
+        let armamentosDisplay = '—';
+        if (Array.isArray(prod.armamentos) && prod.armamentos.length) {
+            armamentosDisplay = prod.armamentos.join(', ');
+        } else if (prod.armamento && typeof prod.armamento === 'string' && prod.armamento.trim()) {
+            // compatibilidade: produto antigo com armamento como string
+            armamentosDisplay = prod.armamento.trim();
+        }
+        // Linha filha mostra o pai sob o qual ESTA cópia está aninhada (a mesma
+        // peça pode estar sob dois armamentos); linha de topo mostra os armamentos.
+        let compCellVal = armamentosDisplay;
+        if (isPeca) {
+            const paiU = String(paiNome || '').trim().toUpperCase();
+            const originais = [prod.componente, ...(Array.isArray(prod.armamentos) ? prod.armamentos : []), prod.armamento];
+            const comCaso = originais.find(v => String(v || '').trim().toUpperCase() === paiU);
+            compCellVal = (comCaso && String(comCaso).trim()) || paiU || comp;
+        }
         const grupoBadge = grupo
             ? `<span style="font-size:0.65rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;background:var(--tv-navy-100);color:var(--tv-navy-600);padding:1px 5px;border-radius:2px">${_escapeHtml(grupo)}</span>`
             : '<span style="color:#cbd5e1">—</span>';
-        const pnCell = `<span style="font-family:var(--tv-font-mono);font-size:0.72rem">${_escapeHtml(pn)}</span>${temPecas ? `<span id="${idExpandTV}"></span>` : ''}`;
+        const pnCell = `<span style="font-family:var(--tv-font-mono);font-size:0.72rem">${_escapeHtml(pn)}</span>${prod.pecaRef ? ` <span style="font-family:var(--tv-font-mono);font-size:0.65rem;color:#94a3b8">(${_escapeHtml(prod.pecaRef)})</span>` : ''}${temPecas ? `<span id="${idExpandTV}"></span>` : ''}`;
+        const conjuntoBadge = temComposicao
+            ? ` <span id="${idExpandComposicaoTV}" class="tv-conjunto-badge" style="cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:3px;margin-left:5px;vertical-align:middle;background:var(--tv-amber-100);color:var(--tv-amber-700);border-radius:8px;padding:0 6px;font-size:0.62rem;font-weight:700;letter-spacing:0.03em;text-transform:uppercase" title="Vendido apenas como conjunto"><span class="tv-conjunto-icon">▶</span> conjunto · ${composicao.length}</span>`
+            : '';
 
         const _rowBg = isPeca ? '#fafbfd' : bg;
         const _bdr = '1px solid #e2e8f0';
-        let row = `<tr class="tv-data-row${isPeca?' tv-peca-row':''}" style="${isPeca?'display:none;background:#fafbfd':'background:'+bg}"${isPeca ? ` data-tv-peca-filha="${_escapeHtml((prod.componente||'').trim())}"` : ''}>
+        let row = `<tr class="tv-data-row${isPeca?' tv-peca-row':''}" data-tv-row-uid="${rowUid}" style="${isPeca?'display:none;background:#fafbfd':'background:'+bg}"${isPeca ? ` data-tv-peca-filha="${_escapeHtml(String(paiNome || '').trim())}"` : ''}>
             <td class="tv-td-fixed" style="background:${_rowBg};border-right:${_bdr}">${_escapeHtml(ncm)}</td>
             <td class="tv-td-pn" style="background:${_rowBg};padding:0 8px;border-right:${_bdr}">${pnCell}</td>
             <td class="tv-td-nomefab" style="background:${_rowBg};padding:0 8px;color:#94a3b8;font-size:0.72rem;max-width:220px;overflow:hidden;text-overflow:ellipsis;border-right:${_bdr}" title="${_escapeHtml(nomeFab)}">${_escapeHtml(nomeFab)}</td>
-            <td class="tv-td-comp" style="background:${_rowBg};padding:0 8px;color:#94a3b8;font-size:0.72rem;text-align:center;border-right:${_bdr}">${_escapeHtml(isPeca ? comp : '—')}</td>
-            <td class="tv-td-nome" style="background:${_rowBg};padding:0 8px;max-width:280px;overflow:hidden;text-overflow:ellipsis;border-right:${_bdr}" title="${_escapeHtml(prod.nome)}">${isPeca?'<span style="color:#94a3b8">↳ </span>':''}<span style="font-weight:${isPeca?'400':'600'};color:${isPeca?'#64748b':'var(--tv-navy-900)'}">${_escapeHtml(prod.nome)}</span></td>
+            <td class="tv-td-comp" style="background:${_rowBg};padding:0 8px;color:#94a3b8;font-size:0.72rem;text-align:center;border-right:${_bdr}">${_escapeHtml(compCellVal)}</td>
+            <td class="tv-td-nome" style="background:${_rowBg};padding:0 8px;max-width:280px;overflow:hidden;text-overflow:ellipsis;border-right:${_bdr}" title="${_escapeHtml(prod.nome)}">${isPeca?'<span style="color:#94a3b8">↳ </span>':''}<span style="font-weight:${isPeca?'400':'600'};color:${isPeca?'#64748b':'var(--tv-navy-900)'}">${_escapeHtml(prod.nome)}</span>${conjuntoBadge}</td>
             <td class="tv-ci-cell tv-td-ci" style="background:${_rowBg};border-right:2px solid #cbd5e1">${ciStr}</td>`;
 
         ufs.forEach(uf => {
@@ -18806,11 +19008,30 @@ function renderizarTabelaPrecoVenda() {
             }
         });
         row += `</tr>`;
+
+        // Linhas de leitura dos componentes do conjunto — sem CI, sem preço,
+        // ocultas até o selo "conjunto" ser clicado. Reforça que só se vende o
+        // conjunto inteiro: nenhuma dessas peças existe como produto à parte.
+        if (temComposicao) {
+            const totalCols = ufs.length;
+            composicao.forEach(c => {
+                row += `<tr class="tv-composicao-row" data-tv-composicao-de="${rowUid}" style="display:none;background:#fafbfd">
+                    <td class="tv-td-fixed" style="background:#fafbfd;border-right:${_bdr}"></td>
+                    <td class="tv-td-pn" style="background:#fafbfd;padding:0 8px;border-right:${_bdr}"><span style="font-family:var(--tv-font-mono);font-size:0.68rem;color:#cbd5e1">${_escapeHtml(c.peca || '')}</span></td>
+                    <td class="tv-td-nomefab" style="background:#fafbfd;border-right:${_bdr}"></td>
+                    <td class="tv-td-comp" style="background:#fafbfd;border-right:${_bdr}"></td>
+                    <td class="tv-td-nome" style="background:#fafbfd;padding:0 8px;color:#94a3b8;font-size:0.8rem;max-width:280px;overflow:hidden;text-overflow:ellipsis;border-right:${_bdr}" title="${_escapeHtml(c.nome)}"><span style="color:#cbd5e1">↳ </span>${_escapeHtml(c.nome)}</td>
+                    <td class="tv-ci-cell tv-td-ci" style="background:#fafbfd;border-right:2px solid #cbd5e1;color:#cbd5e1">—</td>
+                    <td colspan="${totalCols}" style="background:#fafbfd;color:#94a3b8;font-size:0.72rem;font-style:italic;padding:0 10px;white-space:nowrap">vendido apenas no conjunto acima</td>
+                </tr>`;
+            });
+        }
+
         return row;
     }
 
     function _tvInjetarBtnExpand(principal, filhas, ctr) {
-        const slot = document.getElementById('tv-expand-' + Number(principal.id));
+        const slot = document.getElementById('tv-expand-' + _tvRowUid(principal, ''));
         if (!slot || slot.dataset.tvInjected) return;
         slot.dataset.tvInjected = '1';
         const btn = document.createElement('span');
@@ -18827,14 +19048,41 @@ function renderizarTabelaPrecoVenda() {
         btn.addEventListener('click', e => {
             e.stopPropagation();
             const expandido = icon.textContent.trim() === '▼';
-            const nomePaiU = (principal.nome || '').toUpperCase();
+            const nomePaiU = (principal.nome || '').trim().toUpperCase();
             ctr.querySelectorAll('tr[data-tv-peca-filha]').forEach(tr => {
-                if ((tr.dataset.tvPecaFilha || '').toUpperCase() === nomePaiU)
-                    tr.style.display = expandido ? 'none' : 'table-row';
+                if ((tr.dataset.tvPecaFilha || '').trim().toUpperCase() !== nomePaiU) return;
+                tr.style.display = expandido ? 'none' : 'table-row';
+                // Recolher o pai fecha junto as linhas de composição das filhas,
+                // senão sobram órfãs visíveis no meio da tabela.
+                if (expandido) {
+                    const uidFilha = tr.dataset.tvRowUid;
+                    if (uidFilha) {
+                        ctr.querySelectorAll(`tr[data-tv-composicao-de="${uidFilha}"]`).forEach(sub => { sub.style.display = 'none'; });
+                        const selo = document.getElementById('tv-conjunto-expand-' + uidFilha);
+                        const seloIcon = selo && selo.querySelector('.tv-conjunto-icon');
+                        if (seloIcon) seloIcon.textContent = '▶';
+                    }
+                }
             });
             icon.textContent = expandido ? '▶' : '▼';
         });
         slot.appendChild(btn);
+    }
+
+    function _tvInjetarBtnExpandComposicao(rowUid, ctr) {
+        const slot = document.getElementById('tv-conjunto-expand-' + rowUid);
+        if (!slot || slot.dataset.tvInjected) return;
+        slot.dataset.tvInjected = '1';
+        const icon = slot.querySelector('.tv-conjunto-icon');
+        if (!icon) return;
+        slot.addEventListener('click', e => {
+            e.stopPropagation();
+            const expandido = icon.textContent.trim() === '▼';
+            ctr.querySelectorAll(`tr[data-tv-composicao-de="${rowUid}"]`).forEach(tr => {
+                tr.style.display = expandido ? 'none' : 'table-row';
+            });
+            icon.textContent = expandido ? '▶' : '▼';
+        });
     }
 
     function _tvRenderWhatIfImpact() {
@@ -19095,16 +19343,17 @@ function renderizarTabelaPrecoVenda() {
         const principal = grupos[chave][0];
         const ncmAtual = principal.ncm || '—';
         if (ncmAtual !== lastNCM2) {
-            const ncmProds2 = ordemFinal.filter(c => grupos[c][0].ncm === ncmAtual);
+            const ncmProds2 = ordemFinal.filter(c => (grupos[c][0].ncm || '—') === ncmAtual);
             const grupoNome2 = (categoriaPorProduto && categoriaPorProduto[principal.nome]) || principal.categoria || '';
             tbodyRows += `<tr class="tv-ncm-group-row"><td colspan="99">${_escapeHtml(ncmAtual)}${grupoNome2 ? ' · <strong>' + _escapeHtml(grupoNome2.toUpperCase()) + '</strong>' : ''} <span style="opacity:0.55;font-weight:400">${ncmProds2.length} produto${ncmProds2.length>1?'s':''}</span></td></tr>`;
             lastNCM2 = ncmAtual;
         }
         const bg = rowIdx2 % 2 === 0 ? '#fff' : '#fafbfd';
         tbodyRows += _tvRenderLinhaHTML(principal, false, bg, tipoPessoa, ufsFiltradas, tvState.wiTaxa, tvState.wiROI, tvState.wiNcmOverrides);
-        const filhas = pecasPorPaiTV[(principal.nome || '').toUpperCase()] || [];
+        const paiKey2 = (principal.nome || '').trim().toUpperCase();
+        const filhas = pecasPorPaiTV[paiKey2] || [];
         filhas.forEach(peca => {
-            tbodyRows += _tvRenderLinhaHTML(peca, true, '#fafbfd', tipoPessoa, ufsFiltradas, tvState.wiTaxa, tvState.wiROI, tvState.wiNcmOverrides);
+            tbodyRows += _tvRenderLinhaHTML(peca, true, '#fafbfd', tipoPessoa, ufsFiltradas, tvState.wiTaxa, tvState.wiROI, tvState.wiNcmOverrides, paiKey2);
         });
         rowIdx2++;
     });
@@ -19214,8 +19463,9 @@ function renderizarTabelaPrecoVenda() {
                 ${temWI ? '⚡ What-If ATIVO' : '⚡ Simulador'}
             </button>
             <button class="tv-bar-btn" onclick="exportarTabelaPrecoVenda()" title="Exportar Excel">⬇ Excel</button>
+            ${temPecasReposicao ? `<button class="tv-bar-btn" onclick="exportarPecasReposicao()" title="Exportar no formato de conjuntos, para conferir contra a planilha de origem">⬇ Peças de Reposição</button>` : ''}
             <button class="tv-bar-btn" onclick="document.getElementById('inputImportarTabelaVendaB').click()" title="Importar">📥</button>
-            <input type="file" id="inputImportarTabelaVendaB" accept=".xlsx,.xls,.csv" style="display:none" onchange="importarTabelaPrecoVendaExcel(event)">
+            <input type="file" id="inputImportarTabelaVendaB" accept=".xlsx,.xls,.ods,.csv" style="display:none" onchange="importarTabelaPrecoVendaExcel(event)">
         </div>
 
         ${kpiHtml}
@@ -19243,8 +19493,13 @@ function renderizarTabelaPrecoVenda() {
     // Pós-renderização: injetar botões expand
     ordemFinal.forEach(chave => {
         const principal = grupos[chave][0];
-        const filhas = pecasPorPaiTV[(principal.nome || '').toUpperCase()] || [];
+        const paiKey3 = (principal.nome || '').trim().toUpperCase();
+        const filhas = pecasPorPaiTV[paiKey3] || [];
         if (filhas.length) _tvInjetarBtnExpand(principal, filhas, container);
+        if ((principal.composicao || []).length > 0) _tvInjetarBtnExpandComposicao(_tvRowUid(principal, ''), container);
+        filhas.forEach(peca => {
+            if ((peca.composicao || []).length > 0) _tvInjetarBtnExpandComposicao(_tvRowUid(peca, paiKey3), container);
+        });
     });
 
     // Renderizar mapa se ativo
@@ -19434,18 +19689,337 @@ function importarTabelaPrecoVendaExcel(event) {
     function _detectarColuna(headers, opcoes) {
         return headers.find(h => opcoes.some(o => String(h).trim().toUpperCase().includes(o))) || null;
     }
+    // O armamento precisa existir como PRODUTO para as peças aninharem embaixo
+    // dele — é o mesmo parentesco que a PISTOLA IMBEL 380 GC MD1 usa (campo
+    // `componente` apontando para o nome do pai). Sem essa linha-mãe as peças
+    // ficam soltas no topo da tabela. Não é um SKU vendável: CI zero, sem NCM.
+    function _garantirProdutoArmamento(nomeArmamento) {
+        // Apelido primeiro: com um produto do catálogo mapeado, as peças aninham
+        // sob ele e nenhuma linha-mãe paralela é criada.
+        const nome = _resolverProdutoPaiArmamento(nomeArmamento);
+        if (!nome) return null;
+        if (!estoque.produtos) estoque.produtos = [];
+        const jaExiste = estoque.produtos.find(p => (p.nome || '').trim().toUpperCase() === nome.toUpperCase());
+        // Produto que já existia é do usuário — não recebe a marca `ehArmamentoPai`,
+        // que só identifica as linhas-mãe criadas aqui e passíveis de limpeza.
+        if (jaExiste) return jaExiste;
+        const pai = {
+            id: Date.now() + Math.floor(Math.random() * 1000),
+            nome: nome,
+            pn: '',
+            ci: 0,
+            ncm: '',
+            componente: '',
+            nomeFabrica: '',
+            categoria: 'ARMAMENTO',
+            ehArmamentoPai: true,
+            armamentos: [],
+            distribuicao: {},
+            vendas: {}
+        };
+        estoque.produtos.push(pai);
+        return pai;
+    }
+    function _semAcento(s) {
+        return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toUpperCase();
+    }
+    function _parseNumBR(raw) {
+        if (raw === '' || raw === null || raw === undefined) return null;
+        if (typeof raw === 'number') return raw;
+        const s = String(raw).replace(/\s/g, '').replace(/^R\$/i, '');
+        const lastComma = s.lastIndexOf(',');
+        const lastDot = s.lastIndexOf('.');
+        let norm;
+        if (lastComma > lastDot) norm = s.replace(/\./g, '').replace(',', '.');
+        else norm = s.replace(/,/g, '');
+        const n = Number(norm);
+        return isNaN(n) ? null : n;
+    }
+    function _parsePctBR(raw) {
+        if (raw === '' || raw === null || raw === undefined) return null;
+        return _parseNumBR(String(raw).replace('%', ''));
+    }
+
+    // Layout "peça de reposição": título mesclado (linha 0), linha de grupo
+    // (linha 1: Tx/ROI/ICMS/COFINS/PIS/IPI) e linha de rótulos com as alíquotas
+    // globais (linha 2: NOME/PEÇA/PN/CI + os percentuais). Conjuntos aparecem
+    // como células mescladas — SheetJS entrega isso como linha em branco na
+    // coluna "peça de reposição", que tratamos como continuação do SKU aberto
+    // na linha anterior. Devolve true quando tratou o arquivo; false faz o
+    // fluxo cair no parser padrão abaixo, sem alterar seu comportamento.
+    function _tentarImportarReposicao(ws) {
+        const matriz = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+        const ehReposicao = matriz.slice(0, 6).some(l => (l || []).some(c => _semAcento(c) === 'PECA DE REPOSICAO'));
+        if (!ehReposicao) return false;
+
+        const tituloRaw = String(matriz[0]?.[0] || '').trim();
+        // "o" opcional: "para o Fz Ass..." e "para Pst 9 M973" (sem "o") coexistem entre os arquivos reais
+        const mArm = tituloRaw.match(/para\s+(?:o\s+)?(.+)$/i);
+        const armamento = (prompt('Nome do armamento (aplicado a todas as peças desta planilha):', mArm ? mArm[1].trim() : '') || '').trim();
+        if (!armamento) {
+            mostrarNotificacao('Importação cancelada: nome do armamento é obrigatório.', 'warning');
+            return true;
+        }
+
+        const iRot = matriz.findIndex(l => (l || []).some(c => _semAcento(c) === 'PN'));
+        if (iRot < 1) {
+            mostrarNotificacao('Não foi possível localizar a linha de cabeçalho (coluna PN) na planilha.', 'erro');
+            return true;
+        }
+
+        // Linha-mãe do armamento: as peças aninham sob ela na Tabela de Preço
+        _garantirProdutoArmamento(armamento);
+        const rot  = (matriz[iRot] || []).map(c => String(c || '').trim());
+        const rotU = rot.map(_semAcento);
+
+        const idxTodos = (arr, alvo) => arr.reduce((a, c, i) => c === alvo ? [...a, i] : a, []);
+        const [iNomeInt, iNomeRep] = idxTodos(rotU, 'NOME');
+        const [iPecaInt, iPecaRep] = idxTodos(rotU, 'PECA');
+        const iPN  = rotU.indexOf('PN');
+        const iCI  = rotU.findIndex(c => c.startsWith('CI'));
+
+        if (iNomeRep === undefined || iPN < 0 || iCI < 0) {
+            mostrarNotificacao('Não foi possível identificar as colunas NOME (reposição), PN ou CI na planilha.', 'erro');
+            return true;
+        }
+
+        // Células cobertas por mesclagem vertical (conjuntos) às vezes retêm o
+        // valor antigo da célula por baixo, em vez de ficarem vazias — visto em
+        // planilhas .ods reexportadas por ferramentas diferentes da que gerou o
+        // AGLC original (o PARAFAL é o caso confirmado). A âncora (canto
+        // superior-esquerdo do merge) é a única fonte confiável; qualquer outra
+        // célula dentro do range é tratada como vazia, não importa o que o
+        // SheetJS devolva ali.
+        const celulasCobertas = new Set();
+        (ws['!merges'] || []).forEach(m => {
+            for (let r = m.s.r; r <= m.e.r; r++) {
+                for (let c = m.s.c; c <= m.e.c; c++) {
+                    if (r === m.s.r && c === m.s.c) continue;
+                    celulasCobertas.add(r + ',' + c);
+                }
+            }
+        });
+        function _val(r, c) {
+            if (celulasCobertas.has(r + ',' + c)) return '';
+            return (matriz[r] || [])[c] ?? '';
+        }
+        // Normaliza texto de NOME/PEÇA: descarta o artefato de célula numérica
+        // formatada como moeda sobre zero (ex. "$0", "R$ 0,00" — visto em mais
+        // de um arquivo, sempre onde o autor deixou o campo sem preencher) e
+        // remove o "$" que sobra quando uma célula de código de peça (ex. "9")
+        // herdou formatação de moeda por engano.
+        function _limparCelula(bruta) {
+            const s = String(bruta || '').trim();
+            if (/^[R$\s]*0+([.,]0*)?%?$/i.test(s)) return '';
+            return s.replace(/^\$\s*/, '');
+        }
+
+        // A linha de grupo (uma acima de "rot", com os rótulos Tx/ROI/ICMS/
+        // COFINS/PIS/IPI) tem um bug conhecido de leitura de ODS no SheetJS:
+        // quando uma célula mesclada horizontalmente ("PEÇA DE REPOSIÇÃO")
+        // cobre colunas via covered-table-cell com number-columns-repeated, o
+        // parser subconta a largura do merge e desalinha tudo à direita dele
+        // — aqui, a partir da coluna F. A linha "rot" não tem mesclagem
+        // própria e não sofre esse desvio, então as colunas de alíquota são
+        // lidas por deslocamento fixo a partir de CI, e não por rótulo.
+        // Confirmado com o P Ref calculado batendo em 40/40 linhas do AGLC.
+        const iTx     = iCI + 1;
+        const iRoi    = iCI + 2;
+        // iCI+3 = P Ref (não usado)
+        const iCofins = iCI + 5;
+        const iPis    = iCI + 6;
+        // iCI+7 = $ sem IPI (não usado)
+        const iIPI    = iCI + 8;
+
+        const taxaPct   = _parsePctBR(rot[iTx]);
+        const roiPct    = _parsePctBR(rot[iRoi]);
+        const cofinsPct = _parsePctBR(rot[iCofins]);
+        const pisPct    = _parsePctBR(rot[iPis]);
+        console.log('Peças de reposição —', armamento, '| Tx:', taxaPct, '| ROI:', roiPct, '| COFINS:', cofinsPct, '| PIS:', pisPct, '| linha de rótulos:', iRot);
+
+        // ── Varre as linhas de dados; NOME em branco (ou zerado) na coluna de
+        // reposição = continuação do conjunto aberto na linha anterior — a
+        // menos que nenhum conjunto esteja aberto, caso em que o próprio nome
+        // de interesse serve de nome de reposição (peça simples cujo campo
+        // ficou sem preencher na planilha de origem, visto no M973) ──
+        const skus = [];
+        let atual = null;
+        for (let r = iRot + 1; r < matriz.length; r++) {
+            const intNome = _limparCelula(_val(r, iNomeInt));
+            const repNome = _limparCelula(_val(r, iNomeRep));
+            if (!intNome && !repNome) continue;
+
+            if (repNome) {
+                const ci = _parseNumBR(_val(r, iCI));
+                atual = {
+                    nome: repNome,
+                    pecaRef: _limparCelula(_val(r, iPecaRep)),
+                    pn: String(_val(r, iPN) || '').trim(),
+                    ci: (ci !== null && ci > 0) ? ci : 0,
+                    ipi: _parsePctBR(_val(r, iIPI)) || 0,
+                    // "armamento" (não "componente"): cada peça é vendida por si só, não é
+                    // filha de um produto principal — só usaríamos "componente" se existisse
+                    // um SKU cadastrado para o armamento em si, o que normalmente não existe.
+                    armamento: armamento,
+                    composicao: []
+                };
+                skus.push(atual);
+                continue;
+            }
+            if (!atual && intNome) {
+                const ci = _parseNumBR(_val(r, iCI));
+                atual = {
+                    nome: intNome,
+                    pecaRef: _limparCelula(_val(r, iPecaRep)) || _limparCelula(_val(r, iPecaInt)),
+                    pn: String(_val(r, iPN) || '').trim(),
+                    ci: (ci !== null && ci > 0) ? ci : 0,
+                    ipi: _parsePctBR(_val(r, iIPI)) || 0,
+                    armamento: armamento,
+                    composicao: []
+                };
+                skus.push(atual);
+                continue;
+            }
+            if (atual && intNome) {
+                atual.composicao.push({ nome: intNome, peca: _limparCelula(_val(r, iPecaInt)) });
+            }
+        }
+        // Linha 1:1 (peça de interesse == peça de reposição) não é conjunto — zera a composição
+        skus.forEach(s => {
+            if (s.composicao.length === 1 && s.composicao[0].nome.toUpperCase() === s.nome.toUpperCase()) {
+                s.composicao = [];
+            }
+        });
+
+        if (!skus.length) {
+            mostrarNotificacao('Nenhuma peça de reposição encontrada na planilha.', 'warning');
+            return true;
+        }
+
+        // ── Taxa/ROI globais viram (ou reaproveitam) uma versão da Tabela de Preço de Venda ──
+        if (taxaPct !== null && roiPct !== null) {
+            if (!estoque.parametrosTabelaVenda) estoque.parametrosTabelaVenda = { versaoAtiva: null, versoes: [] };
+            if (!estoque.parametrosTabelaVenda.versoes) estoque.parametrosTabelaVenda.versoes = [];
+            const ptv = estoque.parametrosTabelaVenda;
+            let versao = ptv.versoes.find(v => v.taxaPadrao === taxaPct && v.roiPadrao === roiPct);
+            if (!versao) {
+                versao = {
+                    id: Date.now(),
+                    data: new Date().toISOString(),
+                    descricao: `Importado — ${armamento} (Tx ${taxaPct}% / ROI ${roiPct}%)`,
+                    params: {},
+                    taxaPadrao: taxaPct,
+                    roiPadrao: roiPct
+                };
+                ptv.versoes.push(versao);
+            }
+            ptv.versaoAtiva = versao.id;
+        }
+
+        // ── Grava cada SKU: CI sempre sobrescreve, IPI por linha, PIS/COFINS globais, composição do conjunto ──
+        let criados = 0, atualizados = 0, ignorados = 0;
+        skus.forEach((sku, idx) => {
+            if (!sku.nome) { ignorados++; return; }
+
+            // PN igual = mesma peça física, mesmo se o catálogo de origem for de
+            // outro armamento (visto no PARAFAL/FAL-RJ, que compartilham a
+            // maioria dos PNs por serem variantes do mesmo M964) — casa por PN
+            // primeiro, sem olhar o armamento. Sem PN, casa por nome só dentro
+            // do MESMO armamento já conhecido: nomes genéricos como "Cano" se
+            // repetem entre famílias de arma diferentes, então nome sozinho não
+            // é confiável para ligar peças de armamentos distintos.
+            let existente = null;
+            if (sku.pn) {
+                existente = (estoque.produtos || []).find(p => p.pn && p.pn.trim().toUpperCase() === sku.pn.toUpperCase());
+            }
+            if (!existente) {
+                existente = (estoque.produtos || []).find(p =>
+                    (p.nome || '').trim().toUpperCase() === sku.nome.toUpperCase() &&
+                    (p.armamentos || []).some(a => a.trim().toUpperCase() === sku.armamento.toUpperCase())
+                );
+            }
+
+            const alvo = existente || {
+                id: Date.now() + idx,
+                nome: sku.nome,
+                pn: '',
+                ci: 0,
+                componente: '', // peça vendável por si só — não é filha de um produto principal
+                categoria: '',
+                armamentos: [],
+                distribuicao: {},
+                vendas: {}
+            };
+            const chaveNome = alvo.nome;
+
+            if (sku.ci > 0) {
+                if (!precificacao[chaveNome]) precificacao[chaveNome] = {};
+                precificacao[chaveNome].ci = sku.ci;
+                alvo.ci = sku.ci;
+            }
+            if (sku.pn && !alvo.pn) alvo.pn = sku.pn;
+            if (sku.pecaRef) alvo.pecaRef = sku.pecaRef;
+            // Um SKU pode servir vários armamentos — soma à lista, nunca substitui.
+            if (!Array.isArray(alvo.armamentos)) alvo.armamentos = [];
+            if (!alvo.armamentos.some(a => a.toUpperCase() === sku.armamento.toUpperCase())) {
+                alvo.armamentos.push(sku.armamento);
+            }
+            // `componente` é o parentesco que o resto do sistema (Estoque, etc.)
+            // já entende. Só o primeiro armamento cabe aqui; os demais ficam em
+            // `armamentos` e a Tabela de Preço aninha a peça sob todos eles.
+            if (!alvo.componente || !String(alvo.componente).trim() || String(alvo.componente).trim() === '-') {
+                alvo.componente = _resolverProdutoPaiArmamento(sku.armamento);
+            }
+            alvo.composicao = sku.composicao;
+
+            if (!tabelaAliquotas[chaveNome]) tabelaAliquotas[chaveNome] = {};
+            tabelaAliquotas[chaveNome].ipi = sku.ipi;
+            if (cofinsPct !== null) tabelaAliquotas[chaveNome].cofins = cofinsPct;
+            if (pisPct !== null) tabelaAliquotas[chaveNome].pis = pisPct;
+
+            if (existente) {
+                atualizados++;
+            } else {
+                if (!estoque.produtos) estoque.produtos = [];
+                estoque.produtos.push(alvo);
+                criados++;
+            }
+        });
+
+        salvarDados();
+        renderizarTabelaPrecoVenda();
+        mostrarNotificacao(
+            `Peças de reposição (${armamento}): ${atualizados} atualizadas, ${criados} criadas, ${ignorados} ignoradas.`,
+            'success'
+        );
+        return true;
+    }
 
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
             const wb = XLSX.read(e.target.result, { type: 'array' });
             const ws = wb.Sheets[wb.SheetNames[0]];
+
+            if (_tentarImportarReposicao(ws)) return;
+
             // raw:false faz o XLSX retornar os valores formatados como texto (ex: "4.688,11")
             const dados = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
 
             if (!dados.length) {
                 mostrarNotificacao('Arquivo vazio ou sem dados reconhecíveis.', 'warning');
                 return;
+            }
+
+            // Tenta extrair armamento do título (primeira linha) se existir
+            let armamentoExtraido = '';
+            const primeiraLinha = dados[0];
+            if (primeiraLinha) {
+                const primeiraColuna = Object.values(primeiraLinha)[0];
+                if (primeiraColuna && typeof primeiraColuna === 'string') {
+                    const mArm = String(primeiraColuna).match(/para\s+(?:o\s+)?(.+)$/i);
+                    if (mArm) armamentoExtraido = mArm[1].trim();
+                }
             }
 
             const headers = Object.keys(dados[0]);
@@ -19468,7 +20042,11 @@ function importarTabelaPrecoVendaExcel(event) {
                           || _detectarColuna(headers, ['CUSTO','COST','VALOR CI']);
             const colNCM   = _detectarColuna(headers, ['NCM']);
             const colComp  = _detectarColuna(headers, ['COMPONENTE','COMPONENT']);
-            console.log('colPN:', colPN, '| colNomeFab:', colNomeFab, '| colGrupo:', colGrupo, '| colNome:', colNome, '| colCI:', colCI, '| colComp:', colComp);
+            // Armamento pai da peça. Coluna própria é o caminho confiável — o
+            // título da planilha nem sempre traz "para o <arma>", e adivinhar
+            // errado deixa a peça solta na tabela.
+            const colArmamento = _detectarColuna(headers, ['ARMAMENTO','ARMA PAI','PRODUTO PAI']);
+            console.log('colPN:', colPN, '| colNomeFab:', colNomeFab, '| colGrupo:', colGrupo, '| colNome:', colNome, '| colCI:', colCI, '| colComp:', colComp, '| colArmamento:', colArmamento);
 
             if (!colPN) {
                 mostrarNotificacao('Coluna de PN não encontrada. Use cabeçalho PN, Part Number ou Codigo.', 'erro');
@@ -19479,6 +20057,16 @@ function importarTabelaPrecoVendaExcel(event) {
                 return;
             }
 
+            // Sem coluna de Armamento e sem "para o <arma>" no título, pergunta —
+            // é a única forma de a peça saber sob qual pai aninhar. Cancelar
+            // (ou deixar vazio) ainda importa, só que como produto de topo.
+            if (!colArmamento && !armamentoExtraido) {
+                armamentoExtraido = (prompt(
+                    'Armamento pai destas peças (deixe vazio se não forem peças de reposição):', ''
+                ) || '').trim();
+            }
+            if (armamentoExtraido) _garantirProdutoArmamento(armamentoExtraido);
+
             let criados = 0, atualizados = 0, ignorados = 0;
 
             dados.forEach((row, idx) => {
@@ -19488,8 +20076,15 @@ function importarTabelaPrecoVendaExcel(event) {
                 // Ignora valor inválido: cabeçalho gravado como dado em importação anterior
                 const comp    = (compRaw.toUpperCase() === 'COMPONENTE' || compRaw.toUpperCase() === 'COMPONENT') ? '' : compRaw;
                 const nomeFab = colNomeFab ? String(row[colNomeFab] || '').trim() : '';
+                // Coluna própria manda; sem ela vale o armamento da planilha inteira.
+                // Vários armamentos na mesma célula vêm separados por ";" (é assim
+                // que a exportação grava um PN que serve mais de uma arma).
+                const armRaw = (colArmamento ? String(row[colArmamento] || '').trim() : '') || armamentoExtraido;
+                const armsLinha = armRaw.split(';').map(s => s.trim()).filter(Boolean);
+                const armLinha = armsLinha[0] || '';
 
                 if (!pn && !nome) { ignorados++; return; }
+                armsLinha.forEach(_garantirProdutoArmamento);
 
                 const ciValBruto = colCI ? row[colCI] : '';
                 if (idx === 0) console.log('Linha 0 — colCI:', colCI, '| ciValBruto:', ciValBruto, '| tipo:', typeof ciValBruto);
@@ -19513,6 +20108,9 @@ function importarTabelaPrecoVendaExcel(event) {
                     }
                 }
                 const ncm = colNCM ? String(row[colNCM] || '').trim() : '';
+                // A coluna Grupo era detectada mas descartada, então exportar e
+                // reimportar apagava a categoria de todo mundo.
+                const grupo = colGrupo ? String(row[colGrupo] || '').trim() : '';
 
                 // Busca produto existente: primeiro por PN (quando preenchido),
                 // depois por nome + componente para distinguir peças de pistolas diferentes com mesmo nome
@@ -19542,7 +20140,23 @@ function importarTabelaPrecoVendaExcel(event) {
                     if (pn && !existente.pn) existente.pn = pn;
                     if (nomeFab) existente.nomeFabrica = nomeFab;
                     if (ncm) existente.ncm = ncm;
+                    if (grupo) existente.categoria = grupo;
                     if (comp) existente.componente = comp;
+                    // Adiciona armamento sem substituir os já conhecidos: o mesmo
+                    // PN serve mais de uma arma (PARAFAL/FAL-RJ compartilham 64).
+                    if (armsLinha.length) {
+                        if (!Array.isArray(existente.armamentos)) existente.armamentos = [];
+                        armsLinha.forEach(a => {
+                            if (!existente.armamentos.some(x => x.toUpperCase() === a.toUpperCase())) {
+                                existente.armamentos.push(a);
+                            }
+                        });
+                        // Sem coluna de Componente própria, o armamento também vira o
+                        // parentesco padrão — senão a peça fica solta na Tabela de Preço.
+                        if (!comp && (!existente.componente || !existente.componente.trim() || existente.componente.trim() === '-')) {
+                            existente.componente = _resolverProdutoPaiArmamento(armLinha);
+                        }
+                    }
                     atualizados++;
                 } else {
                     if (!nome) { ignorados++; return; }
@@ -19552,9 +20166,10 @@ function importarTabelaPrecoVendaExcel(event) {
                         pn: pn,
                         ci: (ci !== null && !isNaN(ci) && ci > 0) ? ci : 0,
                         ncm: ncm,
-                        componente: comp,
+                        componente: comp || _resolverProdutoPaiArmamento(armLinha),
                         nomeFabrica: nomeFab,
-                        categoria: '',
+                        categoria: grupo,
+                        armamentos: armsLinha.slice(),
                         distribuicao: {},
                         vendas: {}
                     };
@@ -19614,15 +20229,19 @@ function exportarTabelaPrecoVenda() {
     const label = _tipoClienteLabel(tipo);
     const produtos = (estoque.produtos || []).filter(p => p.nome);
 
-    const linhas = [['NCM','Grupo','PN','Nome Fábrica','Componente','Nome','CI (R$)', ...ESTADOS_BR]];
+    // "Armamento" separa os armamentos por ";" — o mesmo PN serve mais de uma
+    // arma, e a reimportação precisa recuperar a lista inteira, não só a primeira.
+    const linhas = [['NCM','Grupo','PN','Nome Fábrica','Componente','Armamento','Nome','CI (R$)', ...ESTADOS_BR]];
     produtos.forEach(prod => {
         const ci = Number(precificacao[prod.nome]?.ci ?? prod.ci ?? 0);
+        const armsProd = Array.isArray(prod.armamentos) ? prod.armamentos : (prod.armamento ? [prod.armamento] : []);
         const linha = [
             prod.ncm || '',
             prod.categoria || '',
             prod.pn || '',
             prod.nomeFabrica || '',
             prod.componente || '',
+            armsProd.join('; '),
             prod.nome,
             ci > 0 ? ci.toFixed(2).replace('.',',') : ''
         ];
@@ -19647,6 +20266,93 @@ function exportarTabelaPrecoVenda() {
     a.click();
     URL.revokeObjectURL(url);
     mostrarNotificacao(`Tabela exportada: ${label}`, 'success');
+}
+
+// Reemite as peças de reposição importadas no mesmo layout mesclado do
+// arquivo de origem (peça de interesse | peça de reposição), uma aba por
+// armamento — fecha o ciclo da importação: dá para conferir célula a célula
+// contra a planilha original. Não inclui preço: ICMS varia por UF e tipo de
+// cliente, então "o" preço não existe fora do app — só CI e IPI, que são os
+// dois campos que a importação de fato grava.
+function exportarPecasReposicao() {
+    const produtos = (estoque.produtos || []).filter(p => {
+        if (Array.isArray(p.armamentos) && p.armamentos.length) return true;
+        if (p.armamento && typeof p.armamento === 'string' && p.armamento.trim()) return true;
+        return false;
+    });
+    if (!produtos.length) {
+        mostrarNotificacao('Nenhuma peça de reposição importada para exportar.', 'warning');
+        return;
+    }
+
+    // Um SKU pode servir vários armamentos (mesmo PN em catálogos diferentes)
+    // — entra na aba de cada um, para a conferência ficar completa nos dois.
+    const porArmamento = {};
+    produtos.forEach(p => {
+        const armamentsArray = Array.isArray(p.armamentos) ? p.armamentos : (p.armamento ? [p.armamento] : []);
+        armamentsArray.forEach(armRaw => {
+            const arm = armRaw.trim();
+            if (!arm) return;
+            if (!porArmamento[arm]) porArmamento[arm] = [];
+            porArmamento[arm].push(p);
+        });
+    });
+
+    const wb = XLSX.utils.book_new();
+    let totalPecas = 0;
+
+    Object.keys(porArmamento).sort((a, b) => a.localeCompare(b, 'pt-BR')).forEach(arm => {
+        const linhas = [
+            [`Tabela de peças de reposição para o ${arm}`],
+            ['PEÇA DE INTERESSE', '', 'PEÇA DE REPOSIÇÃO', '', '', '', ''],
+            ['NOME', 'PEÇA', 'NOME', 'PEÇA', 'PN', 'CI (R$)', 'IPI (%)']
+        ];
+        const merges = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },
+            { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } },
+            { s: { r: 1, c: 2 }, e: { r: 1, c: 6 } }
+        ];
+
+        porArmamento[arm]
+            .slice()
+            .sort((a, b) => (a.pecaRef || a.pn || a.nome || '').localeCompare(b.pecaRef || b.pn || b.nome || '', 'pt-BR', { numeric: true }))
+            .forEach(prod => {
+                const ci = Number(precificacao[prod.nome]?.ci ?? prod.ci ?? 0);
+                const ipi = Number(tabelaAliquotas[prod.nome]?.ipi ?? 0);
+                // peça simples: uma "peça de interesse" idêntica à peça de reposição, sem mesclagem
+                const composicao = (prod.composicao || []).length ? prod.composicao : [{ nome: prod.nome, peca: prod.pecaRef || '' }];
+                const linhaInicio = linhas.length;
+
+                composicao.forEach((c, i) => {
+                    if (i === 0) {
+                        linhas.push([
+                            c.nome, c.peca,
+                            prod.nome, prod.pecaRef || '', prod.pn || '',
+                            ci > 0 ? ci.toFixed(2).replace('.', ',') : '',
+                            ipi > 0 ? ipi.toFixed(2).replace('.', ',') : '0,00'
+                        ]);
+                    } else {
+                        linhas.push([c.nome, c.peca, '', '', '', '', '']);
+                    }
+                });
+
+                if (composicao.length > 1) {
+                    const linhaFim = linhas.length - 1;
+                    [2, 3, 4, 5, 6].forEach(col => merges.push({ s: { r: linhaInicio, c: col }, e: { r: linhaFim, c: col } }));
+                }
+                totalPecas++;
+            });
+
+        const ws = XLSX.utils.aoa_to_sheet(linhas);
+        ws['!merges'] = merges;
+        ws['!cols'] = [{ wch: 34 }, { wch: 7 }, { wch: 34 }, { wch: 7 }, { wch: 16 }, { wch: 10 }, { wch: 8 }];
+        // nome de aba: máx. 31 caracteres, sem os caracteres que o Excel proíbe
+        const nomeAba = arm.replace(/[\\/*?:[\]]/g, '').slice(0, 31) || 'Armamento';
+        XLSX.utils.book_append_sheet(wb, ws, nomeAba);
+    });
+
+    XLSX.writeFile(wb, `pecas_reposicao_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
+    mostrarNotificacao(`Exportado: ${Object.keys(porArmamento).length} armamento(s), ${totalPecas} peça(s) de reposição.`, 'success');
 }
 
 function criarNovaVersaoTabelaVenda() {

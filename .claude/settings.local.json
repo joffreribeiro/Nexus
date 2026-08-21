@@ -7,7 +7,17 @@
       "Bash(grep -n \"} catch\\(e\\){}$\\\\|} catch \\(e\\) {}$\\\\|} catch\\(e\\) {}$\\\\|} catch \\(e\\){}$\" app.js)",
       "Bash(grep -v \"//\")",
       "WebFetch(domain:webmail.imbel.gov.br)",
-      "WebFetch(domain:controleestoque-3wj.pages.dev)"
+      "WebFetch(domain:controleestoque-3wj.pages.dev)",
+      "Bash(node --check app2.js)",
+      "Bash(ls \"C:/Users/Joffre/Downloads/\" | grep -i \"reposi\")",
+      "Bash(node test_aninhamento.js)",
+      "Bash(npx vitest *)",
+      "Bash(node test_export_multi.js)",
+      "Bash(git checkout *)",
+      "Bash(node test_roundtrip_armamento.js)",
+      "Bash(node test_migracao.js)",
+      "Bash(npx serve *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5183/)"
     ]
   }
 }

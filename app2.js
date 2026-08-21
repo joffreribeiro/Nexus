@@ -1102,6 +1102,10 @@ function removerRepresentante(nome) {
 
 async function inicializar() {
     carregarDados();
+    // Corrige peças de reposição importadas (componente/NCM ausentes) mesmo se
+    // o usuário não abrir a Tabela de Preço de Venda nesta sessão — sem isso o
+    // ICMS calcula 0% em qualquer tela que precifique essas peças.
+    try { _tvGarantirPaisArmamento(); } catch (e) { _catchSilencioso(e, 'inicializar'); }
     try { if (window.CrmStore) window.CrmStore.ensureCrmDefault(); } catch (e) { console.error('CRM ensureCrmDefault:', e); }
     try { if (window.PontoStore) window.PontoStore.ensurePontoDefault(); } catch (e) { console.error('Ponto ensurePontoDefault:', e); }
     try { if (window.ProcessosStore) window.ProcessosStore.ensureProcessosDefault(); } catch (e) { console.error('Processos ensureProcessosDefault:', e); }
@@ -18501,6 +18505,17 @@ function _tvGarantirPaisArmamento() {
         mudou = true;
     });
 
+    // Peça de reposição importada antes de o NCM ser gravado no import fica sem
+    // NCM pra sempre — e o ICMS calcula 0% nesse caso (buscarAliquotaICMS não
+    // acha regra sem NCM). Preenche com o único NCM que essas peças usam.
+    prods.forEach(p => {
+        if (p.ehArmamentoPai) return;
+        if (!armsDe(p).length) return;
+        if (p.ncm && String(p.ncm).trim()) return;
+        p.ncm = '9305.10.00';
+        mudou = true;
+    });
+
     // Linha-mãe sintética que ficou sem nenhuma peça (caso típico: as peças foram
     // reapontadas para o produto real do catálogo) vira lixo visual no topo da
     // tabela. Só remove o que esta migração criou, e só se estiver vazia.
@@ -19987,6 +20002,7 @@ function importarTabelaPrecoVendaExcel(event) {
                 nome: sku.nome,
                 pn: '',
                 ci: 0,
+                ncm: '9305.10.00', // peça de reposição de arma de fogo — NCM único usado pra todas
                 componente: '', // peça vendável por si só — não é filha de um produto principal
                 categoria: '',
                 armamentos: [],
@@ -19994,6 +20010,10 @@ function importarTabelaPrecoVendaExcel(event) {
                 vendas: {}
             };
             const chaveNome = alvo.nome;
+            // Produto que já existia sem NCM (importado antes desta correção, ou
+            // cadastrado manualmente) recebe o mesmo NCM — sem isso o ICMS calcula
+            // 0% porque a busca por alíquota depende do NCM (ver buscarAliquotaICMS).
+            if (!alvo.ncm || !String(alvo.ncm).trim()) alvo.ncm = '9305.10.00';
 
             if (sku.ci > 0) {
                 if (!precificacao[chaveNome]) precificacao[chaveNome] = {};
@@ -20183,6 +20203,11 @@ function importarTabelaPrecoVendaExcel(event) {
                     if (pn && !existente.pn) existente.pn = pn;
                     if (nomeFab) existente.nomeFabrica = nomeFab;
                     if (ncm) existente.ncm = ncm;
+                    // Peça de reposição de arma sem NCM na planilha: usa o único NCM que
+                    // essas peças têm (9305.10.00) — sem isso o ICMS calcula 0%.
+                    else if (armsLinha.length && (!existente.ncm || !String(existente.ncm).trim())) {
+                        existente.ncm = '9305.10.00';
+                    }
                     if (grupo) existente.categoria = grupo;
                     if (comp) existente.componente = comp;
                     // Adiciona armamento sem substituir os já conhecidos: o mesmo
@@ -20208,7 +20233,7 @@ function importarTabelaPrecoVendaExcel(event) {
                         nome: nome,
                         pn: pn,
                         ci: (ci !== null && !isNaN(ci) && ci > 0) ? ci : 0,
-                        ncm: ncm,
+                        ncm: ncm || (armsLinha.length ? '9305.10.00' : ''),
                         componente: comp || _resolverProdutoPaiArmamento(armLinha),
                         nomeFabrica: nomeFab,
                         categoria: grupo,
@@ -22477,6 +22502,13 @@ function aplicarEstadoPrecificacaoSalva(registro) {
         const container = document.getElementById('precifLinhasProdutos');
         const itens = registro.itens || registro.produtos || [];
         if (container) {
+            // Limpar antes de repopular: esta função é chamada toda vez que se
+            // carrega uma precificação salva ou uma versão do histórico — sem
+            // isso, carregar com a tabela já preenchida (ex.: clicar "Carregar
+            // salva" depois de montar itens à mão, ou trocar de versão) soma os
+            // itens do registro em cima dos que já estavam lá, duplicando cada
+            // produto (mesmo nome, mesma CI, como se tivesse 2 unidades).
+            container.innerHTML = '';
             if (itens.length === 0) {
                 container.innerHTML = '<div data-placeholder style="color:#94a3b8;font-size:0.85rem;text-align:center;padding:14px;background:#f8fafc;border-radius:8px;border:1px dashed #e2e8f0">Clique em "+ Adicionar Produto" para iniciar</div>';
             } else {

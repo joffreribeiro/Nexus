@@ -23,7 +23,8 @@
       "mcp__claude-in-chrome__tabs_context_mcp",
       "mcp__claude-in-chrome__navigate",
       "Bash(netstat -ano)",
-      "Bash(findstr :5181)"
+      "Bash(findstr :5181)",
+      "Bash(node test_ncm_fix.js)"
     ]
   }
 }

@@ -1,8 +1,9 @@
 /* ════════════════════════════════════════════════════════════════
    NAVEGAÇÃO EM FLUXO DE TRABALHO — controlador
-   Constrói a barra global (workspace switch), a esteira de 5 etapas
-   (Operação) e a faixa de referência. Dirige o trocarAba() existente,
-   sem tocar na lógica de renderização do app.
+   Constrói a barra global única (marca, workspace switch, esteira de 5
+   etapas, busca, menu de Referência, status) do workspace Operação.
+   Dirige o trocarAba() existente, sem tocar na lógica de renderização
+   do app.
 
    Pipeline:  ① Estoque → ② Precificação → ③ Proposta → ④ Venda → ⑤ Envio
    Workspaces: Operação (fluxo) | IMBEL (separado)
@@ -16,28 +17,38 @@
     // ── Ícones (inline SVG, stroke currentColor) — dicionário único em icons.js ──
     var I = window.NexusIcons || {};
 
+    // Badge de pendência por etapa: função opcional que devolve um número (ou
+    // null/0 para não renderizar pastilha). Lê os arrays globais de app2.js
+    // (compartilham o escopo de script clássico do documento) via
+    // FluxoNavCalculos, puro e testado em tests/fluxo-nav-calculos.test.js.
+    function badgePropostasPendentes() {
+        try { return window.FluxoNavCalculos.contarPrecificacoesSemProposta(precificacoesCliente); } catch (e) { return null; }
+    }
+    function badgeVendasPendentes() {
+        try { return window.FluxoNavCalculos.contarPropostasAceitasSemVenda(propostas); } catch (e) { return null; }
+    }
+
     // ── Etapas do pipeline (Operação) ──
     var STEPS = [
         { tab: 'estoque', t: 'Estoque', s: 'o que temos', icon: I.box },
         { tab: 'precificacao', t: 'Precificação', s: 'quanto cobrar', icon: I.tag },
-        { tab: 'propostas', t: 'Proposta', s: 'montar oferta', icon: I.doc },
-        { tab: 'vendas', t: 'Venda', s: 'fechar contrato', icon: I.cart },
-        { tab: 'envio', t: 'Envio', s: 'doc. e entrega', icon: I.truck }
+        { tab: 'propostas', t: 'Proposta', s: 'montar oferta', icon: I.doc, badge: badgePropostasPendentes },
+        { tab: 'vendas', t: 'Venda', s: 'fechar contrato', icon: I.cart, badge: badgeVendasPendentes },
+        { tab: 'envio', t: 'Envio', s: 'doc. e entrega', icon: I.truck, emDesenvolvimento: true }
     ];
 
-    // ── Telas de referência (fora do fluxo) ──
+    // ── Telas de referência (fora do fluxo), achatadas em um único menu ──
     // sub: quando informado, reaproveita a Precificação e troca a sub-aba.
+    // group: rótulo de seção não-clicável dentro do menu (ex.: "Cadastro").
     var REFS = [
         { label: 'Painel', tab: 'dashboard', icon: I.grid },
         { sep: true },
-        { label: 'Cadastro', icon: I.file, items: [
-            { label: 'Clientes', tab: 'clientes', icon: I.users },
-            { label: 'Distribuição', tab: 'distribuicao', icon: I.truck },
-            { label: 'Produtos', tab: 'cadastro-produtos', icon: I.file },
-            { label: 'Impostos', tab: 'precificacao', sub: 'impostos', icon: I.receipt },
-            { sep: true },
-            { label: 'Dados do Contrato', tab: 'cadastro', icon: I.file }
-        ] },
+        { group: 'Cadastro' },
+        { label: 'Clientes', tab: 'clientes', icon: I.users },
+        { label: 'Distribuição', tab: 'distribuicao', icon: I.truck },
+        { label: 'Produtos', tab: 'cadastro-produtos', icon: I.file },
+        { label: 'Impostos', tab: 'precificacao', sub: 'impostos', icon: I.receipt },
+        { label: 'Dados do Contrato', tab: 'cadastro', icon: I.file },
         { sep: true },
         { label: 'Rastreabilidade', tab: 'precificacao', sub: 'rastreabilidade', icon: I.link },
         { label: 'CI', tab: 'precificacao', sub: 'tabelaci', icon: I.dollar },
@@ -49,8 +60,7 @@
     var workspace = 'operacao';
     var els = {};             // refs de DOM
     var stepBtns = [];
-    var refBtns = [];         // { el, ref, parentEl? }
-    var refDropdowns = [];    // wrappers .ref-dropdown, para fechar ao clicar fora
+    var refBtns = [];         // { el, ref }
 
     // ══════════════════════════════════════════════════════════
     //  Construção do DOM
@@ -71,154 +81,112 @@
                 '<div class="flow-brand">' +
                     '<span class="flow-brand-mark">' + logoInner + '</span>' +
                     '<span>Nexus</span>' +
-                    '<span class="flow-brand-sub">Operações Conectadas</span>' +
                 '</div>' +
                 '<div class="ws-switch" role="tablist" aria-label="Workspace">' +
-                    '<button class="ws-btn operacao active" data-ws="operacao" type="button">' + I.box + '<span>Operação</span></button>' +
-                    '<button class="ws-btn relacionamento" data-ws="relacionamento" type="button">' + I.heart + '<span>Relacionamento</span></button>' +
-                    '<button class="ws-btn imbel" data-ws="imbel" type="button">' + I.shield + '<span>IMBEL</span></button>' +
-                    '<button class="ws-btn ponto" data-ws="ponto" type="button" style="border-left: 1px solid var(--sidebar-border)">' + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' + '<span>Ponto</span></button>' +
-                    '<button class="ws-btn processos" data-ws="processos" type="button">' + I.file + '<span>Processos</span></button>' +
+                    '<button class="ws-btn operacao active" data-ws="operacao" type="button" title="Operação">' + I.box + '<span>Operação</span></button>' +
+                    '<button class="ws-btn relacionamento" data-ws="relacionamento" type="button" title="Relacionamento">' + I.heart + '<span>Relacionamento</span></button>' +
+                    '<button class="ws-btn imbel" data-ws="imbel" type="button" title="IMBEL">' + I.shield + '<span>IMBEL</span></button>' +
+                    '<button class="ws-btn ponto" data-ws="ponto" type="button" title="Ponto">' + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' + '<span>Ponto</span></button>' +
+                    '<button class="ws-btn processos" data-ws="processos" type="button" title="Processos">' + I.file + '<span>Processos</span></button>' +
+                '</div>' +
+                '<span class="flow-sep"></span>' +
+                '<div class="pipetrack" role="tablist" aria-label="Etapas do fluxo"></div>' +
+                '<div class="flow-tools">' +
+                    '<button type="button" class="flow-search-btn" title="Busca global">' + (I.search || '') + '<span class="flow-search-kbd">Ctrl K</span></button>' +
+                    '<div class="ref-dropdown">' +
+                        '<button type="button" class="flow-ref-toggle">' + '<span>Referência</span>' + (I.chevron || '') + '</button>' +
+                        '<div class="ref-dropdown-menu" aria-label="Telas de referência"></div>' +
+                    '</div>' +
                 '</div>' +
                 '<div class="flow-status"></div>' +
-            '</div>' +
-            '<div class="pipebar" role="tablist" aria-label="Etapas do fluxo"></div>' +
-            '<div class="refbar" aria-label="Telas de referência">' +
-                '<span class="refbar-lbl">Referência</span>' +
             '</div>';
 
         container.insertBefore(header, container.firstChild);
 
         els.header = header;
         els.globalbar = header.querySelector('.flow-globalbar');
-        els.pipebar = header.querySelector('.pipebar');
-        els.refbar = header.querySelector('.refbar');
+        els.pipetrack = header.querySelector('.pipetrack');
         els.status = header.querySelector('.flow-status');
         els.wsBtns = header.querySelectorAll('.ws-btn[data-ws]');
+        els.searchBtn = header.querySelector('.flow-search-btn');
+        els.refWrap = header.querySelector('.ref-dropdown');
+        els.refToggle = header.querySelector('.flow-ref-toggle');
+        els.refMenu = header.querySelector('.ref-dropdown-menu');
 
-        buildPipebar();
-        buildRefbar();
+        buildPipetrack();
+        buildRefMenu();
         relocateStatusActions();
         ensureEnvioTab();
+
+        els.searchBtn.addEventListener('click', function () {
+            try { if (typeof window.abrirBuscaGlobal === 'function') window.abrirBuscaGlobal(); } catch (e) {}
+        });
+        els.refToggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var wasOpen = els.refWrap.classList.contains('open');
+            closeRefMenu();
+            if (!wasOpen) els.refWrap.classList.add('open');
+        });
     }
 
-    function buildPipebar() {
+    function buildPipetrack() {
         STEPS.forEach(function (st, i) {
             var btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'pstep';
+            btn.className = 'pstep' + (st.emDesenvolvimento ? ' pstep-dev' : '');
             btn.setAttribute('data-step', i);
+            btn.setAttribute('aria-current', 'false');
             btn.innerHTML =
                 '<span class="pn">' + (i + 1) + '</span>' +
-                '<span class="picon">' + st.icon + '</span>' +
-                '<span class="pl"><span class="t">' + st.t + '</span><span class="s">' + st.s + '</span></span>';
+                '<span class="pt">' + st.t + '</span>' +
+                '<span class="pbadge" hidden></span>' +
+                '<span class="ps">' + st.s + '</span>';
             btn.addEventListener('click', function () { goStep(i); });
-            els.pipebar.appendChild(btn);
+            els.pipetrack.appendChild(btn);
             stepBtns.push(btn);
 
             if (i < STEPS.length - 1) {
                 var arrow = document.createElement('span');
                 arrow.className = 'parrow';
-                arrow.innerHTML = I.chevron;
-                els.pipebar.appendChild(arrow);
+                arrow.innerHTML = I.chevron || '';
+                els.pipetrack.appendChild(arrow);
             }
         });
-
-        // Botão "Próximo passo"
-        var next = document.createElement('button');
-        next.type = 'button';
-        next.className = 'pnext';
-        next.innerHTML = '<span class="pnext-lbl">Próximo</span>' + I.chevron;
-        next.addEventListener('click', function () { if (currentStep < STEPS.length - 1) goStep(currentStep + 1); });
-        els.pipebar.appendChild(next);
-        els.next = next;
     }
 
-    function buildRefbar() {
+    // Menu único de Referência — achata o antigo grupo "Cadastro" em uma
+    // seção rotulada dentro do mesmo menu, em vez de um submenu aninhado.
+    function buildRefMenu() {
         REFS.forEach(function (r) {
             if (r.sep) {
-                var sep = document.createElement('span');
-                sep.className = 'refbar-sep';
-                els.refbar.appendChild(sep);
+                var sep = document.createElement('div');
+                sep.className = 'ref-dropdown-sep';
+                els.refMenu.appendChild(sep);
                 return;
             }
-            if (r.items) {
-                buildRefDropdown(r);
-                return;
-            }
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'ref-btn';
-            btn.innerHTML = (r.icon || '') + '<span>' + r.label + '</span>';
-            btn.addEventListener('click', function () { goRef(r); });
-            els.refbar.appendChild(btn);
-            refBtns.push({ el: btn, ref: r });
-        });
-    }
-
-    // Grupo suspenso na faixa de referência (ex.: "Cadastro" reunindo Clientes/Impostos/Produtos).
-    // O menu é anexado ao <body> (não ao .refbar) e posicionado via position:fixed, porque o
-    // .refbar tem overflow-x:auto — o que força overflow-y para 'auto' também (regra do CSS2.1)
-    // e cortaria um menu posicionado absoluto dentro dele.
-    function buildRefDropdown(group) {
-        var wrap = document.createElement('div');
-        wrap.className = 'ref-dropdown';
-
-        var toggle = document.createElement('button');
-        toggle.type = 'button';
-        toggle.className = 'ref-btn ref-dropdown-toggle';
-        toggle.innerHTML = (group.icon || '') + '<span>' + group.label + '</span>' + I.chevron;
-        wrap.appendChild(toggle);
-
-        var menu = document.createElement('div');
-        menu.className = 'ref-dropdown-menu';
-        group.items.forEach(function (item) {
-            if (item.sep) {
-                var isep = document.createElement('div');
-                isep.className = 'ref-dropdown-sep';
-                menu.appendChild(isep);
+            if (r.group) {
+                var lbl = document.createElement('div');
+                lbl.className = 'ref-dropdown-group-lbl';
+                lbl.textContent = r.group;
+                els.refMenu.appendChild(lbl);
                 return;
             }
             var itemBtn = document.createElement('button');
             itemBtn.type = 'button';
             itemBtn.className = 'ref-dropdown-item';
-            itemBtn.innerHTML = (item.icon || '') + '<span>' + item.label + '</span>';
+            itemBtn.innerHTML = (r.icon || '') + '<span>' + r.label + '</span>';
             itemBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
-                closeAllRefDropdowns();
-                goRef(item);
+                closeRefMenu();
+                goRef(r);
             });
-            menu.appendChild(itemBtn);
-            refBtns.push({ el: itemBtn, ref: item, parentEl: toggle });
+            els.refMenu.appendChild(itemBtn);
+            refBtns.push({ el: itemBtn, ref: r });
         });
-        document.body.appendChild(menu);
-
-        function positionMenu() {
-            var r = toggle.getBoundingClientRect();
-            menu.style.left = Math.round(r.left) + 'px';
-            menu.style.top = Math.round(r.bottom + 6) + 'px';
-        }
-
-        toggle.addEventListener('click', function (e) {
-            e.stopPropagation();
-            var wasOpen = wrap.classList.contains('open');
-            closeAllRefDropdowns();
-            if (!wasOpen) {
-                positionMenu();
-                wrap.classList.add('open');
-                menu.classList.add('open');
-            }
-        });
-
-        els.refbar.appendChild(wrap);
-        refDropdowns.push({ wrap: wrap, menu: menu });
     }
 
-    function closeAllRefDropdowns() {
-        refDropdowns.forEach(function (d) {
-            d.wrap.classList.remove('open');
-            d.menu.classList.remove('open');
-        });
+    function closeRefMenu() {
+        if (els.refWrap) els.refWrap.classList.remove('open');
     }
 
     // Realoca status do Firestore + auth + ações de cloud para a barra global,
@@ -266,7 +234,7 @@
             e.stopPropagation();
             menu.classList.toggle('open');
         });
-        document.addEventListener('click', function () { menu.classList.remove('open'); });
+        document.addEventListener('click', function () { menu.classList.remove('open'); closeRefMenu(); });
         drop.addEventListener('click', function (e) { e.stopPropagation(); });
 
         if (fsStatus) els.status.appendChild(fsStatus);
@@ -296,31 +264,31 @@
     //  Navegação
     // ══════════════════════════════════════════════════════════
     function clearRefActive() {
-        refBtns.forEach(function (rb) {
-            rb.el.classList.remove('active');
-            if (rb.parentEl) rb.parentEl.classList.remove('active');
-        });
+        refBtns.forEach(function (rb) { rb.el.classList.remove('active'); });
         document.body.classList.remove('flow-ref-precif');
     }
 
     function paintSteps() {
         stepBtns.forEach(function (btn, i) {
             btn.classList.remove('active', 'done');
+            btn.setAttribute('aria-current', 'false');
             var pn = btn.querySelector('.pn');
             if (i < currentStep) {
                 btn.classList.add('done');
-                if (pn) pn.innerHTML = I.check;
+                if (pn) pn.innerHTML = I.check || '✓';
             } else {
                 if (pn) pn.textContent = (i + 1);
-                if (i === currentStep) btn.classList.add('active');
+                if (i === currentStep) { btn.classList.add('active'); btn.setAttribute('aria-current', 'step'); }
+            }
+
+            var badgeEl = btn.querySelector('.pbadge');
+            if (badgeEl) {
+                var st = STEPS[i];
+                var count = (typeof st.badge === 'function') ? st.badge() : null;
+                if (count) { badgeEl.textContent = String(count); badgeEl.hidden = false; }
+                else { badgeEl.hidden = true; }
             }
         });
-        if (els.next) {
-            var last = currentStep >= STEPS.length - 1;
-            els.next.disabled = last;
-            var lbl = els.next.querySelector('.pnext-lbl');
-            if (lbl) lbl.textContent = last ? 'Concluído' : ('Próximo: ' + STEPS[currentStep + 1].t);
-        }
     }
 
     function goStep(i) {
@@ -334,13 +302,7 @@
 
     function goRef(r) {
         clearRefActive();
-        // Marca o botão clicado (e o grupo suspenso pai, se houver)
-        refBtns.forEach(function (rb) {
-            if (rb.ref === r) {
-                rb.el.classList.add('active');
-                if (rb.parentEl) rb.parentEl.classList.add('active');
-            }
-        });
+        refBtns.forEach(function (rb) { if (rb.ref === r) rb.el.classList.add('active'); });
 
         try {
             if (typeof window.trocarAba === 'function') window.trocarAba(r.tab);
@@ -372,8 +334,9 @@
         var relacionamento = (ws === 'relacionamento');
         var ponto = (ws === 'ponto');
         var processos = (ws === 'processos');
-        els.pipebar.style.display = (imbel || relacionamento || ponto || processos) ? 'none' : '';
-        els.refbar.style.display = (imbel || relacionamento || ponto || processos) ? 'none' : '';
+        var foraDoFluxo = imbel || relacionamento || ponto || processos;
+        els.pipetrack.style.display = foraDoFluxo ? 'none' : '';
+        els.refWrap.style.display = foraDoFluxo ? 'none' : '';
         try { localStorage.setItem(LS_WS, ws); } catch (e) {}
 
         if (imbel) {
@@ -437,17 +400,21 @@
         currentStep = savedStep;
 
         document.addEventListener('keydown', onKey);
-        document.addEventListener('click', closeAllRefDropdowns);
+        document.addEventListener('click', closeRefMenu);
         els.wsBtns.forEach(function (b) {
             b.addEventListener('click', function () { setWorkspace(b.getAttribute('data-ws')); });
         });
         window.addEventListener('resize', adjustHeaderHeight);
-        window.addEventListener('resize', closeAllRefDropdowns);
-        window.addEventListener('scroll', closeAllRefDropdowns, true);
+        window.addEventListener('resize', closeRefMenu);
+        window.addEventListener('scroll', closeRefMenu, true);
 
         // Aplica workspace inicial (dispara a navegação da etapa/aba correta)
         setWorkspace(savedWs);
         setTimeout(adjustHeaderHeight, 100);
+
+        // Repinta os badges de pendência periodicamente (dados podem mudar sem
+        // troca de etapa — ex.: salvar uma precificação em outra aba aberta).
+        setInterval(paintSteps, 4000);
 
         // Expõe API mínima para depuração
         window.FluxoNav = { goStep: goStep, setWorkspace: setWorkspace, get step() { return currentStep; } };

@@ -6008,6 +6008,15 @@ textarea:focus-visible {
     padding: 0;
 }
 
+.precif-subnav-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-1, var(--text-primary));
+    padding: 0 14px 0 0;
+    flex: none;
+    align-self: center;
+}
+
 .precif-subtab-sep {
     width: 1px;
     background: var(--border-color);

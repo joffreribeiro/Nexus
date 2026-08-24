@@ -813,6 +813,9 @@ function updateFirestoreStatus(connected, lastSyncDate, message) {
             dot.classList.add('fs-offline');
             text.textContent = message || 'Cloud: desconectado';
         }
+        // No cabeçalho compacto (fluxo-nav), o texto fica escondido por CSS e
+        // o estado passa a viver no title do ponto — hover mostra a mensagem.
+        if (dot) dot.title = text.textContent;
         // Banner sem login
         const banner = document.getElementById('bannerSemSync');
         if (banner) {
@@ -26523,12 +26526,37 @@ function renderizarBuscaGlobal() {
             itens.push({ tipo: 'Contrato', label: `Contrato ${contrato}`, sub: `${v.representante || ''} — ${loja}`, acao: () => { fecharBuscaGlobal(); trocarAba('vendas'); setTimeout(() => { const el = document.getElementById('filtroVendasBusca') || document.getElementById('filtroContrato'); if (el) { el.value = contrato; el.dispatchEvent(new Event('input')); } }, 300); } });
         }
     });
+    // Propostas
+    (propostas || []).forEach(p => {
+        const numero = String(p.numero || '');
+        const cli = String(p.cliente || '');
+        if (numero.toLowerCase().includes(q) || cli.toLowerCase().includes(q) || (p.representante || '').toLowerCase().includes(q)) {
+            itens.push({ tipo: 'Proposta', label: `${numero} — ${cli}`, sub: p.representante || '', acao: () => {
+                fecharBuscaGlobal();
+                if (typeof window.FluxoNav?.goStep === 'function') window.FluxoNav.goStep(2); else trocarAba('propostas');
+                setTimeout(() => { if (typeof selecionarProposta === 'function') selecionarProposta(p.id); }, 300);
+            } });
+        }
+    });
+    // Precificações por cliente
+    (precificacoesCliente || []).forEach(pc => {
+        const cli = String(pc.cliente || pc.clienteNome || '');
+        if (!cli || !cli.toLowerCase().includes(q)) return;
+        itens.push({ tipo: 'Precificação', label: `Precificação — ${cli}`, sub: pc.dataCriacao ? new Date(pc.dataCriacao).toLocaleDateString('pt-BR') : '', acao: () => {
+            fecharBuscaGlobal();
+            if (typeof window.FluxoNav?.goStep === 'function') window.FluxoNav.goStep(1); else trocarAba('precificacao');
+            setTimeout(() => {
+                const sel = document.getElementById('precifClienteSelect');
+                if (sel && pc.clienteId) { sel.value = pc.clienteId; if (typeof selecionarClientePrecif === 'function') selecionarClientePrecif(); }
+            }, 300);
+        } });
+    });
     if (itens.length === 0) {
         res.innerHTML = '<div style="padding:16px;text-align:center;color:#94a3b8;font-size:.875rem">Nenhum resultado encontrado.</div>';
         res.style.display = 'block';
         return;
     }
-    const cores = { Produto: '#3b82f6', Cliente: '#10b981', Contrato: '#f59e0b' };
+    const cores = { Produto: '#3b82f6', Cliente: '#10b981', Contrato: '#f59e0b', Proposta: '#e5a128', 'Precificação': '#7c3aed' };
     res.innerHTML = itens.slice(0, 12).map((it, idx) => `
         <div onclick="window._buscaGlobalAcoes[${idx}]()" style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f1f5f9"
              onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">

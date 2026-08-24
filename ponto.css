@@ -168,7 +168,7 @@
     color: #fff;
     font-family: var(--ts-display);
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 600;
     letter-spacing: .08em;
     text-transform: uppercase;
     padding: 10px 16px;
@@ -226,7 +226,7 @@
     width: 140px;
     font-family: var(--ts-display);
     font-size: 9px;
-    font-weight: 800;
+    font-weight: 600;
     letter-spacing: .1em;
     text-transform: uppercase;
 }
@@ -236,7 +236,7 @@
     width: 60px;
     font-family: var(--ts-display);
     font-size: 9px;
-    font-weight: 800;
+    font-weight: 600;
     letter-spacing: .1em;
     text-transform: uppercase;
 }
@@ -260,7 +260,7 @@
     color: var(--ts-label-color);
     font-family: var(--ts-display);
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: .03em;
     text-align: left;
     padding: 0 10px;
@@ -270,7 +270,7 @@
 
 .th-dia { display: flex; flex-direction: column; align-items: center; gap: 1px; line-height: 1; }
 .th-dia-semana { font-size: 9px; font-weight: 500; opacity: .75; color: rgba(255, 255, 255, .8); }
-.th-dia-num { font-size: 12px; font-weight: 700; color: #fff; }
+.th-dia-num { font-size: 12px; font-weight: 600; color: #fff; }
 
 .timesheet-table td.col-fimsemana {
     background: var(--ts-fds-bg) repeating-linear-gradient(135deg, transparent, transparent 3px, rgba(0, 0, 0, .04) 3px, rgba(0, 0, 0, .04) 6px);
@@ -287,7 +287,7 @@
     background: linear-gradient(90deg, #f0f4fd 0%, #e8eef9 100%);
     font-family: var(--ts-display);
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 600;
     letter-spacing: .04em;
     border-top: 2px solid #bfcbef;
     color: #0f1c3f;
@@ -306,8 +306,8 @@
     line-height: 1px !important;
 }
 
-.timesheet-table td.saldo-positivo { color: #14532d; background: #dcfce7; font-weight: 700; outline: 2px solid #bbf7d0; outline-offset: -2px; }
-.timesheet-table td.saldo-negativo { color: #7f1d1d; background: #fee2e2; font-weight: 700; outline: 2px solid #fecaca; outline-offset: -2px; }
+.timesheet-table td.saldo-positivo { color: #14532d; background: #dcfce7; font-weight: 600; outline: 2px solid #bbf7d0; outline-offset: -2px; }
+.timesheet-table td.saldo-negativo { color: #7f1d1d; background: #fee2e2; font-weight: 600; outline: 2px solid #fecaca; outline-offset: -2px; }
 
 .timesheet-observacao {
     white-space: pre-wrap;
@@ -328,7 +328,7 @@
 .timesheet-table td.evento-vertical {
     writing-mode: vertical-rl;
     text-orientation: upright;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 9px;
     line-height: 1;
     letter-spacing: .08em;
@@ -356,7 +356,7 @@
     font-size: 10px;
     line-height: 1;
     letter-spacing: .06em;
-    font-weight: 700;
+    font-weight: 600;
     opacity: .8;
     height: 100%;
     width: 100%;
@@ -366,7 +366,7 @@
 .timesheet-table th.ts-dia-hoje {
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
     color: #ffffff !important;
-    font-weight: 700;
+    font-weight: 600;
     border-left: 3px solid #0c3d99 !important;
 }
 
@@ -442,7 +442,7 @@
     padding: 2px 8px;
     border-radius: 10px;
     font-size: 11.5px;
-    font-weight: 700;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
 }
 .rp-saldo-chip.saldo-positivo { background: #dcfce7; color: #166534; }
@@ -452,7 +452,7 @@
 .reg-badge {
     display: inline-block;
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 600;
     padding: 2px 7px;
     border-radius: 10px;
     white-space: nowrap;
@@ -468,7 +468,7 @@
     padding: 3px 9px;
     border-radius: 10px;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 600;
     white-space: nowrap;
     background: #f3f4f6;
     color: #374151;
@@ -482,7 +482,7 @@
 
 /* ── Férias ── */
 .ponto-ferias-table td { vertical-align: middle; }
-.ponto-ferias-disp { font-weight: 700; color: var(--primary-color); }
+.ponto-ferias-disp { font-weight: 600; color: var(--primary-color); }
 .ponto-link-ferias { color: var(--primary-color); text-decoration: underline; cursor: pointer; }
 .ponto-link-ferias:hover { color: var(--primary-dark, var(--primary-color)); }
 
@@ -564,7 +564,7 @@
     flex-direction: column;
     gap: 10px;
 }
-.ponto-mreg-block-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--text-muted); }
+.ponto-mreg-block-label { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--text-muted); }
 
 .ponto-mreg-times-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
 
@@ -601,7 +601,7 @@
     flex-wrap: wrap;
 }
 .acv2-header-left { display: flex; align-items: center; gap: 10px; }
-.acv2-titulo { font-size: 15px; font-weight: 700; color: #fff; }
+.acv2-titulo { font-size: 15px; font-weight: 600; color: #fff; }
 .acv2-header-actions { display: flex; gap: 6px; }
 
 /* Botões do cabeçalho escuro: fantasma claro por padrão, "+ Evento" em destaque sólido. */
@@ -620,14 +620,14 @@
 }
 .acv2-header-actions [data-ponto-action="acordoNovoEvento"]:hover:not(:disabled) { background: #2563eb; border-color: #2563eb; }
 
-.acv2-badge { font-size: 10.5px; font-weight: 700; padding: 2px 9px; border-radius: 10px; text-transform: uppercase; }
+.acv2-badge { font-size: 10.5px; font-weight: 600; padding: 2px 9px; border-radius: 10px; text-transform: uppercase; }
 .acv2-badge-active { background: #d1fae5; color: #065f46; }
 .acv2-badge-inactive { background: rgba(255, 255, 255, .12); color: rgba(255, 255, 255, .75); }
 
 .acv2-stats { display: flex; flex-wrap: wrap; gap: 1px; background: var(--border-color); }
 .acv2-stat { flex: 1 1 110px; background: var(--bg-light); padding: 10px 14px; }
 .acv2-stat-label { display: block; font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; }
-.acv2-stat-value { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.acv2-stat-value { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 
 .acv2-sections { display: flex; flex-direction: column; }
 
@@ -647,13 +647,13 @@
     font: inherit;
 }
 
-.acv2-section-titulo { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: .02em; }
+.acv2-section-titulo { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: .02em; }
 .acv2-section-count {
     background: var(--bg-light);
     border-radius: 10px;
     padding: 1px 8px;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-secondary);
     min-width: 18px;
     text-align: center;
@@ -665,14 +665,14 @@
 .acv2-section.acv2-section-open .acv2-section-body { display: block; }
 
 .acv2-row-evento { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
-.acv2-evento-tipo { font-weight: 700; text-transform: capitalize; }
+.acv2-evento-tipo { font-weight: 600; text-transform: capitalize; }
 .acv2-evento-desc { flex: 1; color: var(--text-secondary); }
 .acv2-evento-data { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; }
 
 .acv2-beneficio + .acv2-beneficio { margin-top: 12px; }
 .acv2-beneficio-header { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 4px; }
 .acv2-beneficio-label { font-weight: 600; color: var(--text-secondary); }
-.acv2-beneficio-nums { font-weight: 700; color: var(--text-primary); }
+.acv2-beneficio-nums { font-weight: 600; color: var(--text-primary); }
 .acv2-beneficio-nums.acv2-esgotado { color: var(--danger-color); }
 .acv2-progress { height: 6px; border-radius: 4px; background: var(--bg-light); overflow: hidden; }
 .acv2-progress-bar { height: 100%; background: var(--primary-color); border-radius: 4px; }
@@ -710,7 +710,7 @@
     background: var(--primary-color);
     color: #fff;
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 600;
     display: flex; align-items: center; justify-content: center;
 }
 .ponto-acd-passo strong { display: block; font-size: 13.5px; }
@@ -740,7 +740,7 @@
 .acv2-row + .acv2-row { margin-top: 4px; }
 .acv2-row-ativo { background: #ecfdf5; color: #065f46; font-weight: 600; }
 .acv2-row-sub { display: block; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.acv2-chip { background: var(--bg-light); border-radius: 10px; padding: 2px 8px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.acv2-chip { background: var(--bg-light); border-radius: 10px; padding: 2px 8px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .acv2-row-ativo .acv2-chip { background: #d1fae5; color: #065f46; }
 .acv2-empty-section { font-size: 12.5px; color: var(--text-muted); font-style: italic; margin: 0; }
 

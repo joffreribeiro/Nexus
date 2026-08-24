@@ -1369,7 +1369,7 @@ function renderConsultaPrecificacoes(dados) {
                         <tr>
                             <td colspan="28">
                                 <div class="empty-state">
-                                    <div class="empty-icon">📋</div>
+                                    <div class="empty-icon">${window.NexusIcons.clipboard}</div>
                                     <div class="empty-text">Nenhuma precificação salva</div>
                                     <div class="empty-hint">Calcule e salve uma precificação na aba "Por Cliente"</div>
                                 </div>
@@ -1485,7 +1485,7 @@ function renderConsultaPrecificacoes(dados) {
                 html += `<td style="min-width:110px;position:sticky;right:0;white-space:nowrap">`;
                 html += `<button class="btn-action btn-edit" onclick="editarPrecificacaoDaConsulta('${prec.id}')" title="Editar precificação">✏️</button>`;
                 if (!_propVinc) {
-                    html += `<button class="btn-action btn-edit" onclick="gerarPropostaDePrecificacao('${prec.id}', ${idxProd})" title="Gerar proposta">📋</button>`;
+                    html += `<button class="btn-action btn-edit" onclick="gerarPropostaDePrecificacao('${prec.id}', ${idxProd})" title="Gerar proposta">${window.NexusIcons.doc}</button>`;
                 }
                 html += `<button class="btn-action btn-delete" onclick="excluirPrecificacao('${prec.id}')" title="Excluir precificação">🗑</button>`;
                 html += `</td>`;
@@ -10189,7 +10189,7 @@ function renderizarAlertasDashboard() {
 
     if (enviosPendentes > 0) cards.push(`
         <div style="display:flex;align-items:center;gap:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;flex:1;min-width:180px;cursor:pointer" onclick="trocarAba('vendas')">
-            <span style="font-size:1.4rem">📦</span>
+            <span style="font-size:1.4rem" class="ico">${window.NexusIcons.box}</span>
             <div>
                 <div style="font-size:1.1rem;font-weight:800;color:#1d4ed8">${enviosPendentes}</div>
                 <div style="font-size:0.78rem;color:#1e40af;font-weight:600">Contrato(s) com envio pendente</div>
@@ -11809,7 +11809,7 @@ function renderizarRegistroVendas() {
         tbody.innerHTML = `
             <tr>
                 <td colspan="12" class="empty-state">
-                    <div class="empty-icon">📋</div>
+                    <div class="empty-icon">${window.NexusIcons.clipboard}</div>
                     <div class="empty-text">Nenhuma venda registrada</div>
                     <div class="empty-hint">Clique em "Nova Venda" para adicionar o primeiro registro</div>
                 </td>
@@ -11932,7 +11932,7 @@ function renderizarRegistroVendas() {
         const fmtVal = v => formatarMoedaValor(Number(v) || 0);
         tfoot.innerHTML = `
             <tr style="background:#1e3a5f;color:#fff;font-weight:700">
-              <td colspan="3" style="padding:10px 14px;text-align:left">📊 ${qtdContratos} contrato(s) · ${linhas.length} linha(s)</td>
+              <td colspan="3" style="padding:10px 14px;text-align:left"><span class="ico">${window.NexusIcons.chart}</span> ${qtdContratos} contrato(s) · ${linhas.length} linha(s)</td>
               <td style="padding:10px;text-align:center">${totalUnidades}</td>
               <td colspan="2"></td>
               <td style="padding:10px;text-align:right;color:#7ee787;font-size:1rem">${fmtVal(totalFiltrado)}</td>
@@ -16917,7 +16917,7 @@ function gerarRelatorioVendasImbel() {
             <div class="summary">
                 <span>📅 Gerado em ${dataGeracao}</span>
                 <span>·</span>
-                <span>📦 ${totalQtd} unidades</span>
+                <span><span class="ico">${window.NexusIcons.box}</span> ${totalQtd} unidades</span>
                 <span>·</span>
                 <span>💰 Total: ${fmt(totalValor)}</span>
             </div>
@@ -16927,7 +16927,7 @@ function gerarRelatorioVendasImbel() {
                                 style="background:#1e3a5f;color:#fff;border:none;
                                              padding:10px 28px;border-radius:8px;font-size:14px;
                                              cursor:pointer;margin-right:10px">
-                    🖨️ Imprimir
+                    <span class="ico">${window.NexusIcons.printer}</span> Imprimir
                 </button>
                 <button onclick="window.close()"
                                 style="background:#f1f5f9;color:#475569;border:none;
@@ -17736,7 +17736,7 @@ function _renderizarImpostosBloomb(container) {
     container.innerHTML = `<div class="imp-root">
         <div class="imp-cmdbar">
             <div class="imp-seg">
-                <button class="imp-seg-btn${(s.view==='federais'||s.view==='icms')?' active':''}" onclick="window._impSetView('icms')">📊 ICMS por NCM/UF</button>
+                <button class="imp-seg-btn${(s.view==='federais'||s.view==='icms')?' active':''}" onclick="window._impSetView('icms')"><span class="ico">${window.NexusIcons.chart}</span> ICMS por NCM/UF</button>
                 <button class="imp-seg-btn${s.view==='ipi'?' active':''}" onclick="window._impSetView('ipi')">🧾 IPI por NCM</button>
                 <button class="imp-seg-btn${s.view==='regimes'?' active':''}" onclick="window._impSetView('regimes')">⚖ Regimes</button>
             </div>
@@ -17752,7 +17752,7 @@ function _renderizarImpostosBloomb(container) {
             ${editBadge}
             ${descartarBtn}
             <button class="imp-bar-btn accent" onclick="window._impAplicar()" ${editCount===0?'disabled':''}>✓ Aplicar mudanças</button>
-            <button class="imp-bar-btn" onclick="">⬇ Exportar</button>
+            <button class="imp-bar-btn" onclick=""><span class="ico">${window.NexusIcons.download}</span> Exportar</button>
         </div>
         <div class="imp-kpi-strip">
             <div class="imp-kpi">
@@ -18273,7 +18273,7 @@ function visualizarTabelaLojistasHistorico(idx) {
     // Mostrar apenas produtos principais (sem componente), igual à tabela principal
     const produtos = (estoque.produtos || []).filter(p => p.nome && (!p.componente || p.componente.trim() === '' || p.componente.trim() === '-'));
 
-    let html = `<div style="font-size:0.9rem;font-weight:700;color:#1e3a5f;margin-bottom:12px">📋 ${_escapeHtml(h.nome)} <span style="font-size:0.78rem;color:#94a3b8;font-weight:400">${h.data}</span></div>`;
+    let html = `<div style="font-size:0.9rem;font-weight:600;color:#1e3a5f;margin-bottom:12px"><span class="ico">${window.NexusIcons.clipboard}</span> ${_escapeHtml(h.nome)} <span style="font-size:0.78rem;color:#94a3b8;font-weight:400">${h.data}</span></div>`;
     html += `<table style="border-collapse:collapse;width:100%;font-size:0.85rem"><thead><tr>
         <th style="padding:8px 12px;text-align:left;background:#1e3a5f;color:#fff">Produto</th>`;
     GRUPOS_PRECO_ESTADO.forEach(g => {
@@ -19480,7 +19480,7 @@ function renderizarTabelaPrecoVenda() {
 
         <div class="tv-command-bar">
             <div class="tv-search-box">
-                <span class="tv-search-icon">🔍</span>
+                <span class="tv-search-icon">${window.NexusIcons.search}</span>
                 <input type="text" id="tvBuscaInput" placeholder="Buscar nome, NCM, PN…" value="${_escapeHtml(tvState.busca)}"
                     oninput="window._tvBusca(this.value)" autocomplete="off">
                 <span class="tv-search-kbd">⌘K</span>
@@ -19520,8 +19520,8 @@ function renderizarTabelaPrecoVenda() {
             <button class="tv-bar-btn${temWI?' primary':''}" onclick="window._tvToggleWhatIf()">
                 ${temWI ? '⚡ What-If ATIVO' : '⚡ Simulador'}
             </button>
-            <button class="tv-bar-btn" onclick="exportarTabelaPrecoVenda()" title="Exportar Excel">⬇ Excel</button>
-            ${temPecasReposicao ? `<button class="tv-bar-btn" onclick="exportarPecasReposicao()" title="Exportar no formato de conjuntos, para conferir contra a planilha de origem">⬇ Peças de Reposição</button>` : ''}
+            <button class="tv-bar-btn" onclick="exportarTabelaPrecoVenda()" title="Exportar Excel"><span class="ico">${window.NexusIcons.download}</span> Excel</button>
+            ${temPecasReposicao ? `<button class="tv-bar-btn" onclick="exportarPecasReposicao()" title="Exportar no formato de conjuntos, para conferir contra a planilha de origem"><span class="ico">${window.NexusIcons.download}</span> Peças de Reposição</button>` : ''}
             <button class="tv-bar-btn" onclick="document.getElementById('inputImportarTabelaVendaB').click()" title="Importar">📥</button>
             <input type="file" id="inputImportarTabelaVendaB" accept=".xlsx,.xls,.ods,.csv" style="display:none" onchange="importarTabelaPrecoVendaExcel(event)">
         </div>
@@ -23457,7 +23457,7 @@ function renderizarHistoricoPrecif(clienteId) {
                             <td style="text-align:center">
                                 <button onclick="carregarVersaoPrecif('${v.id}')" class="btn btn-outline btn-sm" title="Carregar esta versão">↩ Carregar</button>
                                 <button onclick="visualizarPrecificacao('${v.id}')" class="btn btn-outline btn-sm" title="Ver detalhado" style="margin-left:6px">👁️ Ver</button>
-                                <button onclick="arquivarVersaoPrecif('${v.id}')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:0.9rem;margin-left:6px" title="Arquivar">📦</button>
+                                <button onclick="arquivarVersaoPrecif('${v.id}')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:0.9rem;margin-left:6px" title="Arquivar"><span class="ico">${window.NexusIcons.box}</span></button>
                                 <button onclick="excluirVersaoPrecif('${v.id}')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:0.9rem;margin-left:6px" title="Excluir">🗑️</button>
                             </td>
                         </tr>

@@ -104,7 +104,7 @@
   text-overflow: ellipsis;
 }
 .imbel-kpis .kpi-value {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 22px;
   font-weight: 600;
   color: var(--text-1, #0f1e31);
@@ -128,7 +128,7 @@
 .imbel-kpis .kpi-tag {
   display: inline-block;
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.04em;
   padding: 1px 5px;
   border-radius: 3px;
@@ -199,7 +199,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   padding: 0 16px;
   background: #0a1828;
   color: #c4d1e1;
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 11px;
   overflow: hidden;
 }
@@ -297,7 +297,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   border-right: 1px solid #e2e8f0;
   cursor: pointer;
   white-space: nowrap;
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
 }
 .imbel-cmdbar .seg button:last-child { border-right: none; }
 .imbel-cmdbar .seg button.active { background: #0f1e31; color: #e5a128; font-weight: 600; }
@@ -403,7 +403,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   background: #e5a128;
   color: #fff;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -444,7 +444,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
 .imbel-pill.on { font-weight: 600; }
 .imbel-pill.empty { opacity: 0.4; }
 .imbel-pill-cnt {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 9px;
   background: #f1f5f9;
   border-radius: 8px;
@@ -504,11 +504,11 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   font-size: 10px;
   color: #94a3b8;
   letter-spacing: 0.3px;
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
 }
 .imbel-card-legend {
   display: flex; gap: 12px;
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 10px;
   color: #64748b;
 }
@@ -553,7 +553,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
 .imbel-bar:hover .imbel-bar-e,
 .imbel-bar:hover .imbel-bar-s { opacity: 0.75; }
 .imbel-bar-lbl {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 9px;
   color: #94a3b8;
   letter-spacing: -0.3px;
@@ -569,9 +569,9 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   padding: 4px 0;
 }
 .imbel-top-rank {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   color: #94a3b8;
   text-align: center;
 }
@@ -586,7 +586,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
 }
 .imbel-top-meta {
   display: flex; gap: 8px;
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 10px;
   color: #94a3b8;
   margin-top: 2px;
@@ -603,9 +603,9 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   border-radius: 4px;
 }
 .imbel-top-val {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: #0f1e31;
   text-align: right;
 }
@@ -626,9 +626,9 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
 }
 .imbel-cat-nm { font-weight: 600; font-size: 12px; color: #0f1e31; }
 .imbel-cat-vl {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   color: #0f1e31;
   display: flex; gap: 6px; align-items: baseline;
 }
@@ -655,14 +655,14 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   position: absolute;
   right: 6px; top: 50%;
   transform: translateY(-50%);
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 9px;
   font-weight: 600;
   color: #374151;
 }
 .imbel-cat-vl-money {
   grid-column: 2 / 3;
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 11px;
   color: #64748b;
   text-align: right;
@@ -681,9 +681,9 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   align-items: center;
 }
 .imbel-alert-id {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   color: #0f1e31;
 }
 .imbel-alert-nm {
@@ -701,12 +701,12 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
 .imbel-alert-bar .fill { height: 100%; border-radius: 3px; }
 .imbel-alert-val { text-align: right; }
 .imbel-alert-val .cur {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
 }
 .imbel-alert-val .min {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 10px;
   color: #94a3b8;
 }
@@ -721,7 +721,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   padding: 4px 0;
 }
 .imbel-rep-name {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 12px;
   font-weight: 600;
   color: #0f1e31;
@@ -734,7 +734,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   padding: 1px 5px;
   border-radius: 2px;
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.5px;
   margin-left: 6px;
 }
@@ -745,8 +745,8 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   overflow: hidden;
 }
 .imbel-rep-bar .fill { height: 100%; border-radius: 2px; }
-.imbel-rep-val { text-align: right; font-family: var(--font-primary, 'Inter', system-ui, sans-serif); }
-.imbel-rep-val div { font-size: 13px; font-weight: 700; color: #0f1e31; }
+.imbel-rep-val { text-align: right; font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif); }
+.imbel-rep-val div { font-size: 13px; font-weight: 600; color: #0f1e31; }
 .imbel-rep-val .sub { font-size: 10px; color: #94a3b8; font-weight: 500; }
 
 /* =================================================================
@@ -769,7 +769,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   flex-shrink: 0;
 }
 .imbel-edit-ttl { font-size: 12px; color: #92400e; font-weight: 500; }
-.imbel-edit-ttl b { font-family: var(--font-primary, 'Inter', system-ui, sans-serif); color: #0f1e31; }
+.imbel-edit-ttl b { font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif); color: #0f1e31; }
 .imbel-edit-input {
   flex: 1;
   height: 32px;
@@ -811,7 +811,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   letter-spacing: 1px;
   color: #0f1e31;
 }
-.imbel-imp-sub { font-size: 11px; color: #94a3b8; font-family: var(--font-primary, 'Inter', system-ui, sans-serif); margin-top: 4px; }
+.imbel-imp-sub { font-size: 11px; color: #94a3b8; font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif); margin-top: 4px; }
 .imbel-imp-body { flex: 1; overflow: auto; padding: 24px; }
 .imbel-imp-dropzone {
   border: 2px dashed #93c5fd;
@@ -847,7 +847,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   gap: 10px;
   padding: 8px 16px;
 }
-.imbel-group-collapse { font-family: var(--font-primary, 'Inter', system-ui, sans-serif); font-size: 10px; color: #1e3a5f; width: 12px; }
+.imbel-group-collapse { font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif); font-size: 10px; color: #1e3a5f; width: 12px; }
 .imbel-group-name {
   font-family: var(--tv-font-display, inherit);
   font-size: 12px;
@@ -857,7 +857,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   color: #0f1e31;
 }
 .imbel-group-cnt {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 10px;
   color: #94a3b8;
   background: #fff;
@@ -874,7 +874,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   margin-left: 14px;
 }
 .imbel-group-stat .l { font-size: 9px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: #94a3b8; }
-.imbel-group-stat b { font-family: var(--font-primary, 'Inter', system-ui, sans-serif); color: #0f1e31; font-weight: 700; }
+.imbel-group-stat b { font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif); color: #0f1e31; font-weight: 600; }
 
 .imbel-cad-input {
   width: 100%;
@@ -922,9 +922,9 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   color: #94a3b8;
 }
 .imbel-params .val {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: #0f1e31;
 }
 .imbel-params .val.accent { color: #e5a128; }
@@ -990,7 +990,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   gap: 4px;
   font-size: 10px;
   color: #16a34a;
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
 }
 .imbel-whatif-head .live .dot {
   width: 6px; height: 6px;
@@ -1015,15 +1015,15 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
 .imbel-param-row .name { font-size: 11px; font-weight: 600; color: #374151; }
 .imbel-param-row .hint { font-size: 9px; color: #94a3b8; margin-left: 4px; }
 .imbel-param-row .value {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: #0f1e31;
 }
 .imbel-param-row .unit { font-size: 11px; color: #94a3b8; }
 .imbel-param-row .delta {
   font-size: 10px;
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   margin-left: 4px;
 }
 .imbel-param-row .delta.pos { color: #16a34a; }
@@ -1033,7 +1033,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   justify-content: space-between;
   font-size: 9px;
   color: #94a3b8;
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   margin-top: -2px;
 }
 
@@ -1058,7 +1058,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
 
 .imbel-sec-ttl {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #94a3b8;
@@ -1073,7 +1073,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   background: none;
   border: none;
   cursor: pointer;
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
 }
 
 .imbel-impact-grid {
@@ -1088,7 +1088,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   padding: 8px 10px;
 }
 .imbel-impact-cell .l { font-size: 9px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-.imbel-impact-cell .v { font-family: var(--font-primary, 'Inter', system-ui, sans-serif); font-size: 13px; font-weight: 700; color: #0f1e31; margin: 2px 0; }
+.imbel-impact-cell .v { font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif); font-size: 13px; font-weight: 600; color: #0f1e31; margin: 2px 0; }
 .imbel-impact-cell .d { font-size: 10px; color: #94a3b8; }
 .imbel-impact-cell .d.pos { color: #16a34a; }
 .imbel-impact-cell .d.neg { color: #dc2626; }
@@ -1122,9 +1122,9 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
 }
 .imbel-day-date { display: flex; align-items: baseline; gap: 4px; }
 .imbel-day-d {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   color: #0f1e31;
   line-height: 1;
 }
@@ -1143,7 +1143,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
 }
 .imbel-day-cnt {
   margin-left: 6px;
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 10px;
   background: #f1f5f9;
   border-radius: 8px;
@@ -1164,7 +1164,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
 .imbel-entry:hover { background: #f8fafc; }
 .imbel-entry.active { background: #f0f4f9; }
 .imbel-entry-time {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 10px;
   color: #94a3b8;
   padding-top: 2px;
@@ -1176,7 +1176,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   align-items: center;
   gap: 3px;
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   padding: 1px 6px;
@@ -1188,14 +1188,14 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 10px;
   color: #94a3b8;
   margin-top: 2px;
 }
 .imbel-entry-diff .before { color: #64748b; }
 .imbel-entry-diff .after  { color: #0f1e31; font-weight: 600; }
-.imbel-entry-diff .impact { font-size: 10px; font-weight: 700; border-radius: 2px; padding: 0 4px; }
+.imbel-entry-diff .impact { font-size: 10px; font-weight: 600; border-radius: 2px; padding: 0 4px; }
 .imbel-entry-diff .impact.pos { color: #16a34a; background: #dcfce7; }
 .imbel-entry-diff .impact.neg { color: #dc2626; background: #fee2e2; }
 
@@ -1214,7 +1214,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
 }
 .imbel-detail-target {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: #0f1e31;
   margin: 6px 0 4px;
 }
@@ -1224,13 +1224,13 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   gap: 8px;
   font-size: 10px;
   color: #64748b;
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
 }
 .imbel-detail-meta span { display: inline-flex; align-items: center; gap: 3px; }
 .imbel-detail-body { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
 .imbel-detail-section-ttl {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #94a3b8;
@@ -1244,7 +1244,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
 }
 .imbel-rcc-row { display: flex; padding: 10px 12px; }
 .imbel-rcc-l { font-size: 10px; font-weight: 600; text-transform: uppercase; color: #94a3b8; width: 48px; flex-shrink: 0; }
-.imbel-rcc-v { font-family: var(--font-primary, 'Inter', system-ui, sans-serif); font-size: 13px; font-weight: 700; }
+.imbel-rcc-v { font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif); font-size: 13px; font-weight: 600; }
 .imbel-rcc-v.before { color: #dc2626; text-decoration: line-through; opacity: 0.7; }
 .imbel-rcc-v.after  { color: #16a34a; }
 .imbel-rcc-arrow { display: flex; justify-content: center; color: #94a3b8; padding: 4px 0; border-top: 1px dashed #e2e8f0; border-bottom: 1px dashed #e2e8f0; }
@@ -1266,7 +1266,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
 }
 .imbel-tech > div { display: flex; gap: 8px; }
 .imbel-tech .l { color: #94a3b8; font-weight: 600; min-width: 60px; }
-.imbel-tech .v { font-family: var(--font-primary, 'Inter', system-ui, sans-serif); color: #374151; }
+.imbel-tech .v { font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif); color: #374151; }
 
 /* Histórico de períodos */
 .imbel-periodo-row {
@@ -1283,7 +1283,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
 .imbel-phr-id {
   font-family: var(--tv-font-display, inherit);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   color: #0f1e31;
   letter-spacing: -0.3px;
 }
@@ -1291,13 +1291,13 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   background: #e5a128;
   color: #050e1a;
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.6px;
   padding: 1px 6px;
   border-radius: 2px;
 }
 .imbel-phr-meta {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 10px;
   color: #94a3b8;
   margin-top: 4px;
@@ -1315,7 +1315,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   text-align: center;
 }
 .imbel-phr-params .l { display: block; font-size: 9px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: #94a3b8; }
-.imbel-phr-params .v { display: block; font-family: var(--font-primary, 'Inter', system-ui, sans-serif); font-size: 12px; font-weight: 700; color: #0f1e31; margin-top: 2px; }
+.imbel-phr-params .v { display: block; font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif); font-size: 12px; font-weight: 600; color: #0f1e31; margin-top: 2px; }
 
 /* =================================================================
    FIX V9 — BULK ACTIONS BAR (Cadastro)
@@ -1333,7 +1333,7 @@ table[class~="imbel-mov-grid"] tbody tr:hover td {
   gap: 12px;
 }
 .imbel-bulk-count {
-  font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
   font-size: 11px;
   color: #e5a128;
   font-weight: 600;

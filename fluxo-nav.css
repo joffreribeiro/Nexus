@@ -39,7 +39,7 @@ body.flow-nav-on .content-area { max-width: none !important; }
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 2100;
-    font-family: var(--font-primary, 'Inter', system-ui, sans-serif);
+    font-family: var(--font-primary, 'IBM Plex Sans', system-ui, sans-serif);
     box-shadow: 0 6px 20px rgba(0,0,0,0.35);
 }
 
@@ -55,7 +55,7 @@ body.flow-nav-on .content-area { max-width: none !important; }
 }
 .flow-brand {
     display: flex; align-items: center; gap: 9px;
-    font-weight: 700; font-size: 14px; letter-spacing: .2px;
+    font-weight: 600; font-size: 14px; letter-spacing: .2px;
     color: #fff; white-space: nowrap;
 }
 .flow-brand .flow-brand-mark {
@@ -142,7 +142,7 @@ body.flow-nav-on .content-area { max-width: none !important; }
     border: 1.5px solid var(--fn-navy-400);
     display: flex; align-items: center; justify-content: center;
     color: var(--fn-navy-200); font-family: var(--font-mono);
-    font-size: 14px; font-weight: 700; transition: all .12s;
+    font-size: 14px; font-weight: 600; transition: all .12s;
 }
 .pstep.active .pn { background: var(--fn-amber-500); border-color: var(--fn-amber-500); color: var(--fn-navy-950); }
 .pstep.done .pn { background: var(--fn-navy-600); border-color: var(--fn-navy-600); color: #fff; }
@@ -170,7 +170,7 @@ body.flow-nav-on .content-area { max-width: none !important; }
     display: flex; align-items: center; gap: 7px;
     background: var(--fn-amber-500); color: var(--fn-navy-950);
     border: none; border-radius: 5px; padding: 8px 13px;
-    font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
     transition: background .12s;
 }
 .pnext:hover { background: var(--fn-amber-400); }
@@ -235,11 +235,11 @@ body.flow-ref-precif .precif-subnav { display: none !important; }
     min-height: 55vh;
 }
 #tab-envio .flow-placeholder .fp-icon { font-size: 3.4rem; margin-bottom: 16px; opacity: .8; }
-#tab-envio .flow-placeholder h2 { font-size: 1.25rem; font-weight: 700; color: var(--text-primary, #111a27); margin-bottom: 8px; }
+#tab-envio .flow-placeholder h2 { font-size: 1.25rem; font-weight: 600; color: var(--text-primary, #111a27); margin-bottom: 8px; }
 #tab-envio .flow-placeholder p { font-size: .9rem; max-width: 440px; line-height: 1.5; }
 #tab-envio .flow-placeholder .fp-badge {
     margin-top: 18px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px;
-    text-transform: uppercase; color: var(--fn-amber-500); font-weight: 700;
+    text-transform: uppercase; color: var(--fn-amber-500); font-weight: 600;
     border: 1px solid var(--fn-amber-500); border-radius: 20px; padding: 5px 14px;
 }
 

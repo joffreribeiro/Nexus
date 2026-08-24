@@ -59,9 +59,11 @@
     --info-bg: rgba(13,144,212,0.07);
 
     /* ── Tipografia ── */
-        --font-primary: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-    --font-display: 'Inter', 'IBM Plex Sans', system-ui, sans-serif;
+    --font-primary: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-display: 'IBM Plex Sans', system-ui, sans-serif;
     --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, 'Courier New', monospace;
+    --font-size-base: 14px;
+    --line-height-base: 1.45;
     --text-primary: #111a27;
     --text-secondary: #5a6d82;
     --text-muted: #8fa0b4;
@@ -116,6 +118,32 @@
     --shadow-card-hover: 0 4px 16px rgba(15,30,49,0.10);
     --filters-bar-bg: #f6f8fa;
 }
+
+/* ----------------------------------------
+   Utilitários de tipografia (fase 1 — legibilidade/densidade)
+   ---------------------------------------- */
+.num, td.num, th.num, .kpi-v2-value, .cq-kpi-val, .pc-kpi-val, .est-kpi-val {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+.label-mono {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    flex: none;
+    vertical-align: -2px;
+}
+.ico svg { width: 100%; height: 100%; stroke-width: 1.6; }
 
 /* ----------------------------------------
    .filters-bar — barra de filtros unificada
@@ -219,7 +247,7 @@
     color: #dce8f4;
     font-size: 0.95rem;
     margin: 0;
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1;
     font-family: var(--font-display);
     letter-spacing: 0.3px;
@@ -244,7 +272,7 @@
     color: #3d5068;
     margin-bottom: 5px;
     text-transform: uppercase;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 1px;
     padding-left: 8px;
 }
@@ -287,7 +315,7 @@
     border-top: 1px solid rgba(255,255,255,0.05);
 }
 .faturamento-label { font-size: 12px; color: #94d3a2; font-weight: 600; }
-.faturamento-value { font-size: 1rem; font-weight: 700; color: var(--success-color); }
+.faturamento-value { font-size: 1rem; font-weight: 600; color: var(--success-color); }
 .cloud-status { display: flex; align-items: center; gap: 8px; color: #8b949e; font-size: 0.9rem; }
 
 /* Botões de ação na sidebar-footer */
@@ -598,7 +626,8 @@ body {
     background: var(--bg-light);
     min-height: 100vh;
     color: var(--text-primary);
-    line-height: 1.5;
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
 }
 
 /* .container consolidated above */
@@ -703,7 +732,7 @@ header {
     display: block;
     font-size: 1.55rem;
     color: var(--primary-dark);
-    font-weight: 800;
+    font-weight: 600;
     letter-spacing: -0.5px;
     line-height: 1.1;
     margin: 0;
@@ -804,7 +833,7 @@ th[data-sort]:hover { background: rgba(30,58,95,0.03); }
     color: #ffffff;
     border-radius: 6px;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 /* Em telas muito grandes, garantir que o bloco fique fixo à direita */
@@ -853,7 +882,7 @@ th[data-sort]:hover { background: rgba(30,58,95,0.03); }
 
 .header-stat .stat-value {
     font-size: 0.98rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-primary);
     font-variant-numeric: tabular-nums;
 }
@@ -984,7 +1013,7 @@ th[data-sort]:hover { background: rgba(30,58,95,0.03); }
 .tab-btn.active {
     color: var(--primary-color);
     border-bottom-color: var(--accent-color);
-    font-weight: 700;
+    font-weight: 600;
     background: rgba(26, 48, 80, 0.03);
 }
 
@@ -1323,7 +1352,7 @@ th[data-sort]:hover { background: rgba(30,58,95,0.03); }
 
 .dash-card-value {
     font-size: 1.55rem;
-    font-weight: 800;
+    font-weight: 600;
     color: var(--text-primary);
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
@@ -1422,7 +1451,7 @@ th[data-sort]:hover { background: rgba(30,58,95,0.03); }
 
 .dashboard-section .section-title {
     font-size: 0.92rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.02em;
 }
 
@@ -1630,17 +1659,21 @@ thead th.col-produto {
     position: relative;
 }
 
+.cell-disp, .cell-venda, .cell-saldo, .geral-disp, .geral-venda, .geral-saldo, .cell-valor, .cell-qtd {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
 .cell-disp { color: var(--text-primary); font-weight: 500; }
 .cell-venda { color: var(--primary-light); font-weight: 600; }
 .cell-saldo { color: var(--success-color); font-weight: 600; }
 .cell-saldo.negativo { color: var(--danger-color); background: rgba(220, 53, 69, 0.08); }
-.cell-saldo.negativo { font-weight: 800; }
+.cell-saldo.negativo { font-weight: 600; }
 
 /* Garantir que saldos consolidados negativos também fiquem vermelhos */
 #tabelaEstoque td.geral-saldo.negativo {
     color: var(--danger-color);
     background: rgba(220, 53, 69, 0.06);
-    font-weight: 800;
+    font-weight: 600;
 }
 
 /* Totais negativos na linha de totais */
@@ -1693,7 +1726,7 @@ tr.total-row td.geral-saldo.negativo.animate-negativo {
 
 tr.total-row {
     background: linear-gradient(90deg, #e4ecf5 0%, #dce6f0 100%) !important;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 tr.total-row td {
@@ -2090,7 +2123,7 @@ tr.total-row:hover {
 .config-card h3 {
     margin: 0 0 14px 0;
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-primary);
     display: flex;
     align-items: center;
@@ -2502,7 +2535,7 @@ tr.total-row:hover {
     background: #0ea5e9;
     color: #fff;
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 600;
     padding: 1px 6px;
     border-radius: 10px;
     margin-left: 4px;
@@ -2525,7 +2558,7 @@ tr.total-row:hover {
 .pn-expandir {
     cursor: pointer;
     color: #1e3a5f;
-    font-weight: 700;
+    font-weight: 600;
     font-family: monospace;
     text-decoration: underline dotted;
     white-space: nowrap;
@@ -2831,7 +2864,7 @@ tr.total-row:hover {
 
 .total-item .total-value {
     font-size: 1.1rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-primary);
 }
 
@@ -2971,7 +3004,7 @@ tr.total-row:hover {
 #tabelaEstoque td:nth-child(21),
 #tabelaEstoque td:nth-child(22) {
     background: rgba(16, 30, 46, 0.03);
-    font-weight: 700;
+    font-weight: 600;
 }
 
 /* Cor por representante usando classes (sobrescreve nth-child quando presente) */
@@ -3002,7 +3035,7 @@ tr.total-row:hover {
 
 /* Sub-headers (segunda linha do thead) com cores correspondentes - mais legível */
 #tabelaEstoque thead tr:nth-child(2) th.sub-header {
-    font-weight: 700;
+    font-weight: 600;
     font-size: 0.72rem;
     padding: 10px 8px;
     color: #0f1724; /* texto escuro para contraste */
@@ -3019,13 +3052,13 @@ tr.total-row:hover {
 #tabelaEstoque td.cell-saldo { color: #198754; }
 
 /* Tornar as colunas de saldo mais visíveis */
-#tabelaEstoque td.cell-saldo { font-weight: 700; }
+#tabelaEstoque td.cell-saldo { font-weight: 600; }
 
 /* Garantir prioridade para saldos negativos (especificidade maior) */
 #tabelaEstoque td.cell-saldo.negativo {
     color: var(--danger-color) !important;
     background: rgba(220, 53, 69, 0.08) !important;
-    font-weight: 800 !important;
+    font-weight: 600 !important;
 }
 
 /* Garantir animação para negativos com especificidade aumentada */
@@ -3077,7 +3110,7 @@ th.header-rep { border-right: 2px solid rgba(255,255,255,0.06); }
 /* Aumentar destaque do nome do produto na tabela de Inventário */
 #tabelaEstoque th.col-produto {
     font-size: 1.05rem; /* maior que o padrão do thead */
-    font-weight: 700;
+    font-weight: 600;
     padding-top: 12px;
     padding-bottom: 12px;
 }
@@ -3141,7 +3174,7 @@ th.header-rep { border-right: 2px solid rgba(255,255,255,0.06); }
 /* Aumentar fonte no relatório/preview também */
 .report-printable #tabelaEstoqueRelatorio th.col-produto {
     font-size: 1.05rem;
-    font-weight: 700;
+    font-weight: 600;
     padding-top: 12px;
     padding-bottom: 12px;
 }
@@ -3264,11 +3297,11 @@ tr.row-saldo-zero td {
 
 #tabelaEstoque thead tr:nth-child(2) th.sub-header { color: #ffffff !important; }
 tr.row-saldo-zero td.produto-nome {
-    font-weight: 700;
+    font-weight: 600;
 }
 tr.row-saldo-zero .geral-saldo {
     color: #dc3545;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 /* Impressão: esconder cabeçalho, navegação e elementos não relacionados ao relatório */
@@ -3728,7 +3761,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
 }
 
 .alerta-estoque-baixo .alerta-titulo {
-    font-weight: 700;
+    font-weight: 600;
     font-size: 0.88rem;
     margin-bottom: 8px;
     display: flex;
@@ -3912,7 +3945,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
 }
 .imbel-section-header .imbel-label {
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: #ff7b72;
@@ -3973,7 +4006,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
     color: #ffffff;
     border-radius: 10px;
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 600;
     margin-left: 6px;
 }
     width: 90%;
@@ -4124,7 +4157,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
 }
 .imbel-modal-body .imbel-section-heading {
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 600;
     color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -4309,12 +4342,12 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
     text-transform: uppercase;
     color: var(--text-muted);
     letter-spacing: 1px;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .kpi-value {
     font-size: 20px;
-    font-weight: 800;
+    font-weight: 600;
     line-height: 1.15;
     margin-top: 5px;
     font-family: var(--font-display);
@@ -4448,7 +4481,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
     background: #fff1e6;
     color: #bc4c00;
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 #tabelaEstoque tr.total-row {
@@ -4506,7 +4539,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
     height: 18px;
     border-radius: 10px;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 600;
     color: #57606a;
     background: #f6f8fa;
     border: 1px solid #d0d7de;
@@ -4578,7 +4611,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
     color: #1a7f37;
     border: 1px solid rgba(45,164,78,0.3);
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 600;
     padding: 1px 6px;
     border-radius: 10px;
     margin-left: 5px;
@@ -4667,7 +4700,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
     .mobile-topbar-title {
         color: #e6edf3;
         font-size: 14px;
-        font-weight: 700;
+        font-weight: 600;
     }
 
     .sidebar {
@@ -4769,7 +4802,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
 
 .estoque-kpis .kpi-value {
     font-size: 20px;
-    font-weight: 700;
+    font-weight: 600;
     color: #1f2937;
 }
 
@@ -4986,7 +5019,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
     gap: 5px;
     border-radius: 20px;
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     padding: 3px 9px;
     line-height: 1;
 }
@@ -5076,7 +5109,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
    aumentar fonte e centralizar o conteúdo. */
 #tab-estoque #tabelaEstoque th.col-produto {
     font-size: 1.05rem !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     text-align: center !important;
     vertical-align: middle !important;
     padding: 14px 12px !important;
@@ -5108,7 +5141,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
     background: linear-gradient(180deg, var(--primary-dark), var(--primary-color)) !important;
     color: #fff !important;
     text-align: center;
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
     font-size: 0.78rem;
     letter-spacing: 0.5px;
@@ -5150,7 +5183,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
     padding: 4px 10px;
     border-radius: 12px;
     font-size: .82rem;
-    font-weight: 700;
+    font-weight: 600;
     background: rgba(0,0,0,0.04);
 }
 
@@ -5214,7 +5247,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
 .section-header .section-title,
 .section-title {
     font-size: 1.05rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-1);
     letter-spacing: -0.01em;
 }
@@ -5255,7 +5288,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
     background: var(--primary-color);
     color: #fff;
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.8px;
     text-transform: uppercase;
     padding: 2px 10px;
@@ -5270,7 +5303,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
 
 .filtro-group label {
     font-size: 0.7rem !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     color: var(--primary-color) !important;
     text-transform: uppercase !important;
     letter-spacing: 0.6px !important;
@@ -5372,7 +5405,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
 .dashboard-table tfoot tr td,
 .dashboard-table tr.total-row td {
     background: linear-gradient(90deg, #f0f5fc, #e8f0fb) !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     color: var(--primary-color) !important;
     border-top: 2px solid #ccd8ee !important;
     font-size: 0.875rem !important;
@@ -5426,7 +5459,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
 .tab-btn.active {
     color: var(--primary-color) !important;
     border-bottom-color: var(--accent-color) !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     background: rgba(184,146,42,0.05) !important;
 }
 
@@ -5457,7 +5490,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
 
 .kpi-label {
     font-size: 0.65rem !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     text-transform: uppercase !important;
     letter-spacing: 1px !important;
     color: var(--text-muted) !important;
@@ -5466,7 +5499,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
 
 .kpi-value {
     font-size: 1.5rem !important;
-    font-weight: 800 !important;
+    font-weight: 600 !important;
     line-height: 1.15 !important;
     color: var(--primary-color) !important;
     font-variant-numeric: tabular-nums;
@@ -5603,7 +5636,7 @@ th.sortable.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
 /* ── 11. BADGE representantes — já existe mas reforço ── */
 .badge-rep {
     font-size: 0.7rem !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     padding: 3px 10px !important;
     border-radius: 20px !important;
     letter-spacing: 0.3px;
@@ -5819,12 +5852,12 @@ textarea:focus-visible {
     text-transform: uppercase;
     color: var(--text-muted);
     letter-spacing: 1px;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .kpi-v2-value {
     font-size: 2rem;
-    font-weight: 800;
+    font-weight: 600;
     line-height: 1.1;
     margin: 3px 0 2px;
     font-family: var(--font-display);
@@ -6215,7 +6248,7 @@ textarea:focus-visible {
     padding: 1px 7px;
     border-radius: 20px;
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     white-space: nowrap;
 }
 
@@ -6283,7 +6316,7 @@ textarea:focus-visible {
     padding: 2px 8px;
     border-radius: 20px;
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     white-space: nowrap;
 }
 
@@ -6300,7 +6333,7 @@ textarea:focus-visible {
     padding: 2px 9px;
     border-radius: 20px;
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     white-space: nowrap;
 }
 .badge-status-proposta.rascunho          { background: #f1f5f9; color: #475569; }
@@ -6443,7 +6476,7 @@ table#tabelaRegistroVendas th.sortable:hover { background: #1e3a5f !important; }
     gap: 10px;
     margin: 20px 0 12px;
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-muted);
@@ -6506,7 +6539,7 @@ table#tabelaRegistroVendas th.sortable:hover { background: #1e3a5f !important; }
     padding: 2px 10px;
     border-radius: 20px;
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 600;
 }
 .imbel-saldo-badge.ok     { background: #dcfce7; color: #15803d; }
 .imbel-saldo-badge.baixo  { background: #fef3c7; color: #92400e; }
@@ -6539,7 +6572,7 @@ table#tabelaRegistroVendas th.sortable:hover { background: #1e3a5f !important; }
     padding: 3px 9px;
     border-radius: 20px;
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 600;
 }
 .imbel-pipeline-step.done   { background: #dcfce7; color: #15803d; }
 
@@ -6611,7 +6644,7 @@ table#tabelaRegistroVendas th.sortable:hover { background: #1e3a5f !important; }
 .tv-version-label {
     font-family: var(--tv-font-display);
     font-size: 0.78rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-400);
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -6709,7 +6742,7 @@ table#tabelaRegistroVendas th.sortable:hover { background: #1e3a5f !important; }
     border-radius: 10px;
     padding: 0 5px;
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     min-width: 16px;
     text-align: center;
 }
@@ -6737,7 +6770,7 @@ table#tabelaRegistroVendas th.sortable:hover { background: #1e3a5f !important; }
 .tv-seg-btn.active {
     background: var(--tv-navy-900);
     color: var(--tv-amber-400);
-    font-weight: 700;
+    font-weight: 600;
 }
 .tv-seg-btn:hover:not(.active) { background: var(--tv-navy-50); }
 
@@ -6803,7 +6836,7 @@ table#tabelaRegistroVendas th.sortable:hover { background: #1e3a5f !important; }
 .tv-dropdown-header {
     padding: 4px 14px;
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.8px;
     color: var(--tv-navy-200);
@@ -6838,7 +6871,7 @@ table#tabelaRegistroVendas th.sortable:hover { background: #1e3a5f !important; }
     font-family: var(--tv-font-mono);
     font-variant-numeric: tabular-nums;
     font-size: 1.1rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-900);
     line-height: 1.2;
 }
@@ -6905,7 +6938,7 @@ table.tv-table thead tr.tv-thead-region th {
     padding: 5px 8px;
     font-family: var(--tv-font-display);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.8px;
     color: var(--tv-amber-400);
@@ -7006,7 +7039,7 @@ table.tv-table tbody tr.tv-ncm-group-row td {
     background: var(--tv-navy-50);
     font-family: var(--tv-font-mono);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.3px;
     color: var(--tv-navy-600);
     border-top: 2px solid var(--tv-navy-200);
@@ -7133,7 +7166,7 @@ table.tv-table tbody tr.tv-peca-row td { color: #64748b; font-size: 0.75rem; }
 .tv-whatif-title {
     font-family: var(--tv-font-display);
     font-size: 0.8rem;
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.8px;
     color: var(--tv-amber-400);
@@ -7174,7 +7207,7 @@ table.tv-table tbody tr.tv-peca-row td { color: #64748b; font-size: 0.75rem; }
     font-family: var(--tv-font-mono);
     font-variant-numeric: tabular-nums;
     font-size: 0.9rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-900);
 }
 .tv-slider-delta {
@@ -7232,7 +7265,7 @@ input[type=range].tv-slider::-webkit-slider-thumb:hover { transform: scale(1.15)
     font-family: var(--tv-font-mono);
     font-variant-numeric: tabular-nums;
     font-size: 0.9rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-900);
 }
 .tv-impact-val.green { color: var(--tv-green-500); }
@@ -7241,7 +7274,7 @@ input[type=range].tv-slider::-webkit-slider-thumb:hover { transform: scale(1.15)
 .tv-whatif-section-title {
     font-family: var(--tv-font-sans);
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.8px;
     color: var(--tv-navy-500);
@@ -7403,7 +7436,7 @@ input[type=range].tv-slider::-webkit-slider-thumb:hover { transform: scale(1.15)
     justify-content: center;
     font-family: var(--tv-font-mono);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
     transition: filter 0.1s, transform 0.1s;
     position: relative;
@@ -7422,7 +7455,7 @@ input[type=range].tv-slider::-webkit-slider-thumb:hover { transform: scale(1.15)
 .tv-map-ranking-title {
     font-family: var(--tv-font-sans);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.8px;
     color: var(--tv-navy-500);
@@ -7442,7 +7475,7 @@ input[type=range].tv-slider::-webkit-slider-thumb:hover { transform: scale(1.15)
 .tv-map-ranking-item.low  { background: rgba(22,163,74,0.05); }
 .tv-map-ranking-uf {
     font-family: var(--tv-font-mono);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-700);
 }
 .tv-map-ranking-pv {
@@ -7610,7 +7643,7 @@ input[type=range].tv-slider::-webkit-slider-thumb:hover { transform: scale(1.15)
 .imp-kpi-value {
     font-family: var(--tv-font-mono);
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-600);
     font-variant-numeric: tabular-nums;
 }
@@ -7643,7 +7676,7 @@ table.imp-fed-table thead th {
     color: var(--tv-navy-200);
     font-family: var(--tv-font-display);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     text-transform: uppercase;
     padding: 7px 10px;
@@ -7666,7 +7699,7 @@ table.imp-fed-table tbody td {
     vertical-align: middle;
 }
 table.imp-fed-table tbody td.ncm-code {
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-600);
     font-family: var(--tv-font-mono);
     white-space: nowrap;
@@ -7714,7 +7747,7 @@ table.imp-fed-table .imp-fed-input-desc {
     color: var(--tv-amber-700);
     font-family: var(--tv-font-mono);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     padding: 2px 7px;
     border-radius: 2px;
     white-space: nowrap;
@@ -7753,7 +7786,7 @@ table.imp-icms-table thead tr.region-row th {
     color: var(--tv-amber-400);
     font-family: var(--tv-font-display);
     font-size: 0.63rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     padding: 5px 4px;
@@ -7774,7 +7807,7 @@ table.imp-icms-table thead tr.col-row th {
     color: var(--tv-navy-200);
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     padding: 5px 4px;
@@ -7819,7 +7852,7 @@ table.imp-icms-table tbody td {
 table.imp-icms-table tbody td.td-ncm {
     text-align: left;
     padding-left: 10px;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-600);
     position: sticky;
     left: 0;
@@ -7886,7 +7919,7 @@ table.imp-icms-table tbody tr:hover td.td-desc {
 }
 .imp-footbar-tag {
     color: var(--tv-amber-500);
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
 }
 .imp-footbar span { white-space: nowrap; }
@@ -7926,7 +7959,7 @@ table.imp-icms-table tbody tr:hover td.td-desc {
 .imp-modal-title {
     font-family: var(--tv-font-display);
     font-size: 0.9rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-800);
     letter-spacing: 0.04em;
     margin: 0 0 18px;
@@ -7983,7 +8016,7 @@ table.imp-icms-table tbody tr:hover td.td-desc {
     color: #fff;
     font-family: var(--tv-font-display);
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
     padding: 7px 16px;
     border-radius: 3px;
@@ -8039,7 +8072,7 @@ table.imp-icms-table tbody tr:hover td.td-desc {
 .loj2-cmdbar-title {
     font-family: var(--tv-font-display);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     color: var(--tv-navy-700);
     text-transform: uppercase;
@@ -8068,7 +8101,7 @@ table.imp-icms-table tbody tr:hover td.td-desc {
 .loj2-btn {
     font-family: var(--tv-font-display);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.04em;
     background: #fff;
     border: 1px solid var(--tv-navy-200);
@@ -8124,7 +8157,7 @@ table.imp-icms-table tbody tr:hover td.td-desc {
 .loj2-tier-nome {
     font-family: var(--tv-font-display);
     font-size: 0.82rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-800);
 }
 .loj2-tier-ufs {
@@ -8143,7 +8176,7 @@ table.imp-icms-table tbody tr:hover td.td-desc {
 .loj2-tier-kpi-lbl {
     font-family: var(--tv-font-display);
     font-size: 0.58rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
     color: var(--tv-navy-400);
     text-transform: uppercase;
@@ -8151,7 +8184,7 @@ table.imp-icms-table tbody tr:hover td.td-desc {
 .loj2-tier-kpi-val {
     font-family: var(--tv-font-mono);
     font-size: 1.05rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-700);
     line-height: 1.1;
 }
@@ -8181,7 +8214,7 @@ table.imp-icms-table tbody tr:hover td.td-desc {
 .loj2-kpi-lbl {
     font-family: var(--tv-font-display);
     font-size: 0.6rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--tv-navy-400);
     text-transform: uppercase;
@@ -8189,7 +8222,7 @@ table.imp-icms-table tbody tr:hover td.td-desc {
 .loj2-kpi-val {
     font-family: var(--tv-font-mono);
     font-size: 1.2rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-700);
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
@@ -8226,7 +8259,7 @@ table.imp-icms-table tbody tr:hover td.td-desc {
 .loj2-table-title {
     font-family: var(--tv-font-display);
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
     color: var(--tv-navy-600);
     text-transform: uppercase;
@@ -8254,7 +8287,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
     color: var(--tv-navy-200);
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     text-transform: uppercase;
     padding: 8px 16px;
@@ -8270,7 +8303,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
     color: var(--tv-navy-200);
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     padding: 6px 16px;
@@ -8358,7 +8391,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
     color: var(--tv-amber-600);
     font-family: var(--tv-font-mono);
     font-size: 0.6rem;
-    font-weight: 700;
+    font-weight: 600;
     padding: 1px 4px;
     border-radius: 2px;
 }
@@ -8383,7 +8416,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
 .loj2-edit-title {
     font-family: var(--tv-font-display);
     font-size: 0.78rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
     color: var(--tv-navy-100);
     text-transform: uppercase;
@@ -8391,7 +8424,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
 .loj2-edit-id {
     font-family: var(--tv-font-mono);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     margin-top: 2px;
 }
 .loj2-edit-body {
@@ -8403,7 +8436,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
 .loj2-edit-sec-title {
     font-family: var(--tv-font-display);
     font-size: 0.6rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     color: var(--tv-navy-400);
     text-transform: uppercase;
@@ -8469,7 +8502,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
 .loj2-hist-btns button {
     font-family: var(--tv-font-display);
     font-size: 0.6rem;
-    font-weight: 700;
+    font-weight: 600;
     background: var(--tv-navy-50);
     border: 1px solid var(--tv-navy-200);
     color: var(--tv-navy-600);
@@ -8500,7 +8533,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
     width: 100%;
     font-family: var(--tv-font-display);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--tv-navy-600);
@@ -8531,7 +8564,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
 }
 .loj2-footbar-tag {
     color: var(--tv-amber-500);
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
 }
 .loj2-footbar span { white-space: nowrap; }
@@ -8557,7 +8590,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
 .loj-sidebar-title {
     font-family: var(--tv-font-display);
     font-size: 0.63rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     color: var(--tv-navy-500);
     text-transform: uppercase;
@@ -8591,7 +8624,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
 .loj-tier-label {
     font-family: var(--tv-font-display);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
     color: var(--tv-amber-400);
     white-space: nowrap;
@@ -8615,7 +8648,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
 }
 .loj-tier-val {
     color: var(--tv-navy-200);
-    font-weight: 700;
+    font-weight: 600;
 }
 .loj-tier-of { color: var(--tv-navy-600); }
 
@@ -8666,7 +8699,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
 .loj-hist-btn {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.04em;
     background: var(--tv-navy-700);
     border: 1px solid var(--tv-navy-600);
@@ -8685,7 +8718,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
     width: 100%;
     font-family: var(--tv-font-display);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
     color: var(--tv-navy-300);
     background: var(--tv-navy-800);
@@ -8731,7 +8764,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
 .loj-tier-avg {
     font-family: var(--tv-font-mono);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-500);
 }
 
@@ -8755,7 +8788,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
 .loj-kpi-lbl {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     color: var(--tv-navy-500);
     text-transform: uppercase;
@@ -8763,7 +8796,7 @@ table.loj2-table thead tr { border-bottom: 2px solid var(--tv-navy-700); }
 .loj-kpi-val {
     font-family: var(--tv-font-mono);
     font-size: 1.15rem;
-    font-weight: 700;
+    font-weight: 600;
     color: #d8e4f0;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
@@ -8822,7 +8855,7 @@ table.loj-table .loj-tr-prod:nth-child(even) .loj-td-ativo { background: rgba(24
 .loj-bar-title {
     font-family: var(--tv-font-display);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--tv-amber-400);
     text-transform: uppercase;
@@ -8857,7 +8890,7 @@ table.loj-table .loj-th-prod {
     color: var(--tv-amber-400);
     font-family: var(--tv-font-display);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     text-transform: uppercase;
     padding: 8px 14px;
@@ -8873,7 +8906,7 @@ table.loj-table .loj-th-grupo {
     color: var(--tv-amber-400);
     font-family: var(--tv-font-display);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     padding: 6px 14px;
@@ -8968,14 +9001,14 @@ table.loj-table .loj-td-val {
 .loj-expand-icon {
     font-size: 0.65rem;
     color: var(--tv-amber-500);
-    font-weight: 700;
+    font-weight: 600;
 }
 .loj-expand-badge {
     background: rgba(245,158,11,0.12);
     color: var(--tv-amber-400);
     font-family: var(--tv-font-mono);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     padding: 1px 5px;
     border-radius: 2px;
 }
@@ -8995,7 +9028,7 @@ table.loj-table .loj-td-val {
 }
 .loj-footbar-tag {
     color: var(--tv-amber-500);
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
 }
 .loj-footbar span { white-space: nowrap; }
@@ -9035,7 +9068,7 @@ table.loj-table .loj-td-val {
 .rastr-bar-title {
     font-family: var(--tv-font-display);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     color: var(--tv-navy-700);
     white-space: nowrap;
@@ -9062,7 +9095,7 @@ table.loj-table .loj-td-val {
 .rastr-seg-btn {
     font-family: var(--tv-font-display);
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
     color: var(--tv-navy-500);
     background: none;
@@ -9077,7 +9110,7 @@ table.loj-table .loj-td-val {
 .rastr-bar-btn {
     font-family: var(--tv-font-display);
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
     color: var(--tv-navy-600);
     background: var(--tv-navy-50);
@@ -9109,7 +9142,7 @@ table.loj-table .loj-td-val {
 .rastr-kpi-label {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.09em;
     text-transform: uppercase;
     color: var(--tv-navy-500);
@@ -9117,7 +9150,7 @@ table.loj-table .loj-td-val {
 .rastr-kpi-value {
     font-family: var(--tv-font-mono);
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-600);
     font-variant-numeric: tabular-nums;
 }
@@ -9166,7 +9199,7 @@ table.loj-table .loj-td-val {
 .rastr-type-label {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--tv-navy-400);
     text-transform: uppercase;
@@ -9178,7 +9211,7 @@ table.loj-table .loj-td-val {
     gap: 5px;
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
     padding: 3px 9px;
     border-radius: 2px;
@@ -9230,7 +9263,7 @@ table.loj-table .loj-td-val {
 .rastr-client-expand {
     font-size: 0.65rem;
     color: var(--tv-amber-600);
-    font-weight: 700;
+    font-weight: 600;
     width: 12px;
     text-align: center;
     flex-shrink: 0;
@@ -9272,7 +9305,7 @@ table.loj-table .loj-td-val {
 .rastr-client-fat {
     font-family: var(--tv-font-mono);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-600);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -9288,7 +9321,7 @@ table.loj-table .loj-td-val {
 .rastr-day-label {
     font-family: var(--tv-font-mono);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-500);
     letter-spacing: 0.06em;
     margin-bottom: 4px;
@@ -9337,7 +9370,7 @@ table.loj-table .loj-td-val {
 .rastr-event-type {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     color: var(--tv-navy-500);
     min-width: 58px;
@@ -9397,7 +9430,7 @@ table.loj-table .loj-td-val {
 .rastr-detail-type {
     font-family: var(--tv-font-display);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     color: var(--tv-navy-800);
 }
@@ -9420,7 +9453,7 @@ table.loj-table .loj-td-val {
 .rastr-detail-section-title {
     font-family: var(--tv-font-display);
     font-size: 0.63rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     color: var(--tv-navy-500);
     text-transform: uppercase;
@@ -9466,7 +9499,7 @@ table.rastr-detail-table thead th {
     color: var(--tv-navy-200);
     font-family: var(--tv-font-display);
     font-size: 0.63rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     text-transform: uppercase;
     padding: 5px 8px;
@@ -9506,7 +9539,7 @@ table.rastr-detail-table tbody td {
 }
 .rastr-footbar-tag {
     color: var(--tv-amber-500);
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
 }
 .rastr-footbar span { white-space: nowrap; }
@@ -9543,7 +9576,7 @@ table.rastr-detail-table tbody td {
 .pc-bar-title {
     font-family: var(--tv-font-display);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     color: var(--tv-navy-700);
     white-space: nowrap;
@@ -9558,7 +9591,7 @@ table.rastr-detail-table tbody td {
 .pc-label {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--tv-navy-500);
     text-transform: uppercase;
@@ -9588,7 +9621,7 @@ table.rastr-detail-table tbody td {
     width: 80px;
 }
 .pc-input.mono { font-family: var(--tv-font-mono); }
-.pc-input.center { text-align: center; font-weight: 700; letter-spacing: 1px; }
+.pc-input.center { text-align: center; font-weight: 600; letter-spacing: 1px; }
 .pc-bar-actions {
     display: flex;
     gap: 6px;
@@ -9600,7 +9633,7 @@ table.rastr-detail-table tbody td {
 .pc-btn {
     font-family: var(--tv-font-display);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
     color: var(--tv-navy-600);
     background: var(--tv-navy-50);
@@ -9639,7 +9672,7 @@ table.rastr-detail-table tbody td {
 .pc-globals-label {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.09em;
     color: var(--tv-navy-500);
     text-transform: uppercase;
@@ -9690,7 +9723,7 @@ table.rastr-detail-table tbody td {
 .pc-produtos-title {
     font-family: var(--tv-font-display);
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     color: var(--tv-amber-700);
     text-transform: uppercase;
@@ -9846,7 +9879,7 @@ table.rastr-detail-table tbody td {
 .sel-cat-pill {
     font-family: var(--font-display);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: .04em;
     padding: 4px 10px;
     border-radius: 20px;
@@ -9865,7 +9898,7 @@ table.rastr-detail-table tbody td {
 .sel-pill-btn {
     font-family: var(--font-display);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: .04em;
     padding: 4px 10px;
     border-radius: 4px;
@@ -9900,7 +9933,7 @@ table.rastr-detail-table tbody td {
     color: rgba(255,255,255,.65);
     font-family: var(--font-display);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: .06em;
     text-transform: uppercase;
     text-align: left;
@@ -9986,7 +10019,7 @@ tr.on .sel-cbox {
 .sel-td-ci {
     font-family: var(--font-mono);
     font-size: 0.8rem;
-    font-weight: 700;
+    font-weight: 600;
     color: #b8922a;
     text-align: right;
     padding: 8px 12px 8px 10px;
@@ -10011,7 +10044,7 @@ tr.on .sel-cbox {
 .sel-pecas-badge {
     font-family: var(--font-mono);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     color: #345b85;
     background: #e8eef5;
     padding: 1px 7px;
@@ -10027,7 +10060,7 @@ tr.on .sel-cbox {
     padding: 6px 12px;
     font-family: var(--font-display);
     font-size: 0.68rem;
-    font-weight: 800;
+    font-weight: 600;
     letter-spacing: .07em;
     text-transform: uppercase;
     color: #1a3450;
@@ -10109,7 +10142,7 @@ tr.on .sel-cbox {
 .foot-count {
     font-family: var(--font-display);
     font-size: 0.82rem;
-    font-weight: 700;
+    font-weight: 600;
     color: #0f2438;
     white-space: nowrap;
     flex-shrink: 0;
@@ -10184,7 +10217,7 @@ tr.on .sel-cbox {
     user-select: none;
     font-family: var(--tv-font-display);
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
     color: var(--tv-amber-700);
     text-transform: uppercase;
@@ -10221,7 +10254,7 @@ table.pc-beneficio-table thead th {
     color: var(--tv-navy-200);
     font-family: var(--tv-font-display);
     font-size: 0.63rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     text-transform: uppercase;
     padding: 6px 8px;
@@ -10252,7 +10285,7 @@ table.pc-beneficio-table tbody td {
 .pc-empty-title {
     font-family: var(--tv-font-display);
     font-size: 0.85rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.04em;
     color: var(--tv-navy-600);
     margin-bottom: 6px;
@@ -10308,7 +10341,7 @@ table.pc-beneficio-table tbody td {
 .pc-summary-bar > div > span:first-child {
     font-family: var(--tv-font-display) !important;
     font-size: 0.62rem !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     letter-spacing: 0.08em !important;
     text-transform: uppercase !important;
     color: var(--tv-navy-500) !important;
@@ -10317,7 +10350,7 @@ table.pc-beneficio-table tbody td {
 .pc-summary-bar > div > span:last-child {
     font-family: var(--tv-font-mono) !important;
     font-size: 1rem !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     color: var(--tv-amber-600) !important;
     font-variant-numeric: tabular-nums !important;
 }
@@ -10352,7 +10385,7 @@ table.pc-table thead th {
     color: var(--tv-navy-200);
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     text-transform: uppercase;
     padding: 7px 10px;
@@ -10399,7 +10432,7 @@ table.pc-table tbody td[style*="sticky"] {
 .pc-historico-title {
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--tv-navy-200);
     text-transform: uppercase;
@@ -10465,7 +10498,7 @@ table.pc-table tbody td[style*="sticky"] {
 .pc-seg-btn {
     font-family: var(--tv-font-display);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
     color: var(--tv-navy-500);
     background: none;
@@ -10500,7 +10533,7 @@ table.pc-table tbody td[style*="sticky"] {
 .pc-kpi-lbl {
     font-family: var(--tv-font-display);
     font-size: 0.58rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--tv-navy-500);
@@ -10512,7 +10545,7 @@ table.pc-table tbody td[style*="sticky"] {
 .pc-kpi-val {
     font-family: var(--tv-font-mono);
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-600);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -10560,7 +10593,7 @@ table.pc-table tbody td[style*="sticky"] {
 .pc-cli-count {
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--tv-navy-500);
@@ -10602,7 +10635,7 @@ table.pc-table tbody td[style*="sticky"] {
     justify-content: center;
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     flex-shrink: 0;
     letter-spacing: 0.03em;
 }
@@ -10612,7 +10645,7 @@ table.pc-table tbody td[style*="sticky"] {
 .pc-cli-nome {
     font-family: var(--tv-font-display);
     font-size: 0.78rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-800);
     white-space: nowrap;
     overflow: hidden;
@@ -10630,7 +10663,7 @@ table.pc-table tbody td[style*="sticky"] {
 .pc-cli-uf {
     font-family: var(--tv-font-mono);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-500);
     background: var(--tv-navy-100);
     border-radius: 2px;
@@ -10668,7 +10701,7 @@ table.pc-table tbody td[style*="sticky"] {
 .pc-detail-nome {
     font-family: var(--tv-font-display);
     font-size: 0.92rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-900);
     white-space: nowrap;
     overflow: hidden;
@@ -10702,7 +10735,7 @@ table.pc-table tbody td[style*="sticky"] {
 .pc-footbar-tag {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     background: var(--tv-amber-600);
@@ -10753,7 +10786,7 @@ table.pc-table tbody td[style*="sticky"] {
 .cq-bar-title {
     font-family: var(--tv-font-display);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     color: var(--tv-navy-700);
     white-space: nowrap;
@@ -10770,7 +10803,7 @@ table.pc-table tbody td[style*="sticky"] {
 .cq-seg-btn {
     font-family: var(--tv-font-display);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
     color: var(--tv-navy-500);
     background: none;
@@ -10826,7 +10859,7 @@ table.pc-table tbody td[style*="sticky"] {
 .cq-btn {
     font-family: var(--tv-font-display);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
     color: var(--tv-navy-600);
     background: var(--tv-navy-50);
@@ -10868,7 +10901,7 @@ table.cq-table thead th {
     color: var(--tv-navy-200);
     font-family: var(--tv-font-display);
     font-size: 0.63rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     text-transform: uppercase;
     padding: 7px 10px;
@@ -10929,7 +10962,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cq-footbar-tag {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     background: var(--tv-amber-600);
@@ -11004,7 +11037,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cq-hero-tag-lbl {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     color: var(--tv-navy-500);
     text-transform: uppercase;
@@ -11033,7 +11066,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cq-kpi-lbl {
     font-family: var(--tv-font-display);
     font-size: 0.58rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--tv-navy-500);
@@ -11043,7 +11076,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cq-kpi-val {
     font-family: var(--tv-font-mono);
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-600);
     font-variant-numeric: tabular-nums;
     line-height: 1.2;
@@ -11088,7 +11121,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cq-results-count {
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--tv-navy-500);
@@ -11136,13 +11169,13 @@ table.cq-table tbody td[style*="sticky"] {
 .cq-card-num {
     font-family: var(--tv-font-mono);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-600);
 }
 .cq-card-status-ativa {
     font-family: var(--tv-font-display);
     font-size: 0.6rem;
-    font-weight: 700;
+    font-weight: 600;
     background: rgba(22,163,74,0.1);
     color: #15803d;
     border-radius: 10px;
@@ -11152,7 +11185,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cq-card-status-exp {
     font-family: var(--tv-font-display);
     font-size: 0.6rem;
-    font-weight: 700;
+    font-weight: 600;
     background: rgba(220,38,38,0.08);
     color: #dc2626;
     border-radius: 10px;
@@ -11162,7 +11195,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cq-card-cliente {
     font-family: var(--tv-font-display);
     font-size: 0.78rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-800);
     white-space: nowrap;
     overflow: hidden;
@@ -11225,7 +11258,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cmp-bar-title {
     font-family: var(--tv-font-display);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--tv-navy-700);
     text-transform: uppercase;
@@ -11233,7 +11266,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cmp-bar-label {
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--tv-navy-600);
     text-transform: uppercase;
@@ -11259,7 +11292,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cmp-seg-btn {
     font-family: var(--tv-font-display);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.04em;
     color: var(--tv-navy-500);
     background: none;
@@ -11274,7 +11307,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cmp-btn {
     font-family: var(--tv-font-display);
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     background: var(--tv-navy-50);
@@ -11320,7 +11353,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cmp-verdict-lbl {
     font-family: var(--tv-font-display);
     font-size: 0.58rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--tv-navy-500);
@@ -11330,7 +11363,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cmp-verdict-val {
     font-family: var(--tv-font-display);
     font-size: 0.82rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-800);
     white-space: nowrap;
     overflow: hidden;
@@ -11340,7 +11373,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cmp-verdict-delta {
     font-family: var(--tv-font-mono);
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     flex-shrink: 0;
@@ -11356,7 +11389,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cmp-selecao-title {
     font-family: var(--tv-font-display);
     font-size: 0.63rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     color: var(--tv-navy-500);
     text-transform: uppercase;
@@ -11394,7 +11427,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cmp-slot-label {
     font-family: var(--tv-font-display);
     font-size: 0.67rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     color: var(--tv-navy-700);
     text-transform: uppercase;
@@ -11431,7 +11464,7 @@ table.cq-table tbody td[style*="sticky"] {
 .cmp-param-lbl {
     font-family: var(--tv-font-mono);
     font-size: 0.58rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     color: var(--tv-navy-500);
     text-transform: uppercase;
@@ -11484,7 +11517,7 @@ table.cmp-table .cmp-thead-sub th {
     text-align: left;
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     color: var(--tv-navy-200);
     text-transform: uppercase;
@@ -11498,7 +11531,7 @@ table.cmp-table .cmp-thead-sub th {
 .cmp-th-nome {
     font-family: var(--tv-font-display);
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-100);
 }
 .cmp-th-meta {
@@ -11513,7 +11546,7 @@ table.cmp-table .cmp-thead-sub th {
     min-width: 90px;
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     color: var(--tv-navy-300);
     text-transform: uppercase;
@@ -11543,7 +11576,7 @@ table.cmp-table .cmp-thead-sub { border-bottom: 2px solid var(--tv-amber-700); }
 .cmp-td-val {
     font-family: var(--tv-font-mono);
     font-size: 0.78rem;
-    font-weight: 700;
+    font-weight: 600;
     padding: 5px 10px;
     border-left: 1px solid #f1f5f9;
     text-align: right;
@@ -11563,7 +11596,7 @@ table.cmp-table .cmp-thead-sub { border-bottom: 2px solid var(--tv-amber-700); }
     display: inline-block;
     font-family: var(--tv-font-display);
     font-size: 0.55rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
     padding: 1px 4px;
     border-radius: 2px;
@@ -11616,7 +11649,7 @@ table.cmp-table .cmp-thead-sub { border-bottom: 2px solid var(--tv-amber-700); }
 .cmp-footbar-tag {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     background: var(--tv-amber-600);
@@ -11670,7 +11703,7 @@ table.cmp-table .cmp-thead-sub { border-bottom: 2px solid var(--tv-amber-700); }
 .imp-seg-btn {
     font-family: var(--tv-font-display);
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
     color: var(--tv-navy-500);
     background: none;
@@ -11686,7 +11719,7 @@ table.cmp-table .cmp-thead-sub { border-bottom: 2px solid var(--tv-amber-700); }
 .imp-region-lbl {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--tv-navy-400);
     white-space: nowrap;
@@ -11694,7 +11727,7 @@ table.cmp-table .cmp-thead-sub { border-bottom: 2px solid var(--tv-amber-700); }
 .imp-region-pill {
     font-family: var(--tv-font-display);
     font-size: 0.66rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.04em;
     color: var(--tv-navy-500);
     background: var(--tv-navy-50);
@@ -11713,7 +11746,7 @@ table.cmp-table .cmp-thead-sub { border-bottom: 2px solid var(--tv-amber-700); }
     gap: 5px;
     font-family: var(--tv-font-display);
     font-size: 0.67rem;
-    font-weight: 700;
+    font-weight: 600;
     color: #b45309;
     background: rgba(217,119,6,0.12);
     border: 1px solid rgba(217,119,6,0.3);
@@ -11723,12 +11756,12 @@ table.cmp-table .cmp-thead-sub { border-bottom: 2px solid var(--tv-amber-700); }
 }
 .imp-edits-badge .cnt {
     font-family: var(--tv-font-mono);
-    font-weight: 700;
+    font-weight: 600;
 }
 .imp-bar-btn {
     font-family: var(--tv-font-display);
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
     color: var(--tv-navy-600);
     background: var(--tv-navy-50);
@@ -11764,7 +11797,7 @@ table.cmp-table .cmp-thead-sub { border-bottom: 2px solid var(--tv-amber-700); }
 .imp-kpi-lbl {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.09em;
     text-transform: uppercase;
     color: var(--tv-navy-500);
@@ -11772,7 +11805,7 @@ table.cmp-table .cmp-thead-sub { border-bottom: 2px solid var(--tv-amber-700); }
 .imp-kpi-val {
     font-family: var(--tv-font-mono);
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-600);
     font-variant-numeric: tabular-nums;
     line-height: 1.2;
@@ -11819,7 +11852,7 @@ table.imp-matrix thead th {
     color: var(--tv-navy-200);
     font-family: var(--tv-font-display);
     font-size: 0.63rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     text-align: center;
     padding: 6px 10px;
@@ -11840,7 +11873,7 @@ table.imp-matrix thead th {
 .imp-ncm-code {
     font-family: var(--tv-font-mono);
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-400);
 }
 .imp-ncm-grp {
@@ -11885,7 +11918,7 @@ table.imp-matrix thead th {
 .imp-state-region {
     font-family: var(--tv-font-mono);
     font-size: 0.58rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--tv-navy-400);
     text-transform: uppercase;
@@ -11893,7 +11926,7 @@ table.imp-matrix thead th {
 .imp-state-uf {
     font-family: var(--tv-font-mono);
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-800);
     line-height: 1.1;
 }
@@ -11942,7 +11975,7 @@ table.imp-matrix thead th {
     left: 4px;
     font-family: var(--tv-font-mono);
     font-size: 0.56rem;
-    font-weight: 700;
+    font-weight: 600;
     color: #b45309;
     line-height: 1;
     pointer-events: none;
@@ -11973,7 +12006,7 @@ table.imp-matrix thead th {
     padding: 4px 10px;
     font-family: var(--tv-font-mono);
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-600);
     white-space: nowrap;
     background: var(--tv-navy-50) !important;
@@ -11995,7 +12028,7 @@ table.imp-matrix thead th {
 .imp-legend-lbl {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     color: var(--tv-navy-500);
     text-transform: uppercase;
@@ -12003,7 +12036,7 @@ table.imp-matrix thead th {
 .imp-legend-cell {
     font-family: var(--tv-font-mono);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     padding: 2px 8px;
     border-radius: 2px;
 }
@@ -12039,7 +12072,7 @@ table.imp-matrix thead th {
 .imp-ipi-ncm {
     font-family: var(--tv-font-mono);
     font-size: 0.85rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-600);
     letter-spacing: 0.05em;
 }
@@ -12059,7 +12092,7 @@ table.imp-matrix thead th {
     width: 80px;
     font-family: var(--tv-font-mono);
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-800);
     background: var(--tv-navy-50);
     border: 1px solid var(--tv-navy-200);
@@ -12119,7 +12152,7 @@ table.imp-matrix thead th {
 .imp-regime-nm {
     font-family: var(--tv-font-display);
     font-size: 0.85rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-800);
 }
 .imp-regime-fx {
@@ -12131,7 +12164,7 @@ table.imp-matrix thead th {
 .imp-regime-val {
     font-family: var(--tv-font-mono);
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-600);
     font-variant-numeric: tabular-nums;
     margin: 8px 0;
@@ -12148,7 +12181,7 @@ table.imp-matrix thead th {
     margin-top: 10px;
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     color: #15803d;
     background: rgba(22,163,74,0.1);
@@ -12174,7 +12207,7 @@ table.imp-matrix thead th {
 .imp-footbar-tag {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     background: var(--tv-amber-600);
@@ -12192,7 +12225,7 @@ table.imp-matrix thead th {
 }
 .imp-footbar-keys b {
     font-family: var(--tv-font-display);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-300);
     background: var(--tv-navy-700);
     padding: 1px 5px;
@@ -12262,7 +12295,7 @@ table.imp-matrix thead th {
     padding: 3px 10px;
     font-family: var(--tv-font-display);
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--tv-navy-500);
@@ -12283,7 +12316,7 @@ table.imp-matrix thead th {
     padding: 2px 9px;
     font-family: var(--tv-font-display);
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
     border-radius: 2px;
     border: 1px solid transparent;
@@ -12304,7 +12337,7 @@ table.imp-matrix thead th {
     padding: 4px 12px;
     font-family: var(--tv-font-display);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
     border: 1px solid var(--tv-navy-200);
     border-radius: 3px;
@@ -12347,7 +12380,7 @@ table.imp-matrix thead th {
 .imbel-kpi-lbl {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--tv-navy-500);
@@ -12358,7 +12391,7 @@ table.imp-matrix thead th {
 .imbel-kpi-val {
     font-family: var(--tv-font-mono);
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-900);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -12409,7 +12442,7 @@ table.imbel-table thead th {
     color: var(--tv-navy-200);
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     padding: 6px 10px;
@@ -12437,8 +12470,8 @@ table.imbel-table tbody td.mono {
     font-size: 0.75rem;
     font-variant-numeric: tabular-nums;
 }
-table.imbel-table tbody td.pos { color: #15803d; font-family: var(--tv-font-mono); font-weight: 700; }
-table.imbel-table tbody td.neg { color: #dc2626; font-family: var(--tv-font-mono); font-weight: 700; }
+table.imbel-table tbody td.pos { color: #15803d; font-family: var(--tv-font-mono); font-weight: 600; }
+table.imbel-table tbody td.neg { color: #dc2626; font-family: var(--tv-font-mono); font-weight: 600; }
 table.imbel-table tbody td.dim { color: var(--tv-navy-400); font-size: 0.7rem; }
 .imbel-empty-row td {
     text-align: center;
@@ -12456,7 +12489,7 @@ table.imbel-table tbody td.dim { color: var(--tv-navy-400); font-size: 0.7rem; }
     border-radius: 2px;
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     white-space: nowrap;
 }
@@ -12488,7 +12521,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
     padding: 2px 7px;
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     border-radius: 2px;
     border: 1px solid var(--tv-navy-200);
     background: #fff;
@@ -12529,7 +12562,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
 .imbel-card-title {
     font-family: var(--tv-font-display);
     font-size: 0.67rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--tv-navy-600);
@@ -12600,7 +12633,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
 .imbel-giro-val {
     font-family: var(--tv-font-mono);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-600);
     white-space: nowrap;
 }
@@ -12640,7 +12673,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
     justify-content: center;
     color: #fff;
     font-size: 9px;
-    font-weight: 800;
+    font-weight: 600;
     line-height: 1;
 }
 .imbel-alert-dot.warn  { background: #d97706; }
@@ -12662,7 +12695,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
 }
 .imbel-rep-name {
     font-family: var(--tv-font-display);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-700);
     width: 70px;
     flex-shrink: 0;
@@ -12683,7 +12716,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
 .imbel-rep-val {
     font-family: var(--tv-font-mono);
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-700);
     width: 36px;
     text-align: right;
@@ -12714,7 +12747,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
 .imbel-preco-card-name {
     font-family: var(--tv-font-display);
     font-size: 0.78rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-800);
 }
 .imbel-preco-entry {
@@ -12728,7 +12761,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
 .imbel-preco-ano {
     font-family: var(--tv-font-mono);
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-500);
     background: var(--tv-navy-100);
     padding: 1px 6px;
@@ -12737,7 +12770,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
 .imbel-preco-val {
     font-family: var(--tv-font-mono);
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-amber-600);
     font-variant-numeric: tabular-nums;
 }
@@ -12764,7 +12797,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
 .imbel-cat-group-title {
     font-family: var(--tv-font-display);
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--tv-navy-700);
@@ -12800,7 +12833,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
     background: var(--tv-navy-100);
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--tv-navy-600);
@@ -12845,7 +12878,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
 .imbel-aud-who {
     font-family: var(--tv-font-display);
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--tv-navy-800);
 }
 .imbel-aud-detail {
@@ -12864,7 +12897,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
     border-radius: 2px;
     font-family: var(--tv-font-display);
     font-size: 0.6rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.07em;
     white-space: nowrap;
     flex-shrink: 0;
@@ -12912,7 +12945,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
     background: var(--tv-navy-100);
     font-family: var(--tv-font-display);
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--tv-navy-600);
@@ -12932,7 +12965,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
     flex-shrink: 0;
 }
 .imbel-diff-before { color: #dc2626; text-decoration: line-through; margin-right: 8px; }
-.imbel-diff-after  { color: #16a34a; font-weight: 700; }
+.imbel-diff-after  { color: #16a34a; font-weight: 600; }
 
 /* ── Footbar ── */
 .imbel-footbar {
@@ -12951,7 +12984,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
 .imbel-footbar-tag {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     background: var(--tv-amber-600);
@@ -13125,7 +13158,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
 .est-repbar-lbl {
     font-family: var(--tv-font-display);
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #94a3b8;
@@ -13181,7 +13214,7 @@ table.imbel-table tbody tr:hover .imbel-row-actions { opacity: 1; }
 .est-kpi-val {
     font-family: var(--tv-font-mono);
     font-size: 1.1rem;
-    font-weight: 700;
+    font-weight: 600;
     color: #1e293b;
     line-height: 1.2;
 }
@@ -13225,7 +13258,7 @@ table.est-v2-table thead {
 table.est-v2-table thead th.est-prod-hdr {
     position: sticky; left: 0; top: 0; z-index: 7;
     background: var(--tv-navy-950); color: #fff;
-    font-family: var(--tv-font-display); font-size: 0.72rem; font-weight: 700;
+    font-family: var(--tv-font-display); font-size: 0.72rem; font-weight: 600;
     letter-spacing: 0.08em; text-transform: uppercase; text-align: left;
     padding: 0 14px; min-width: 240px;
     border-right: 2px solid var(--tv-amber-500);
@@ -13254,7 +13287,7 @@ table.est-v2-table tfoot td.est-prod-cell {
 .est-prod-nm:hover { color: var(--tv-amber-600); }
 .est-prod-meta { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
 .est-prod-cat {
-    font-family: var(--tv-font-display); font-size: 0.6rem; font-weight: 700;
+    font-family: var(--tv-font-display); font-size: 0.6rem; font-weight: 600;
     letter-spacing: 0.04em; text-transform: uppercase;
     color: var(--tv-navy-600); background: var(--tv-navy-50);
     padding: 1px 5px; border-radius: 2px;
@@ -13269,7 +13302,7 @@ table.est-v2-table thead tr.est-hdr-group th {
     position: sticky; top: 0; z-index: 5;
     height: 28px; color: #fff !important;
     background: var(--tv-navy-900);
-    font-family: var(--tv-font-display); font-size: 0.68rem; font-weight: 700;
+    font-family: var(--tv-font-display); font-size: 0.68rem; font-weight: 600;
     letter-spacing: 0.12em; text-align: center; text-transform: uppercase;
     border-right: 2px solid rgba(255,255,255,0.1);
     border-bottom: 0;
@@ -13289,7 +13322,7 @@ table.est-v2-table thead tr.est-hdr-group th.est-consol-grp {
 table.est-v2-table thead tr.est-hdr-sub th {
     position: sticky; top: 28px; z-index: 4;
     background: var(--tv-navy-900); color: #fff !important;
-    font-family: var(--tv-font-display); font-size: 0.62rem; font-weight: 700;
+    font-family: var(--tv-font-display); font-size: 0.62rem; font-weight: 600;
     letter-spacing: 0.08em; text-transform: uppercase;
     height: 24px; padding: 0 10px; text-align: right; white-space: nowrap;
     border-right: 1px solid var(--tv-navy-700);
@@ -13336,10 +13369,10 @@ table.est-v2-table tbody tr:hover td.est-grp-alt { background: rgba(15,36,56,0.0
 
 table.est-v2-table tbody td.est-consol-cell { background: rgba(229,161,40,0.05); font-weight: 600; }
 table.est-v2-table tbody tr:hover td.est-consol-cell { background: rgba(229,161,40,0.1) !important; }
-table.est-v2-table tbody td.est-total { font-weight: 700; color: var(--tv-navy-900); font-size: 0.82rem; }
+table.est-v2-table tbody td.est-total { font-weight: 600; color: var(--tv-navy-900); font-size: 0.82rem; }
 
-table.est-v2-table tbody td.est-saldo-pos { color: #15803d; font-weight: 700; }
-table.est-v2-table tbody td.est-saldo-neg { color: #dc2626; background: rgba(220,38,38,0.05); font-weight: 700; }
+table.est-v2-table tbody td.est-saldo-pos { color: #15803d; font-weight: 600; }
+table.est-v2-table tbody td.est-saldo-neg { color: #dc2626; background: rgba(220,38,38,0.05); font-weight: 600; }
 table.est-v2-table tbody td.est-saldo-zero { color: #cbd5e1; }
 table.est-v2-table tbody td.est-consol-cell.est-saldo-pos { color: #15803d; background: rgba(22,163,74,0.07); }
 table.est-v2-table tbody td.est-consol-cell.est-saldo-neg { background: rgba(220,38,38,0.08); }
@@ -13374,7 +13407,7 @@ table.est-v2-table tfoot td.est-grp-alt-foot { background: #112236 !important; }
 table.est-v2-table tfoot td.est-consol-cell { background: #2a2010 !important; color: var(--tv-amber-300) !important; }
 table.est-v2-table tfoot td.est-saldo-pos { color: #4ade80 !important; }
 table.est-v2-table tfoot td.est-saldo-neg { color: #f87171 !important; }
-.est-foot-lbl { font-family: var(--tv-font-display); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; color: var(--tv-amber-400); }
+.est-foot-lbl { font-family: var(--tv-font-display); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; color: var(--tv-amber-400); }
 .est-foot-sub { font-family: var(--tv-font-mono); font-size: 0.62rem; color: var(--tv-navy-400); }
 
 /* Densidades */

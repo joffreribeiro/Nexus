@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nexus | Operações Conectadas</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css?v=f402a4db">
     <link rel="stylesheet" href="imbel.css?v=a740bd22">
     <link rel="stylesheet" href="fluxo-nav.css?v=ea717506">
@@ -334,9 +333,9 @@
 
                 <!-- SUBNAV -->
                 <div class="est-subnav">
-                    <button class="est-subnav-tab active">📦 Inventário de Produtos</button>
-                    <button class="est-subnav-tab" onclick="abrirModalEntradaEstoque && abrirModalEntradaEstoque()">⬇ Entrada de Estoque</button>
-                    <button class="est-subnav-tab" onclick="trocarAba('relatorios')">📈 Relatórios</button>
+                    <button class="est-subnav-tab active"><span class="ico" data-icon="box"></span> Inventário de Produtos</button>
+                    <button class="est-subnav-tab" onclick="abrirModalEntradaEstoque && abrirModalEntradaEstoque()"><span class="ico" data-icon="download"></span> Entrada de Estoque</button>
+                    <button class="est-subnav-tab" onclick="trocarAba('relatorios')"><span class="ico" data-icon="trendingUp"></span> Relatórios</button>
                     <div class="est-subnav-right">
                         <span>ESTOQUE</span>&nbsp;/&nbsp;<b>Inventário Consolidado</b>
                     </div>
@@ -378,10 +377,10 @@
                         <button class="est-density-btn" title="Espaçado" onclick="_estSetDensity('cozy')">≣</button>
                     </div>
 
-                    <button class="est-bar-btn accent" onclick="abrirModalEntradaEstoque && abrirModalEntradaEstoque()">⬇ Entrada Estoque</button>
-                    <button class="est-bar-btn icon-only" title="Exportar" onclick="exportarEstoqueExcel && exportarEstoqueExcel()">📊</button>
-                    <button class="est-bar-btn icon-only" title="Imprimir" onclick="imprimirRelatorioAba('estoque')">🖨</button>
-                    <button class="est-bar-btn icon-only" title="Atualizar" onclick="renderizarTabela()">↻</button>
+                    <button class="est-bar-btn accent" onclick="abrirModalEntradaEstoque && abrirModalEntradaEstoque()"><span class="ico" data-icon="download"></span> Entrada Estoque</button>
+                    <button class="est-bar-btn icon-only" title="Exportar" onclick="exportarEstoqueExcel && exportarEstoqueExcel()"><span class="ico" data-icon="chart"></span></button>
+                    <button class="est-bar-btn icon-only" title="Imprimir" onclick="imprimirRelatorioAba('estoque')"><span class="ico" data-icon="printer"></span></button>
+                    <button class="est-bar-btn icon-only" title="Atualizar" onclick="renderizarTabela()"><span class="ico" data-icon="refresh"></span></button>
                 </div>
 
                 <!-- REP TOGGLE BAR -->
@@ -440,10 +439,10 @@
                             <span class="btn-icon">+</span> Novo Cliente
                         </button>
                         <button class="btn btn-outline btn-sm" onclick="exportarClientesExcel()">
-                            <span class="btn-icon">📊</span> Excel
+                            <span class="btn-icon" data-icon="chart"></span> Excel
                         </button>
                         <button class="btn btn-outline btn-sm" onclick="imprimirRelatorioAba('clientes')">
-                            <span class="btn-icon">🖨️</span> Imprimir
+                            <span class="btn-icon" data-icon="printer"></span> Imprimir
                         </button>
                     </div>
                 </div>
@@ -502,9 +501,9 @@
                             <button type="button" class="crm-visao-btn" data-valor="demandas" data-crm-action="setVisao" title="Caixa de demandas">📥</button>
                             <button type="button" class="crm-visao-btn" data-valor="lista" data-crm-action="setVisao" title="Lista completa">☰</button>
                             <button type="button" class="crm-visao-btn" data-valor="previsao" data-crm-action="setVisao" title="Previsão">📅</button>
-                            <button type="button" class="crm-visao-btn" data-valor="timeline" data-crm-action="setVisao" title="Timeline">📊</button>
+                            <button type="button" class="crm-visao-btn" data-valor="timeline" data-crm-action="setVisao" title="Timeline"><span class="ico" data-icon="chart"></span></button>
                             <button type="button" class="crm-visao-btn" data-valor="excluidos" data-crm-action="setVisao" title="Excluídos">🗑</button>
-                            <button type="button" class="crm-visao-btn" data-valor="painel" data-crm-action="setVisao" title="Painel">📈</button>
+                            <button type="button" class="crm-visao-btn" data-valor="painel" data-crm-action="setVisao" title="Painel"><span class="ico" data-icon="trendingUp"></span></button>
                         </div>
                         <input type="text" id="crmBusca" class="crm-busca" placeholder="Buscar negócio..." oninput="Crm.setBusca(this.value)">
                         <label class="crm-check-fechados">
@@ -617,10 +616,10 @@
                             <span class="btn-icon">+</span> Nova Proposta
                         </button>
                         <button class="btn btn-outline btn-sm" onclick="exportarPropostasExcel()">
-                            <span class="btn-icon">📊</span> Exportar
+                            <span class="btn-icon" data-icon="chart"></span> Exportar
                         </button>
                         <button class="btn btn-outline btn-sm" onclick="imprimirRelatorioAba('propostas')">
-                            <span class="btn-icon">🖨️</span> Imprimir
+                            <span class="btn-icon" data-icon="printer"></span> Imprimir
                         </button>
                     </div>
                 </div>
@@ -735,14 +734,14 @@
                                 <div class="precif-subnav">
                                     <div class="precif-subtab-group">
                                         <div class="precif-subtab-group-label">Cálculo e Análise</div>
-                                        <button class="precif-subtab-btn active" onclick="trocarSubabaPrecif('porcliente')" id="sbtn-porcliente">👤 Por Cliente</button>
-                                        <button class="precif-subtab-btn" id="btnConsultaPrecificacao" onclick="trocarSubabaPrecif('consultaPrec')">🔍 Consulta</button>
+                                        <button class="precif-subtab-btn active" onclick="trocarSubabaPrecif('porcliente')" id="sbtn-porcliente"><span class="ico" data-icon="user"></span> Por Cliente</button>
+                                        <button class="precif-subtab-btn" id="btnConsultaPrecificacao" onclick="trocarSubabaPrecif('consultaPrec')"><span class="ico" data-icon="search"></span> Consulta</button>
                                     </div>
                                     <div class="precif-subtab-sep"></div>
                                     <div class="precif-subtab-group">
                                         <div class="precif-subtab-group-label">Tabelas e Config</div>
-                                        <button class="precif-subtab-btn" onclick="trocarSubabaPrecif('precoestado')" id="sbtn-precoestado">🗂️ Preço Lojistas</button>
-                                        <button class="precif-subtab-btn" onclick="trocarSubabaPrecif('tabelavenda')" id="sbtn-tabelavenda">📋 Tabela de Preço de Venda</button>
+                                        <button class="precif-subtab-btn" onclick="trocarSubabaPrecif('precoestado')" id="sbtn-precoestado"><span class="ico" data-icon="folder"></span> Preço Lojistas</button>
+                                        <button class="precif-subtab-btn" onclick="trocarSubabaPrecif('tabelavenda')" id="sbtn-tabelavenda"><span class="ico" data-icon="clipboard"></span> Tabela de Preço de Venda</button>
                                     </div>
                                 </div>
 
@@ -1073,7 +1072,7 @@
                     </select>
                 </div>
                 <div style="margin-left:auto">
-                    <button class="pc-btn primary" onclick="calcularPrecificacaoPorCliente({forcarAtual:true})" style="font-size:0.95rem;padding:9px 28px;letter-spacing:0.04em">&#9881; CALCULAR</button>
+                    <button class="pc-btn primary" onclick="calcularPrecificacaoPorCliente({forcarAtual:true})" style="font-size:0.95rem;padding:9px 28px;letter-spacing:0.04em"><span class="ico" data-icon="gear"></span> CALCULAR</button>
                 </div>
             </div>
 
@@ -1106,7 +1105,7 @@
                 <div style="display:flex;gap:8px;margin-top:10px">
                     <button class="pc-btn sm" onclick="isentarTodosProdutos()">ISENTAR TODOS</button>
                     <button class="pc-btn sm" onclick="limparBeneficios()">LIMPAR OVERRIDES</button>
-                    <button class="pc-btn primary sm" style="margin-left:auto" onclick="calcularPrecificacaoPorCliente()">&#9881; RECALCULAR</button>
+                    <button class="pc-btn primary sm" style="margin-left:auto" onclick="calcularPrecificacaoPorCliente()"><span class="ico" data-icon="gear"></span> RECALCULAR</button>
                 </div>
             </div>
         </div>
@@ -1472,7 +1471,7 @@
                             <span>↺</span> Limpar
                         </button>
                         <button class="btn btn-outline btn-sm" onclick="imprimirRelatorioAba('distribuicao')">
-                            <span class="btn-icon">🖨️</span> Imprimir
+                            <span class="btn-icon" data-icon="printer"></span> Imprimir
                         </button>
                         <button class="btn btn-outline" data-admin="true" onclick="abrirModalDevolucao()">
                             <span class="btn-icon">↩</span> Devolução
@@ -1534,10 +1533,10 @@
                             <span class="btn-icon">🕘</span> Histórico
                         </button>
                         <button class="btn btn-outline btn-sm" onclick="imprimirRelatorioAba('vendas')">
-                            <span class="btn-icon">🖨️</span> Imprimir
+                            <span class="btn-icon" data-icon="printer"></span> Imprimir
                         </button>
                         <button class="btn btn-outline btn-sm" onclick="exportarVendas()">
-                            <span class="btn-icon">📊</span> Exportar
+                            <span class="btn-icon" data-icon="chart"></span> Exportar
                         </button>
                     </div>
                 </div>
@@ -1644,7 +1643,7 @@
                     <button class="btn btn-outline btn-sm" onclick="colapsarTodosContratos()">▸ Colapsar</button>
                     <button class="btn btn-outline btn-sm" onclick="limparFiltrosVendas()" title="Limpar todos os filtros" style="color:#dc2626;border-color:#fca5a5">✕ Limpar</button>
                     <button class="btn btn-outline btn-sm" onclick="abrirModalCancelamentos()" title="Ver contratos cancelados">⛔ Cancelamentos</button>
-                    <button class="btn btn-outline btn-sm" data-admin="true" onclick="exportarRelatorioRepresentante(document.getElementById('filtroRepresentante')?.value || '')" title="Exportar relatório de estoque por representante">📊 Exportar</button>
+                    <button class="btn btn-outline btn-sm" data-admin="true" onclick="exportarRelatorioRepresentante(document.getElementById('filtroRepresentante')?.value || '')" title="Exportar relatório de estoque por representante"><span class="ico" data-icon="chart"></span> Exportar</button>
                     <span id="vendasContador" class="prod-result-count"></span>
                 </div>
 
@@ -1710,7 +1709,7 @@
                             <input type="date" id="dashboardDateEnd" onchange="renderizarDashboard()" style="display:none">
                         </div>
                         <button class="btn btn-outline btn-sm" onclick="imprimirRelatorioAba('dashboard')">
-                            <span class="btn-icon">🖨️</span>
+                            <span class="btn-icon" data-icon="printer"></span>
                             Imprimir
                         </button>
                     </div>
@@ -1874,7 +1873,7 @@
                                     <option value="produto">Produto (A→Z)</option>
                                 </select>
                                 <button class="btn btn-outline btn-sm" onclick="imprimirDashboardQtdProduto()">
-                                    <span class="btn-icon">🖨️</span>
+                                    <span class="btn-icon" data-icon="printer"></span>
                                     Imprimir
                                 </button>
                             </div>
@@ -1897,7 +1896,7 @@
                             <h2 class="section-title">Valor das Vendas por Produto</h2>
                             <div class="header-actions">
                                 <button class="btn btn-outline btn-sm" onclick="imprimirDashboardValorProduto()">
-                                    <span class="btn-icon">🖨️</span>
+                                    <span class="btn-icon" data-icon="printer"></span>
                                     Imprimir
                                 </button>
                             </div>
@@ -2259,7 +2258,7 @@
                         </button>
                         <input type="file" id="inputImportarControleEnvio" accept=".xlsx,.xls,.csv" style="display:none" onchange="importarControleEnvioArquivo(event)">
                         <button class="btn btn-outline btn-sm" onclick="imprimirControleEnvio()">
-                            <span class="btn-icon">🖨️</span> Imprimir
+                            <span class="btn-icon" data-icon="printer"></span> Imprimir
                         </button>
                     </div>
                 </div>
@@ -5074,6 +5073,7 @@
     <script src="processos-ui.js?v=4fd69575"></script>
     <link rel="stylesheet" href="processos.css?v=3de7249f">
 
+    <script src="icons.js?v=1"></script>
     <script src="fluxo-nav.js?v=c8274e1c"></script>
 
     <script>

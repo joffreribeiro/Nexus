@@ -21768,10 +21768,45 @@ window._pcAtualizarKpiTaxaROI = function() {
     const roi  = !isNaN(parseFloat(roiEl?.value))  ? parseFloat(roiEl.value)  : roiGlobal;
     const el = document.getElementById('pcKpiTaxaROI');
     if (el) el.textContent = taxa + '% / ' + roi + '%';
+    window._pcAtualizarAjustesDot();
+};
+
+// Popover de Ajustes (fase 4, item 2): abre/fecha ao clicar no botão da
+// faixa de contexto; fecha ao clicar fora ou com Esc.
+window._pcToggleAjustes = function (forceState) {
+    const pop = document.getElementById('pcAjustesPopover');
+    const toggle = document.getElementById('pcAjustesToggle');
+    if (!pop) return;
+    const abrir = typeof forceState === 'boolean' ? forceState : pop.hidden;
+    pop.hidden = !abrir;
+    if (toggle) toggle.classList.toggle('open', abrir);
+};
+document.addEventListener('click', function (e) {
+    const pop = document.getElementById('pcAjustesPopover');
+    const toggle = document.getElementById('pcAjustesToggle');
+    if (!pop || pop.hidden) return;
+    if (pop.contains(e.target) || (toggle && toggle.contains(e.target))) return;
+    window._pcToggleAjustes(false);
+});
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { const pop = document.getElementById('pcAjustesPopover'); if (pop && !pop.hidden) window._pcToggleAjustes(false); }
+});
+
+// Ponto âmbar no botão "Ajustes" quando taxa/ROI/comissão fogem do padrão
+// salvo (precif_taxa_global etc.) — sinaliza exceção sem precisar abrir o popover.
+window._pcAtualizarAjustesDot = function () {
+    const dot = document.getElementById('pcAjustesDot');
+    if (!dot) return;
+    const taxaEl = document.getElementById('precifTaxaOverride');
+    const roiEl = document.getElementById('precifROIOverride');
+    const comEl = document.getElementById('precifComissaoOverride');
+    const foraDoPadrao = !!((taxaEl?.value) || (roiEl?.value) || (comEl?.value) || (parseFloat(document.getElementById('precifFreteGlobal')?.value) > 0));
+    dot.hidden = !foraDoPadrao;
 };
 
 // Recalcula quando frete global ou modo é alterado
 window._pcAtualizarFreteGlobal = function() {
+    window._pcAtualizarAjustesDot();
     // Só recalcula se já existir resultado calculado
     if (document.getElementById('precifClienteResultado')?.style.display !== 'none') {
         calcularPrecificacaoPorCliente({ forcarAtual: true });
@@ -22200,7 +22235,16 @@ function precifConfirmarModalProdutos() {
         return;
     }
 
+    // Remove a linha vazia final antes de anexar, senão ela fica presa no meio
+    // da lista (o invariante é: a última linha é sempre a vazia).
+    const linhas = Array.from(document.querySelectorAll('.precif-linha-produto'));
+    const ultima = linhas[linhas.length - 1];
+    if (ultima && !(ultima.dataset.nomeProduto || '').trim()) ultima.remove();
+
     novos.forEach(nome => precifAdicionarProdutoLinha(nome));
+    precifGarantirLinhaVaziaFinal();
+    precifAutoCalcularDebounced();
+    precifSalvarRascunhoDebounced();
     mostrarNotificacao(`${novos.length} produto(s) adicionado(s).`, 'success');
 }
 
@@ -22261,20 +22305,53 @@ function restaurarPadraoPrecif() {
         const tIn = document.getElementById('precifTaxaOverride'); if (tIn) tIn.value = '';
         const rIn = document.getElementById('precifROIOverride');  if (rIn) rIn.value = '';
         const cIn = document.getElementById('precifComissaoOverride'); if (cIn) cIn.value = '';
+        window._pcAtualizarKpiTaxaROI && window._pcAtualizarKpiTaxaROI();
         mostrarNotificacao && mostrarNotificacao('Padrões restaurados.', 'success');
     } catch (e) { console.warn('restaurarPadraoPrecif', e); mostrarNotificacao && mostrarNotificacao('Erro ao restaurar padrões.', 'error'); }
 }
 
+// Datalist único de produtos (autocomplete nativo do navegador — sem
+// dependência externa) compartilhado por todas as linhas.
+function precifAtualizarDatalistProdutos() {
+    let dl = document.getElementById('precifProdutosDatalist');
+    if (!dl) {
+        dl = document.createElement('datalist');
+        dl.id = 'precifProdutosDatalist';
+        document.body.appendChild(dl);
+    }
+    const produtos = [...(estoque.produtos || [])].sort((a, b) => (a.nome||'').localeCompare(b.nome||'', 'pt-BR'));
+    dl.innerHTML = produtos.map(p => {
+        const ci = parseFloat(precificacao[p.nome]?.ci || p.ci || 0);
+        const ciTxt = ci > 0 ? ` (CI: ${_fmtMoeda(ci)})` : ' (sem CI)';
+        return `<option value="${_escapeHtml(p.nome)}">${_escapeHtml(p.nome)}${ciTxt}</option>`;
+    }).join('');
+    return dl;
+}
+
+// Acha o produto do catálogo cujo nome bate (exato, ou por prefixo do rótulo
+// "Nome (CI: ...)" que o datalist mostra) com o texto digitado.
+function _precifResolverProdutoPorTexto(texto) {
+    const t = (texto || '').trim();
+    if (!t) return null;
+    const produtos = estoque.produtos || [];
+    let p = produtos.find(x => (x.nome || '').toLowerCase() === t.toLowerCase());
+    if (p) return p;
+    // usuário pode deixar o sufixo " (CI: ...)"/" (sem CI)" do datalist colado
+    const base = t.replace(/\s*\((CI:.*|sem CI)\)\s*$/i, '').trim();
+    p = produtos.find(x => (x.nome || '').toLowerCase() === base.toLowerCase());
+    return p || null;
+}
+
 function precifAdicionarProdutoLinha(nomeProduto = '', taxaOvr = null, roiOvr = null, freteVal = null, quantidade = 1, comOvr = null) {
     const container = document.getElementById('precifLinhasProdutos');
-    if (!container) return;
+    if (!container) return null;
 
     // Remover placeholder caso exista
     const placeholder = container.querySelector('[data-placeholder]');
     if (placeholder) placeholder.remove();
 
+    precifAtualizarDatalistProdutos();
     const glob = precifGetGlobais();
-    const produtos = [...(estoque.produtos || [])].sort((a, b) => (a.nome||'').localeCompare(b.nome||'', 'pt-BR'));
 
     const linhaId = 'precif-linha-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
     const div = document.createElement('div');
@@ -22283,21 +22360,13 @@ function precifAdicionarProdutoLinha(nomeProduto = '', taxaOvr = null, roiOvr = 
     div.id = linhaId;
     div.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 0.9fr 0.9fr 0.9fr 0.9fr 0.8fr auto;gap:8px;align-items:center;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px';
 
-    // Opções de produto
-    const optsHtml = produtos.map(p => {
-        const ci = parseFloat(precificacao[p.nome]?.ci || p.ci || 0);
-        const ciTxt = ci > 0 ? ` (CI: ${_fmtMoeda(ci)})` : ' (sem CI)';
-        const sel = p.nome === nomeProduto ? ' selected' : '';
-        return `<option value="${_escapeHtml(p.nome)}"${sel}>${_escapeHtml(p.nome)}${ciTxt}</option>`;
-    }).join('');
-
     div.innerHTML = `
         <div>
             <label style="font-size:0.75rem;font-weight:600;color:#64748b;display:block;margin-bottom:3px">Produto</label>
-            <select class="precif-linha-select" onchange="precifLinhaAtualizarProduto(this)" style="width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:0.85rem">
-                <option value="">Selecione...</option>
-                ${optsHtml}
-            </select>
+            <input type="text" class="precif-linha-produto-input" list="precifProdutosDatalist" autocomplete="off"
+                value="${_escapeHtml(nomeProduto)}" placeholder="Nome ou NCM do produto…"
+                onchange="precifLinhaAtualizarProduto(this)" oninput="precifLinhaAtualizarProduto(this)"
+                style="width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:0.85rem">
         </div>
         <div>
             <label style="font-size:0.75rem;font-weight:600;color:#64748b;display:block;margin-bottom:3px">CI</label>
@@ -22332,7 +22401,7 @@ function precifAdicionarProdutoLinha(nomeProduto = '', taxaOvr = null, roiOvr = 
             <input type="number" class="precif-linha-quant" min="1" step="1" value="${(typeof quantidade !== 'undefined' && quantidade !== null) ? quantidade : 1}" placeholder="1"
                 style="width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:0.85rem">
         </div>
-        <button type="button" onclick="document.getElementById('${linhaId}').remove(); atualizarContadorLinhasPrecif();"
+        <button type="button" tabindex="-1" onclick="precifRemoverLinha('${linhaId}')"
             title="Remover produto"
             style="background:none;border:1px solid #fca5a5;color:#dc2626;border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;margin-top:18px">✕</button>
     `;
@@ -22346,24 +22415,140 @@ function precifAdicionarProdutoLinha(nomeProduto = '', taxaOvr = null, roiOvr = 
 
     container.appendChild(div);
     atualizarContadorLinhasPrecif();
+    return div;
 }
 
-function precifLinhaAtualizarProduto(select) {
-    const linha = select.closest('.precif-linha-produto');
+function precifRemoverLinha(linhaId) {
+    const el = document.getElementById(linhaId);
+    if (el) el.remove();
+    atualizarContadorLinhasPrecif();
+    precifSalvarRascunhoDebounced();
+}
+
+// Garante que a última linha da tabela esteja sempre vazia (pronta para o
+// próximo produto) — chamada sempre que uma linha deixa de estar vazia.
+function precifGarantirLinhaVaziaFinal() {
+    const container = document.getElementById('precifLinhasProdutos');
+    if (!container) return;
+    const linhas = Array.from(container.querySelectorAll('.precif-linha-produto'));
+    const ultima = linhas[linhas.length - 1];
+    if (!ultima || (ultima.dataset.nomeProduto || '').trim()) {
+        precifAdicionarProdutoLinha('');
+    }
+}
+
+function precifLinhaAtualizarProduto(input) {
+    const linha = input.closest('.precif-linha-produto');
     if (!linha) return;
-    const nome = select.value;
-    linha.dataset.nomeProduto = nome;
+    const produto = _precifResolverProdutoPorTexto(input.value);
+    const nomeResolvido = produto ? produto.nome : '';
+    const eraVazia = !linha.dataset.nomeProduto;
+    linha.dataset.nomeProduto = nomeResolvido;
     const ciInput = linha.querySelector('.precif-linha-ci');
-    if (ciInput && nome) {
-        const ci = parseFloat(precificacao[nome]?.ci || 0);
+    if (ciInput && nomeResolvido) {
+        const ci = parseFloat(precificacao[nomeResolvido]?.ci || 0);
         ciInput.value = ci > 0 ? _fmtMoeda(ci) : '';
         ciInput.placeholder = ci > 0 ? '' : 'sem CI';
     }
     atualizarContadorLinhasPrecif();
+    if (nomeResolvido && eraVazia) precifGarantirLinhaVaziaFinal();
+    precifAutoCalcularDebounced();
+    precifSalvarRascunhoDebounced();
 }
+
+// Clona os valores de `linha` numa nova linha logo depois dela (Shift+Enter).
+function precifDuplicarLinha(linha) {
+    const container = document.getElementById('precifLinhasProdutos');
+    if (!container || !linha) return;
+    const nome = linha.dataset.nomeProduto || '';
+    if (!nome) return; // nada a duplicar numa linha vazia
+    const get = sel => linha.querySelector(sel)?.value;
+    const nova = precifAdicionarProdutoLinha(
+        nome,
+        parseFloat(get('.precif-linha-taxa')) ?? null,
+        parseFloat(get('.precif-linha-roi')) ?? null,
+        parseFloat(get('.precif-linha-frete')) || null,
+        parseInt(get('.precif-linha-quant'), 10) || 1,
+        parseFloat(get('.precif-linha-comissao')) ?? null
+    );
+    const ciOriginal = linha.querySelector('.precif-linha-ci')?.value;
+    if (nova && ciOriginal) { const ciNova = nova.querySelector('.precif-linha-ci'); if (ciNova) ciNova.value = ciOriginal; }
+    if (nova) container.insertBefore(nova, linha.nextSibling);
+    precifGarantirLinhaVaziaFinal();
+    precifAutoCalcularDebounced();
+    return nova;
+}
+
+// Enter calcula e vai pra próxima linha (criando-a se for a última);
+// Shift+Enter duplica a linha atual; Delete/Backspace num produto vazio
+// remove a linha anterior. Delegado num único listener no container —
+// mesmo padrão de outras telas do app (evita religar handler por linha).
+function _precifLinhasKeydown(e) {
+    const linha = e.target.closest('.precif-linha-produto');
+    if (!linha) return;
+    const container = e.currentTarget;
+    const linhas = Array.from(container.querySelectorAll('.precif-linha-produto'));
+    const isUltima = linhas[linhas.length - 1] === linha;
+    const isProdutoInput = e.target.classList.contains('precif-linha-produto-input');
+
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        if (e.shiftKey) {
+            precifDuplicarLinha(linha);
+            return;
+        }
+        calcularPrecificacaoPorCliente();
+        precifSalvarRascunhoDebounced();
+        if (isUltima && (linha.dataset.nomeProduto || '').trim()) {
+            precifGarantirLinhaVaziaFinal();
+            const novaUltima = container.querySelector('.precif-linha-produto:last-child .precif-linha-produto-input');
+            if (novaUltima) novaUltima.focus();
+        } else {
+            const proxima = linha.nextElementSibling;
+            const proximoInput = proxima?.querySelector('.precif-linha-produto-input');
+            if (proximoInput) proximoInput.focus();
+        }
+        return;
+    }
+
+    if ((e.key === 'Delete' || e.key === 'Backspace') && isProdutoInput && !e.target.value && isUltima) {
+        const anterior = linha.previousElementSibling;
+        if (anterior && anterior.classList.contains('precif-linha-produto')) {
+            e.preventDefault();
+            precifRemoverLinha(anterior.id);
+            const inputAtual = linha.querySelector('.precif-linha-produto-input');
+            if (inputAtual) inputAtual.focus();
+        }
+    }
+}
+
+function _precifLinhasCampoAlterado(e) {
+    if (!e.target.closest('.precif-linha-produto')) return;
+    if (e.target.classList.contains('precif-linha-produto-input')) return; // já tratado em precifLinhaAtualizarProduto
+    precifAutoCalcularDebounced();
+    precifSalvarRascunhoDebounced();
+}
+
+function precifInicializarLinhasEventos() {
+    const container = document.getElementById('precifLinhasProdutos');
+    if (!container || container.dataset.eventosLigados) return;
+    container.dataset.eventosLigados = '1';
+    container.addEventListener('keydown', _precifLinhasKeydown);
+    container.addEventListener('input', _precifLinhasCampoAlterado);
+}
+
+// Recalcula sozinho (sem esperar o clique em CALCULAR) sempre que qtd/taxa/
+// ROI/comissão/frete mudam numa linha — calcularPrecificacaoPorCliente()
+// continua sendo a mesma função/conta, só passa a ser chamada com mais
+// frequência (debounced pra não recalcular a cada tecla).
+const precifAutoCalcularDebounced = (window.Debounce ? window.Debounce.criar(function () {
+    const temProduto = Array.from(document.querySelectorAll('.precif-linha-produto')).some(l => l.dataset.nomeProduto);
+    if (temProduto) calcularPrecificacaoPorCliente();
+}, 500) : function () { calcularPrecificacaoPorCliente(); });
 
 function atualizarContadorLinhasPrecif() {
     const linhas = document.querySelectorAll('.precif-linha-produto');
+    const preenchidas = Array.from(linhas).filter(l => l.dataset.nomeProduto);
     const el = document.getElementById('precifProdutoContador');
     if (el) {
         if (linhas.length === 0) {
@@ -22371,12 +22556,13 @@ function atualizarContadorLinhasPrecif() {
             // Mostrar placeholder
             const container = document.getElementById('precifLinhasProdutos');
             if (container && !container.querySelector('[data-placeholder]')) {
-                container.innerHTML = '<div data-placeholder style="color:#94a3b8;font-size:0.85rem;text-align:center;padding:14px;background:#f8fafc;border-radius:8px;border:1px dashed #e2e8f0">Clique em &quot;+ Adicionar Produto&quot; para iniciar</div>';
+                container.innerHTML = '<div data-placeholder style="color:#94a3b8;font-size:0.85rem;text-align:center;padding:14px;background:#f8fafc;border-radius:8px;border:1px dashed #e2e8f0">Digite o nome de um produto para iniciar</div>';
             }
         } else {
-            el.textContent = `${linhas.length} produto(s) na lista`;
+            el.textContent = `${preenchidas.length} item(ns) · ${preenchidas.reduce((s,l) => s + (parseInt(l.querySelector('.precif-linha-quant')?.value,10)||0), 0)} un`;
         }
     }
+    precifInicializarLinhasEventos();
 }
 
 // Retorna os dados das linhas para o cálculo
@@ -22390,6 +22576,69 @@ function precifGetLinhasProdutos() {
         frete: parseFloat(linha.querySelector('.precif-linha-frete')?.value) || 0,
         quantidade: parseInt(linha.querySelector('.precif-linha-quant')?.value, 10) || 1
     })).filter(l => l.nomeProduto);
+}
+
+// ── Rascunho automático por cliente (fase 4, item 8) ────────────────────
+// Chave própria (precif_rascunho_<clienteId>), não mexe nas chaves globais
+// precif_taxa_global/precif_roi_global/precif_com_global já existentes.
+// Objetivo: trocar de cliente na lista nunca descarta lançamento sem aviso —
+// cada cliente mantém seu próprio rascunho em paralelo.
+function _precifChaveRascunho(clienteId) { return 'precif_rascunho_' + clienteId; }
+
+function precifSalvarRascunho() {
+    const clienteId = document.getElementById('precifClienteSelect')?.value;
+    if (!clienteId) return;
+    try {
+        const linhas = Array.from(document.querySelectorAll('.precif-linha-produto'))
+            .filter(l => l.dataset.nomeProduto)
+            .map(l => ({
+                nomeProduto: l.dataset.nomeProduto,
+                ci: l.querySelector('.precif-linha-ci')?.value || '',
+                taxa: l.querySelector('.precif-linha-taxa')?.value || '',
+                roi: l.querySelector('.precif-linha-roi')?.value || '',
+                comissao: l.querySelector('.precif-linha-comissao')?.value || '',
+                frete: l.querySelector('.precif-linha-frete')?.value || '',
+                quantidade: l.querySelector('.precif-linha-quant')?.value || '1'
+            }));
+        if (linhas.length === 0) { localStorage.removeItem(_precifChaveRascunho(clienteId)); return; }
+        localStorage.setItem(_precifChaveRascunho(clienteId), JSON.stringify(linhas));
+    } catch (e) { _catchSilencioso(e, 'precifSalvarRascunho'); }
+}
+const precifSalvarRascunhoDebounced = (window.Debounce ? window.Debounce.criar(precifSalvarRascunho, 600) : precifSalvarRascunho);
+
+function precifTemRascunho(clienteId) {
+    try { return !!localStorage.getItem(_precifChaveRascunho(clienteId)); } catch (e) { return false; }
+}
+
+// Repopula as linhas a partir do rascunho salvo; retorna true se havia algo pra restaurar.
+function precifRestaurarRascunho(clienteId) {
+    let linhas;
+    try {
+        const raw = localStorage.getItem(_precifChaveRascunho(clienteId));
+        if (!raw) return false;
+        linhas = JSON.parse(raw);
+    } catch (e) { _catchSilencioso(e, 'precifRestaurarRascunho'); return false; }
+    if (!Array.isArray(linhas) || !linhas.length) return false;
+
+    const container = document.getElementById('precifLinhasProdutos');
+    if (container) container.innerHTML = '';
+    linhas.forEach(l => {
+        const div = precifAdicionarProdutoLinha(
+            l.nomeProduto || '',
+            l.taxa !== '' ? parseFloat(l.taxa) : null,
+            l.roi !== '' ? parseFloat(l.roi) : null,
+            l.frete !== '' ? parseFloat(l.frete) : null,
+            l.quantidade ? parseInt(l.quantidade, 10) : 1,
+            l.comissao !== '' ? parseFloat(l.comissao) : null
+        );
+        if (div && l.ci) { const ciInput = div.querySelector('.precif-linha-ci'); if (ciInput) ciInput.value = l.ci; }
+    });
+    precifGarantirLinhaVaziaFinal();
+    return true;
+}
+
+function precifLimparRascunho(clienteId) {
+    try { localStorage.removeItem(_precifChaveRascunho(clienteId)); } catch (e) { _catchSilencioso(e, 'precifLimparRascunho'); }
 }
 
 function obterUltimaPrecificacaoCliente(clienteId) {
@@ -22521,6 +22770,7 @@ function aplicarEstadoPrecificacaoSalva(registro) {
                     } catch (e) { _catchSilencioso(e, 'aplicarEstadoPrecificacaoSalva'); }
                 });
             }
+            precifGarantirLinhaVaziaFinal();
             atualizarContadorLinhasPrecif();
         }
     } catch (e) { _catchSilencioso(e, 'aplicarEstadoPrecificacaoSalva'); }
@@ -22566,6 +22816,16 @@ function selecionarClientePrecif() {
         const ufB = document.getElementById('precifBannerUF'); if (ufB) ufB.textContent = uf || '—';
         const tipoB = document.getElementById('precifBannerTipo'); if (tipoB) tipoB.textContent = _tipoClienteLabel(tipoPessoa);
         const contato = document.getElementById('precifBannerContato'); if (contato) contato.textContent = cliente.contato || cliente.email || '—';
+
+        // Cada cliente tem seu próprio rascunho (item 8, fase 4): troca de
+        // cliente nunca descarta lançamento sem aviso — restaura o rascunho
+        // deste cliente se houver, ou começa vazio com uma linha pronta pra
+        // digitar (em vez de carregar por acidente as linhas do cliente anterior).
+        try {
+            const containerLinhas = document.getElementById('precifLinhasProdutos');
+            if (containerLinhas) containerLinhas.innerHTML = '';
+            if (!precifRestaurarRascunho(cliente.id)) precifGarantirLinhaVaziaFinal();
+        } catch (e) { _catchSilencioso(e, 'selecionarClientePrecif'); }
 
         calcularPrecificacaoPorCliente({ forcarAtual: true });
 
@@ -22885,10 +23145,16 @@ function calcularPrecificacaoPorCliente(opcoes = {}) {
             ? '<span style="font-size:0.65rem; background:#dbeafe; color:#1d4ed8; padding:1px 5px; border-radius:10px; margin-left:4px; font-weight:600">🔒 salvo</span>'
             : '';
 
-        // product badge
+        // product badge — visível na própria linha (fase 4, item 5): sinaliza
+        // qualquer exceção fiscal (isenção total ou override parcial de
+        // PIS/COFINS/IPI/ICMS), sem abrir o painel de benefícios.
+        const benefLinha = beneficiosPorProduto[produto.nome];
+        const temOverrideParcial = !!(benefLinha && !benefLinha.isentoTotal &&
+            (benefLinha.pis !== null || benefLinha.cofins !== null || benefLinha.ipi !== null || benefLinha.icms !== null));
         let prodBadge = '';
         if (retidAtivo) prodBadge = '<span style="font-size:0.68rem; background:#dbeafe; color:#1d4ed8; padding:1px 6px; border-radius:10px; margin-left:6px; font-weight:700">RETID</span>';
-        else if ((beneficiosPorProduto[produto.nome] && beneficiosPorProduto[produto.nome].isentoTotal)) prodBadge = '<span style="font-size:0.68rem; background:#dcfce7; color:#166534; padding:1px 6px; border-radius:10px; margin-left:6px; font-weight:700">ISENTO</span>';
+        else if (benefLinha && benefLinha.isentoTotal) prodBadge = '<span style="font-size:0.68rem; background:#dcfce7; color:#166534; padding:1px 6px; border-radius:10px; margin-left:6px; font-weight:700">ISENTO</span>';
+        else if (temOverrideParcial) prodBadge = '<span style="font-size:0.68rem; background:#fdf3dc; color:#a6720d; padding:1px 6px; border-radius:10px; margin-left:6px; font-weight:700" title="Alíquota(s) sobrescrita(s) para este produto">BENEFÍCIO FISCAL</span>';
 
         // row left border if margin below minimum (priority) or RETID active
         const rowStyle = abaixo ? 'border-left:3px solid #dc2626' : (retidAtivo ? 'border-left:3px solid #1e3a5f' : '');
@@ -23011,6 +23277,28 @@ function calcularPrecificacaoPorCliente(opcoes = {}) {
     };
     atualizarAvisoCIDivergente(exibindoPrecifSalva ? precifSalvaCarregada : obterUltimaPrecificacaoCliente(cliente.id));
     try { atualizarStatusPropostaNaPrecif(ultimaPrecificacaoCalculada.clienteId); } catch (e) { _catchSilencioso(e, 'calcularPrecificacaoPorCliente'); }
+    try { precifRenderizarCardResultado(); } catch (e) { _catchSilencioso(e, 'calcularPrecificacaoPorCliente'); }
+}
+
+// Card de total (fase 4, item 7) — leitura apenas: reaproveita totalFaturamento
+// e os itens já calculados por calcularPrecificacaoPorCliente() acima, sem
+// re-derivar nenhuma conta de imposto/preço aqui (só soma/média do que já
+// saiu pronto de lá).
+function precifRenderizarCardResultado() {
+    const card = document.getElementById('precifCardResultado');
+    if (!card) return;
+    const reg = ultimaPrecificacaoCalculada;
+    if (!reg || !Array.isArray(reg.itens) || !reg.itens.length) { card.hidden = true; return; }
+
+    card.hidden = false;
+    const valEl = document.getElementById('precifCardTotalVal');
+    const subEl = document.getElementById('precifCardTotalSub');
+    const margemMedia = reg.itens.reduce((s, it) => s + (Number(it.margem) || 0), 0) / reg.itens.length;
+    const validadeDias = parseInt(document.getElementById('precifValidadeDias')?.value || 30, 10) || 30;
+    const vence = new Date(Date.now() + validadeDias * 86400000).toLocaleDateString('pt-BR');
+
+    if (valEl) valEl.textContent = 'R$ ' + _fmtMoeda(reg.totalFaturamento);
+    if (subEl) subEl.textContent = `margem média ${margemMedia.toFixed(1)}% · validade ${validadeDias} dias · vence ${vence}`;
 }
 
 function exportarPrecifCliente() {
@@ -23163,6 +23451,7 @@ function salvarPrecificacaoCliente() {
         precificacoesCliente.push(registro);
         ultimaVersaoSalva = proximaVersao;
         estoque.precificacoesCliente = precificacoesCliente;
+        precifLimparRascunho(cId); // virou versão oficial — o rascunho paralelo não faz mais sentido
         salvarDados();
         try { atualizarIndicadoresPrecificacao(); } catch (e) { _catchSilencioso(e, 'salvarPrecificacaoCliente'); }
         const infoEl = document.getElementById('precifSalvoInfo');

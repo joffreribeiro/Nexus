@@ -898,38 +898,91 @@
     <div class="pc-bar-divider"></div>
     <div class="pc-bar-actions">
         <button class="pc-btn" onclick="abrirModalCliente()">+ Novo cliente</button>
-        <button class="pc-btn primary" onclick="criarPropostaDaPrecificacao()">&#9632; Gerar proposta</button>
+        <button class="pc-btn" onclick="criarPropostaDaPrecificacao()">&#9632; Gerar proposta</button>
         <button class="pc-btn icon" onclick="exportarPrecifCliente()" title="Exportar XLS">&#8679;</button>
     </div>
 </div>
 
-<!-- ── KPI strip ── -->
+<!-- ── Faixa de contexto (fase 4: substitui os 5 cards de KPI) ── -->
 <div class="pc-kpi-strip" id="pcKpiStrip">
-    <div class="pc-kpi" id="pcKpi1">
-        <div class="pc-kpi-lbl">CLIENTE SELECIONADO</div>
-        <div class="pc-kpi-val" id="pcKpiNome" style="font-family:var(--tv-font-display);font-size:0.88rem;letter-spacing:0">—</div>
-        <div class="pc-kpi-sub" id="pcKpiDoc">Selecione um cliente na lista</div>
+    <div class="pc-ctx-main">
+        <div class="pc-ctx-nome" id="pcKpiNome">—</div>
+        <div class="pc-ctx-doc" id="pcKpiDoc">Selecione um cliente na lista</div>
     </div>
-    <div class="pc-kpi">
-        <div class="pc-kpi-lbl">UF / TIPO</div>
-        <div class="pc-kpi-val" id="pcKpiUFTipo">— / —</div>
-        <div class="pc-kpi-sub" id="pcKpiRep">Representante: —</div>
+    <div class="pc-ctx-field">
+        <span class="pc-ctx-lbl">UF / TIPO</span>
+        <span class="pc-ctx-val" id="pcKpiUFTipo">— / —</span>
     </div>
-    <div class="pc-kpi">
-        <div class="pc-kpi-lbl">TAXA / ROI GLOBAL</div>
-        <div class="pc-kpi-val" id="pcKpiTaxaROI">20% / 30%</div>
-        <div class="pc-kpi-sub">padrão vigente</div>
+    <div class="pc-ctx-field">
+        <span class="pc-ctx-val pc-ctx-val--sm" id="pcKpiRep">Representante: —</span>
     </div>
-    <div class="pc-kpi">
-        <div class="pc-kpi-lbl">PROPOSTAS</div>
-        <div class="pc-kpi-val" id="pcKpiPropostas">—</div>
-        <div class="pc-kpi-sub" id="pcKpiPropostasSub">para este cliente</div>
+    <div class="pc-ctx-field">
+        <span class="pc-ctx-lbl">TAXA / ROI</span>
+        <span class="pc-ctx-val" id="pcKpiTaxaROI">20% / 30%</span>
     </div>
-    <div class="pc-kpi">
-        <div class="pc-kpi-lbl">ÚLTIMA PRECIFICAÇÃO</div>
-        <div class="pc-kpi-val" id="pcKpiUltimaPrecif">—</div>
-        <div class="pc-kpi-sub" id="pcKpiUltimaPrecifSub">data de emissão</div>
+    <div class="pc-ctx-field">
+        <span class="pc-ctx-lbl">PROPOSTAS</span>
+        <span class="pc-ctx-val" id="pcKpiPropostas">—</span>
     </div>
+    <div class="pc-ctx-field">
+        <span class="pc-ctx-lbl">ÚLT. PRECIF.</span>
+        <span class="pc-ctx-val" id="pcKpiUltimaPrecif">—</span>
+    </div>
+    <button type="button" class="pc-ajustes-toggle" id="pcAjustesToggle" onclick="window._pcToggleAjustes()">
+        <span>Ajustes</span>
+        <span id="pcAjustesDot" class="pc-ajustes-dot" hidden title="Parâmetros fora do padrão"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+
+    <!-- Popover de Ajustes (fase 4, item 2) — filho direto de .pc-kpi-strip
+         (não de .pc-params-panel) pra o position:absolute ancorar embaixo do
+         botão acima; mesmos elementos/IDs de antes, só movidos de lugar. -->
+    <div class="pc-ajustes-popover" id="pcAjustesPopover" hidden>
+        <div class="pc-globals-bar">
+            <span class="pc-globals-label">PADRÃO GLOBAL</span>
+            <label class="pc-param-field">
+                <span class="pc-param-label">TAXA %</span>
+                <input type="number" step="0.01" min="0" id="precifTaxaOverride" class="pc-param-input" placeholder="20" oninput="window._pcAtualizarKpiTaxaROI()">
+            </label>
+            <label class="pc-param-field">
+                <span class="pc-param-label">ROI %</span>
+                <input type="number" step="0.01" min="0" id="precifROIOverride" class="pc-param-input" placeholder="30" oninput="window._pcAtualizarKpiTaxaROI()">
+            </label>
+            <label class="pc-param-field">
+                <span class="pc-param-label">COMISSÃO %</span>
+                <input type="number" step="0.01" min="0" id="precifComissaoOverride" class="pc-param-input" placeholder="5" oninput="window._pcAtualizarAjustesDot()">
+            </label>
+            <label class="pc-param-field">
+                <span class="pc-param-label">VALIDADE (dias)</span>
+                <input type="number" id="precifValidadeDias" class="pc-param-input" value="30" min="1" max="365">
+            </label>
+            <span id="precifTaxaPadraoLabel" class="pc-param-hint">Padrão: 20%</span>
+            <span id="precifROIPadraoLabel" class="pc-param-hint">Padrão: 30%</span>
+            <span id="precifComissaoPadraoLabel" class="pc-param-hint">Padrão: 5%</span>
+            <div style="margin-left:auto;display:flex;gap:6px">
+                <button class="pc-btn sm" onclick="salvarPadraoPrecif()">SALVAR PADRÃO</button>
+                <button class="pc-btn sm" onclick="restaurarPadraoPrecif()">RESTAURAR</button>
+            </div>
+        </div>
+        <div class="pc-ajustes-frete-row">
+            <span style="font-size:0.75rem;font-weight:600;color:#64748b;white-space:nowrap;letter-spacing:0.04em">FRETE DO PEDIDO (R$)</span>
+            <input type="number" id="precifFreteGlobal" min="0" step="0.01" placeholder="0,00"
+                style="width:110px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:5px;font-size:0.9rem;font-weight:600;color:#1e3a5f;text-align:right"
+                oninput="window._pcAtualizarFreteGlobal()"
+                title="Frete único rateado proporcionalmente entre todos os produtos">
+            <select id="precifFreteModo" onchange="window._pcAtualizarFreteGlobal()"
+                style="padding:5px 6px;border:1px solid #cbd5e1;border-radius:5px;font-size:0.75rem;color:#475569;background:#fff">
+                <option value="proporcional">Rateio proporcional</option>
+                <option value="igualitario">Rateio igualitário</option>
+                <option value="total">Só no total geral</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Mantidos para o JS existente que já escreve neles (_pcSelecionarCliente) —
+         a legenda não cabe na faixa compacta, mas o elemento continua vivo. -->
+    <span id="pcKpiPropostasSub" hidden></span>
+    <span id="pcKpiUltimaPrecifSub" hidden></span>
 </div>
 
 <!-- ── Main: lista + detalhe ── -->
@@ -957,45 +1010,18 @@
             </div>
             <div class="pc-detail-head-actions">
                 <button class="pc-btn sm" onclick="toggleHistoricoPrecif()">&#10710; Histórico</button>
-                <button class="pc-btn sm primary" onclick="criarPropostaDaPrecificacao()">&#9632; Nova proposta</button>
+                <button class="pc-btn sm" onclick="criarPropostaDaPrecificacao()">&#9632; Nova proposta</button>
             </div>
         </div>
 
         <!-- Parâmetros (visível quando cliente selecionado) -->
         <div class="pc-params-panel" id="pcParamsPanel" style="display:none">
-            <!-- Parâmetros globais -->
-            <div class="pc-globals-bar">
-                <span class="pc-globals-label">PADRÃO GLOBAL</span>
-                <label class="pc-param-field">
-                    <span class="pc-param-label">TAXA %</span>
-                    <input type="number" step="0.01" min="0" id="precifTaxaOverride" class="pc-param-input" placeholder="20" oninput="window._pcAtualizarKpiTaxaROI()">
-                </label>
-                <label class="pc-param-field">
-                    <span class="pc-param-label">ROI %</span>
-                    <input type="number" step="0.01" min="0" id="precifROIOverride" class="pc-param-input" placeholder="30" oninput="window._pcAtualizarKpiTaxaROI()">
-                </label>
-                <label class="pc-param-field">
-                    <span class="pc-param-label">COMISSÃO %</span>
-                    <input type="number" step="0.01" min="0" id="precifComissaoOverride" class="pc-param-input" placeholder="5">
-                </label>
-                <label class="pc-param-field">
-                    <span class="pc-param-label">VALIDADE (dias)</span>
-                    <input type="number" id="precifValidadeDias" class="pc-param-input" value="30" min="1" max="365">
-                </label>
-                <span id="precifTaxaPadraoLabel" class="pc-param-hint">Padrão: 20%</span>
-                <span id="precifROIPadraoLabel" class="pc-param-hint">Padrão: 30%</span>
-                <span id="precifComissaoPadraoLabel" class="pc-param-hint">Padrão: 5%</span>
-                <div style="margin-left:auto;display:flex;gap:6px">
-                    <button class="pc-btn sm" onclick="salvarPadraoPrecif()">SALVAR PADRÃO</button>
-                    <button class="pc-btn sm" onclick="restaurarPadraoPrecif()">RESTAURAR</button>
-                </div>
-            </div>
 
             <!-- Header produtos -->
             <div class="pc-produtos-header">
-                <span class="pc-produtos-title">PRODUTOS <span class="pc-produtos-hint">— Taxa/ROI individuais por linha</span></span>
+                <span class="pc-produtos-title">PRODUTOS <span class="pc-produtos-hint">— digite o produto na última linha · Enter calcula e abre a próxima · Shift+Enter duplica</span></span>
                 <div style="display:flex;gap:6px;align-items:center">
-                    <button class="pc-btn sm" onclick="precifAbrirModalProdutos()">+ PRODUTO</button>
+                    <button class="pc-btn sm" onclick="precifAbrirModalProdutos()" title="Selecionar vários produtos de uma vez pelo catálogo">Buscar no catálogo</button>
                 </div>
             </div>
 
@@ -1006,24 +1032,10 @@
             <div id="precifProdutoContador" class="pc-contador"></div>
             <div id="precifProdutosChecklist" style="display:none"></div>
 
-            <!-- Frete global + Botão calcular -->
-            <div style="display:flex;align-items:center;gap:16px;padding:10px 0 4px 0;flex-wrap:wrap">
-                <div style="display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:6px 12px">
-                    <span style="font-size:0.75rem;font-weight:700;color:#64748b;white-space:nowrap;letter-spacing:0.04em">FRETE DO PEDIDO (R$)</span>
-                    <input type="number" id="precifFreteGlobal" min="0" step="0.01" placeholder="0,00"
-                        style="width:110px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:5px;font-size:0.9rem;font-weight:600;color:#1e3a5f;text-align:right"
-                        oninput="window._pcAtualizarFreteGlobal()"
-                        title="Frete único rateado proporcionalmente entre todos os produtos">
-                    <select id="precifFreteModo" onchange="window._pcAtualizarFreteGlobal()"
-                        style="padding:5px 6px;border:1px solid #cbd5e1;border-radius:5px;font-size:0.75rem;color:#475569;background:#fff">
-                        <option value="proporcional">Rateio proporcional</option>
-                        <option value="igualitario">Rateio igualitário</option>
-                        <option value="total">Só no total geral</option>
-                    </select>
-                </div>
-                <div style="margin-left:auto">
-                    <button class="pc-btn primary" onclick="calcularPrecificacaoPorCliente({forcarAtual:true})" style="font-size:0.95rem;padding:9px 28px;letter-spacing:0.04em"><span class="ico" data-icon="gear"></span> CALCULAR</button>
-                </div>
+            <!-- O cálculo já roda sozinho a cada linha (debounced); este botão fica
+                 só como atalho pra forçar um recálculo imediato. -->
+            <div style="display:flex;align-items:center;padding:8px 0 4px 0">
+                <button class="pc-btn sm" style="margin-left:auto" onclick="calcularPrecificacaoPorCliente({forcarAtual:true})" title="Forçar recálculo imediato"><span class="ico" data-icon="refresh"></span> Recalcular agora</button>
             </div>
 
             <!-- Benefício Fiscal -->
@@ -1088,10 +1100,20 @@
         <div id="precifClienteResultado" style="display:none" class="pc-resultado">
             <!-- Summary bar -->
             <div id="precifClienteSummary" class="pc-summary-bar"></div>
-            <!-- Action buttons -->
+
+            <!-- Card de total — única ação primária da tela (fase 4, item 7) -->
+            <div id="precifCardResultado" class="pc-card-total" hidden>
+                <div class="pc-card-total-lbl">TOTAL DA PRECIFICAÇÃO</div>
+                <div class="pc-card-total-val num" id="precifCardTotalVal">—</div>
+                <div class="pc-card-total-sub" id="precifCardTotalSub">—</div>
+                <div class="pc-card-total-actions">
+                    <button type="button" class="pc-card-btn primary" onclick="criarPropostaDaPrecificacao()">Gerar proposta</button>
+                    <button type="button" class="pc-card-btn" onclick="salvarPrecificacaoCliente()">Salvar</button>
+                </div>
+            </div>
+
+            <!-- Ações utilitárias -->
             <div class="pc-result-actions">
-                <button class="pc-btn primary" onclick="salvarPrecificacaoCliente()">&#10003; SALVAR PRECIFICAÇÃO</button>
-                <button class="pc-btn" onclick="criarPropostaDaPrecificacao()">&#9632; GERAR PROPOSTA</button>
                 <button class="pc-btn" onclick="exportarPrecifCliente()">&#8679; EXPORTAR XLS</button>
                 <button class="pc-btn sm" style="margin-left:auto" onclick="imprimirPrecifCliente()">&#9113; IMPRIMIR</button>
             </div>

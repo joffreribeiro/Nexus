@@ -609,9 +609,21 @@
              ======================================== -->
         <div class="tab-content" id="tab-propostas">
             <div class="content-area">
-                <div class="section-header">
-                    <h2 class="section-title">Propostas Comerciais</h2>
+                <div class="prop-header-row">
+                    <h2 class="section-title">Propostas</h2>
+                    <div class="prop-kpi-inline">
+                        <div><span class="num" id="kpiPropostasAbertas">0</span> <span class="prop-kpi-lbl">em aberto</span></div>
+                        <div><span class="num prop-kpi-ok" id="kpiPropostasAceitas">0</span> <span class="prop-kpi-lbl">aceitas</span></div>
+                        <div><span class="num prop-kpi-bad" id="kpiPropostasRecusadas">0</span> <span class="prop-kpi-lbl">recusadas</span></div>
+                        <div><span class="num" id="kpiTaxaConversao">0%</span> <span class="prop-kpi-lbl">conversão</span></div>
+                    </div>
                     <div class="header-actions">
+                        <div class="prod-search-wrap">
+                            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input type="text" id="filtroProposta" class="prod-search-input"
+                                   placeholder="Nº, cliente ou representante..."
+                                   oninput="filtrarPropostas(this.value)">
+                        </div>
                         <button class="btn btn-primary" data-admin="true" onclick="abrirModalProposta()">
                             <span class="btn-icon">+</span> Nova Proposta
                         </button>
@@ -624,104 +636,41 @@
                     </div>
                 </div>
 
-                <!-- KPIs v2 -->
-                <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
-                    <article class="kpi-card-v2 kpi-info">
-                        <div class="kpi-v2-top">
-                            <div class="kpi-v2-body">
-                                <div class="kpi-v2-label">Em Aberto</div>
-                                <div class="kpi-v2-value" id="kpiPropostasAbertas">0</div>
-                                <div class="kpi-v2-subtitle">Rascunho + Enviadas</div>
-                            </div>
-                            <div class="kpi-v2-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                            </div>
-                        </div>
-                    </article>
-                    <article class="kpi-card-v2 kpi-success">
-                        <div class="kpi-v2-top">
-                            <div class="kpi-v2-body">
-                                <div class="kpi-v2-label">Aceitas</div>
-                                <div class="kpi-v2-value" id="kpiPropostasAceitas">0</div>
-                                <div class="kpi-v2-subtitle">Convertidas em venda</div>
-                            </div>
-                            <div class="kpi-v2-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                            </div>
-                        </div>
-                    </article>
-                    <article class="kpi-card-v2 kpi-danger">
-                        <div class="kpi-v2-top">
-                            <div class="kpi-v2-body">
-                                <div class="kpi-v2-label">Recusadas</div>
-                                <div class="kpi-v2-value" id="kpiPropostasRecusadas">0</div>
-                                <div class="kpi-v2-subtitle">Não convertidas</div>
-                            </div>
-                            <div class="kpi-v2-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                            </div>
-                        </div>
-                    </article>
-                    <article class="kpi-card-v2 kpi-accent-v2">
-                        <div class="kpi-v2-top">
-                            <div class="kpi-v2-body">
-                                <div class="kpi-v2-label">Taxa de Conversão</div>
-                                <div class="kpi-v2-value kpi-v2-value--sm" id="kpiTaxaConversao">0%</div>
-                                <div class="kpi-v2-subtitle">Aceitas / Total enviadas</div>
-                            </div>
-                            <div class="kpi-v2-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                            </div>
-                        </div>
-                        <div class="kpi-progress-wrap">
-                            <div class="kpi-progress-bar"><div class="kpi-progress-fill" id="kpiPropostasProgressBar" style="width:0%"></div></div>
-                            <div class="kpi-progress-label" id="kpiPropostasProgressLabel">0% de conversão</div>
-                        </div>
-                    </article>
-                </div>
-
-                <!-- Toolbar busca + filtro -->
-                <div class="produtos-toolbar" style="margin-bottom:12px">
-                    <div class="prod-search-wrap">
-                        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input type="text" id="filtroProposta" class="prod-search-input"
-                               placeholder="Buscar por nº, cliente ou representante..."
-                               oninput="filtrarPropostas(this.value)">
-                    </div>
-                    <select id="filtroStatusProposta" class="prod-filter-select" onchange="filtrarPropostas()">
-                        <option value="">Todos os status</option>
-                        <option value="rascunho">Rascunho</option>
-                        <option value="enviada">Enviada</option>
-                        <option value="aguardando_aprovacao">Aguard. Aprovação</option>
-                        <option value="aceita">Aceita</option>
-                        <option value="recusada">Recusada</option>
-                        <option value="expirada">Expirada</option>
-                    </select>
+                <!-- Pastilhas de status — dirigem filtrarPropostas(); o <select> abaixo
+                     continua sendo a fonte de verdade do filtro por status. -->
+                <div class="prop-pills-row">
+                    <div class="prop-status-pills" id="propStatusPills"></div>
                     <span id="propostasContador" class="prod-result-count"></span>
                 </div>
+                <select id="filtroStatusProposta" class="prod-filter-select" onchange="filtrarPropostas()" hidden>
+                    <option value="">Todos os status</option>
+                    <option value="rascunho">Rascunho</option>
+                    <option value="enviada">Enviada</option>
+                    <option value="aguardando_aprovacao">Aguard. Aprovação</option>
+                    <option value="aceita">Aceita</option>
+                    <option value="recusada">Recusada</option>
+                    <option value="expirada">Expirada</option>
+                </select>
 
-                <div class="table-container">
-                    <div class="table-wrapper">
-                        <table class="dashboard-table" id="tabelaPropostas" data-table="propostas">
-                            <thead>
-                                <tr>
-                                    <th style="width:90px" class="sortable" data-sort="numero" onclick="sortPropostas('numero')">Nº <span class="sort-icon">⇅</span></th>
-                                    <th style="text-align:left;max-width:130px" class="sortable" data-sort="cliente" onclick="sortPropostas('cliente')">Cliente <span class="sort-icon">⇅</span></th>
-                                    <th class="sortable" data-sort="representante" onclick="sortPropostas('representante')">Representante <span class="sort-icon">⇅</span></th>
-                                    <th style="text-align:left" data-sort="produto">Produto</th>
-                                    <th style="width:70px;text-align:center">Qtd</th>
-                                    <th class="sortable" data-sort="valorTotal" onclick="sortPropostas('valorTotal')" style="text-align:right">Valor <span class="sort-icon">⇅</span></th>
-                                    <th class="sortable" data-sort="data" onclick="sortPropostas('data')">Data <span class="sort-icon">⇅</span></th>
-                                    <th>Validade</th>
-                                    <th class="sortable" data-sort="status" onclick="sortPropostas('status')">Status <span class="sort-icon">⇅</span></th>
-                                    <th class="sortable" data-sort="contrato" onclick="sortPropostas('contrato')">Contrato <span class="sort-icon">⇅</span></th>
-                                    <th style="min-width:160px">Motivo Recusa</th>
-                                    <th style="width:140px">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabelaPropostasBody"></tbody>
-                        </table>
+                <div class="prop-layout">
+                    <div class="table-container prop-table-container">
+                        <div class="table-wrapper">
+                            <table class="dashboard-table prop-table" id="tabelaPropostas" data-table="propostas">
+                                <thead>
+                                    <tr>
+                                        <th style="width:100px" class="sortable" data-sort="numero" onclick="sortPropostas('numero')">Nº / Data <span class="sort-icon">⇅</span></th>
+                                        <th style="text-align:left" class="sortable" data-sort="cliente" onclick="sortPropostas('cliente')">Cliente / Rep. <span class="sort-icon">⇅</span></th>
+                                        <th style="text-align:left">Itens</th>
+                                        <th class="sortable" data-sort="valorTotal" onclick="sortPropostas('valorTotal')" style="text-align:right;width:130px">Valor <span class="sort-icon">⇅</span></th>
+                                        <th style="width:120px">Validade</th>
+                                        <th style="width:130px" class="sortable" data-sort="status" onclick="sortPropostas('status')">Status <span class="sort-icon">⇅</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelaPropostasBody"></tbody>
+                            </table>
+                        </div>
                     </div>
+                    <aside class="prop-drawer" id="propDrawer" hidden></aside>
                 </div>
             </div>
         </div>
@@ -5045,6 +4994,7 @@
          nível de módulo (ex.: initControleImbel() logo após ser definida) que
          precisam de window.EstoqueCalculos já disponível nesse momento. -->
     <script src="estoque-calculos.js?v=f17e3ea1"></script>
+    <script src="propostas-calculos.js?v=1"></script>
     <!-- cloud-store.js: persistência em nuvem por módulo, usada por
          salvarNoCloud/carregarDoCloud em app2.js. Carrega antes por coerência
          com estoque-calculos.js. -->

@@ -6342,6 +6342,72 @@ textarea:focus-visible {
 .badge-status-proposta.aceita            { background: #dcfce7; color: #15803d; }
 .badge-status-proposta.recusada          { background: #fee2e2; color: #b91c1c; }
 .badge-status-proposta.expirada          { background: #fef3c7; color: #92400e; }
+.badge-status-proposta .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
+.badge-status-proposta.rascunho .dot     { background: #64748b; }
+.badge-status-proposta.enviada .dot      { background: var(--info-color); }
+.badge-status-proposta.aguardando .dot   { background: #7c3aed; }
+.badge-status-proposta.aceita .dot       { background: var(--success-color); }
+.badge-status-proposta.recusada .dot     { background: var(--danger-color); }
+.badge-status-proposta.expirada .dot     { background: var(--warning-color); }
+
+/* ── Fase 2: cabeçalho compacto, pastilhas de status, tabela + drawer ── */
+.prop-header-row { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin-bottom: 12px; }
+.prop-header-row .section-title { margin: 0; }
+.prop-kpi-inline { display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; }
+.prop-kpi-inline > div { display: flex; align-items: baseline; gap: 6px; }
+.prop-kpi-inline .num { font-size: 17px; color: var(--text-1); }
+.prop-kpi-inline .prop-kpi-ok { color: var(--success-color); }
+.prop-kpi-inline .prop-kpi-bad { color: var(--danger-color); }
+.prop-kpi-lbl { font-size: 12.5px; color: var(--text-3); }
+.prop-header-row .header-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.prop-pills-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.prop-status-pills { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.prop-pill {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.05em;
+    color: var(--text-2); background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 11px; cursor: pointer; white-space: nowrap;
+}
+.prop-pill:hover { border-color: var(--border-strong); }
+.prop-pill.active { font-weight: 600; color: #050e1a; background: var(--tv-amber-400, #f0b94f); border-color: var(--tv-amber-400, #f0b94f); }
+.prop-pill.prop-pill-vencendo { color: #a6720d; background: #fdf3dc; border-color: #f5cd7a; }
+.prop-pill.prop-pill-vencendo.active { color: #050e1a; }
+.prop-pills-row .prod-result-count { margin-left: auto; }
+
+.prop-layout { display: flex; align-items: flex-start; gap: 0; }
+.prop-table-container { flex: 1; min-width: 0; }
+.prop-table td { vertical-align: top; }
+.prop-table tr[data-proposta-id] { cursor: pointer; }
+.prop-table tr[data-proposta-id]:hover { background: #f8fafc; }
+.prop-table tr[data-proposta-id].active { background: #f4f7fb; }
+.prop-cell-sub { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.prop-validade-alerta { color: var(--warning-color); }
+.prop-validade-vencida { color: var(--danger-color); }
+
+.prop-drawer {
+    width: 320px; flex: none; border-left: 1px solid var(--border); background: #fbfcfe;
+    padding: 16px; align-self: stretch;
+}
+.prop-drawer[hidden] { display: none; }
+.prop-drawer-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.prop-drawer-num { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--text-1); }
+.prop-drawer-close { background: none; border: none; cursor: pointer; font-size: 12.5px; color: var(--text-3); }
+.prop-drawer-cliente { font-size: 14px; font-weight: 500; color: var(--text-1); }
+.prop-drawer-doc { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 14px; }
+.prop-drawer-itens { display: flex; flex-direction: column; gap: 8px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.prop-drawer-item { display: flex; justify-content: space-between; font-size: 13px; }
+.prop-drawer-item .v { font-family: var(--font-mono); color: var(--text-1); }
+.prop-drawer-total { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; }
+.prop-drawer-total .lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--text-muted); }
+.prop-drawer-total .v { font-family: var(--font-mono); font-size: 20px; font-weight: 600; color: var(--text-1); }
+.prop-drawer-motivo { font-size: 12.5px; color: var(--danger-color); background: #fef2f2; border-radius: 6px; padding: 8px 10px; margin-top: 10px; }
+.prop-drawer-contrato { font-size: 12.5px; color: var(--text-2); background: #f0fdf4; border-radius: 6px; padding: 8px 10px; margin-top: 10px; }
+.prop-drawer-actions { display: flex; flex-direction: column; gap: 7px; margin-top: 6px; }
+.prop-drawer-actions .row { display: flex; gap: 7px; }
+.prop-drawer-btn { text-align: center; font-size: 13px; font-weight: 500; color: var(--text-2); border: 1px solid var(--border-strong); border-radius: var(--radius-control); padding: 8px; background: var(--surface); cursor: pointer; flex: 1; }
+.prop-drawer-btn.primary { font-weight: 600; color: #050e1a; background: var(--tv-amber-500, #e5a128); border-color: var(--tv-amber-500, #e5a128); }
+.prop-drawer-rastro { margin-top: 14px; font-family: var(--font-mono); font-size: 10.5px; line-height: 1.7; color: var(--text-muted); }
+.prop-drawer-empty { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 200px; color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px; }
 
 /* Sort icons na tabela de propostas */
 #tabelaPropostas th.sortable {

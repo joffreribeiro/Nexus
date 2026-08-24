@@ -25106,7 +25106,8 @@ function confirmarConversaoVenda() {
         `✅ Contrato nº ${contrato} criado! Venda registrada com sucesso.`,
         'success'
     );
-    trocarAba('vendas');
+    if (typeof window.FluxoNav?.goStep === 'function') window.FluxoNav.goStep(3);
+    else trocarAba('vendas');
 }
 
 function excluirProposta(id) {
@@ -25146,6 +25147,32 @@ function recusarProposta(id) {
     try { registrarHistorico('proposta_recusada', `Proposta ${p.numero} recusada: ${p.motivoRecusa}`); } catch (e) { _catchSilencioso(e, 'recusarProposta'); }
 }
 
+// Rótulo/classe de badge por status — reaproveitado pela tabela, pastilhas e drawer.
+const PROPOSTA_STATUS_CONF = {
+    rascunho:             { label: 'Rascunho',            cls: 'rascunho'   },
+    enviada:              { label: 'Enviada',              cls: 'enviada'    },
+    aceita:               { label: 'Aceita',               cls: 'aceita'     },
+    recusada:             { label: 'Recusada',             cls: 'recusada'   },
+    aguardando_aprovacao: { label: 'Aguard. Aprovação',    cls: 'aguardando' },
+    expirada:             { label: 'Expirada',             cls: 'expirada'   }
+};
+
+// Estado da pastilha derivada "vence em 7 dias" — não é um valor de status,
+// então fica fora do <select id="filtroStatusProposta"> (fonte de verdade
+// do filtro por status) e é combinada com ele em renderizarPropostas().
+let _propFiltroVencendo = false;
+let _propostaSelecionadaId = null;
+
+function _propostaEmAberto(p) {
+    return p.status === 'rascunho' || p.status === 'enviada' || p.status === 'aguardando_aprovacao';
+}
+
+function _propostaVenceEm7Dias(p, agora) {
+    if (!_propostaEmAberto(p)) return false;
+    const dias = window.PropostasCalculos.diasParaVencer(p.dataExpiracao, agora);
+    return dias !== null && dias >= 0 && dias <= 7;
+}
+
 function renderizarPropostas(filtro, statusFiltro) {
     const tbody = document.getElementById('tabelaPropostasBody');
     if (!tbody) return;
@@ -25172,15 +25199,9 @@ function renderizarPropostas(filtro, statusFiltro) {
     if (statusFiltro) {
         lista = lista.filter(p => p.status === statusFiltro);
     }
-
-    const statusLabels = {
-        rascunho:             { label: 'Rascunho',            cls: 'rascunho'  },
-        enviada:              { label: 'Enviada',              cls: 'enviada'   },
-        aceita:               { label: 'Aceita',               cls: 'aceita'    },
-        recusada:             { label: 'Recusada',             cls: 'recusada'  },
-        aguardando_aprovacao: { label: '⏳ Aguard. Aprovação', cls: 'aguardando' },
-        expirada:             { label: 'Expirada',             cls: 'expirada'  }
-    };
+    if (_propFiltroVencendo) {
+        lista = lista.filter(p => _propostaVenceEm7Dias(p, agora));
+    }
 
     // Aplicar ordenação de propostas se houver
     const sortP = _sortState['propostas'] || { col: 'data', dir: 'desc' };
@@ -25200,7 +25221,7 @@ function renderizarPropostas(filtro, statusFiltro) {
     const contador = document.getElementById('propostasContador');
     if (contador) {
         const total = propostas.length;
-        if (filtro || statusFiltro) {
+        if (filtro || statusFiltro || _propFiltroVencendo) {
             contador.textContent = `${listaOrdenada.length} de ${total} proposta(s)`;
         } else {
             contador.textContent = `${total} proposta(s)`;
@@ -25208,52 +25229,214 @@ function renderizarPropostas(filtro, statusFiltro) {
     }
 
     tbody.innerHTML = listaOrdenada.map(p => {
-        const repClass = (p.representante || '').toLowerCase();
-        const statusConf = statusLabels[p.status] || statusLabels.rascunho;
+        const statusConf = PROPOSTA_STATUS_CONF[p.status] || PROPOSTA_STATUS_CONF.rascunho;
         const dataProposta = p.data ? new Date(p.data).toLocaleDateString('pt-BR') : '-';
         const dataValidade = p.dataExpiracao ? new Date(p.dataExpiracao).toLocaleDateString('pt-BR') : '-';
-        const validadeExpirada = p.dataExpiracao && new Date(p.dataExpiracao) < agora;
-        const contratoDisplay = p.contratoNumero ? p.contratoNumero : '-';
 
-        const podeConverter = p.status === 'rascunho' || p.status === 'enviada';
-
-        const motivoRecusaEsc = p.motivoRecusa ? _escapeHtml(String(p.motivoRecusa)) : '';
-        const motivoRecusaSmall = (p.status === 'recusada' && p.motivoRecusa) ? `<div style="font-size:0.75rem;color:#dc2626;margin-top:2px;max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${motivoRecusaEsc}">↳ ${motivoRecusaEsc}</div>` : '';
-
-        // Resumo do primeiro item da proposta (exibir produto, qtd e valor unitário)
         const itensArr = Array.isArray(p.itens) ? p.itens : [];
-        const primeiroItem = (itensArr && itensArr.length) ? itensArr[0] : null;
-        const produtoDisplay = primeiroItem ? (_escapeHtml(primeiroItem.produto || primeiroItem.produtoNome || '-')) + (itensArr.length > 1 ? ` <span style="color:#64748b;font-size:0.78rem">+${itensArr.length-1}</span>` : '') : '-';
-        const qtdDisplay = primeiroItem ? (primeiroItem.quantidade || 0) : '-';
-        const unitDisplay = primeiroItem ? formatarMoedaValor(Number(primeiroItem.valorUnitario || primeiroItem.precoFinalCalc || 0)) : '-';
+        const primeiroItem = itensArr.length ? itensArr[0] : null;
+        const produtoDisplay = primeiroItem
+            ? _escapeHtml(primeiroItem.produto || primeiroItem.produtoNome || '-') + (itensArr.length > 1 ? ` <span style="color:#94a3b8">+${itensArr.length-1}</span>` : '')
+            : '-';
+        const totalUn = itensArr.reduce((s, it) => s + (Number(it.quantidade) || 0), 0);
+
+        const cliente = (clientes || []).find(c => c.nome === p.cliente);
+        const clienteSub = [cliente?.uf, p.representante].filter(Boolean).join(' · ');
+
+        // Validade: nº de contrato quando já resolvida em venda, senão contagem regressiva.
+        let validadeSub = '';
+        let validadeSubCls = '';
+        if (p.contratoNumero) {
+            validadeSub = `contrato ${_escapeHtml(String(p.contratoNumero))}`;
+        } else {
+            const dias = window.PropostasCalculos.diasParaVencer(p.dataExpiracao, agora);
+            const semaforo = window.PropostasCalculos.classeSemaforoValidade(dias);
+            if (semaforo === 'vencida') { validadeSub = 'vencida'; validadeSubCls = 'prop-validade-vencida'; }
+            else if (semaforo === 'alerta') { validadeSub = dias === 0 ? 'vence hoje' : `vence em ${dias}d`; validadeSubCls = 'prop-validade-alerta'; }
+            else if (semaforo === 'ok') { validadeSub = `${dias} dias`; }
+        }
 
         const _numPartes = (p.numero || '').split('/');
         const _numFmt = _numPartes.length === 2
             ? `${String(_numPartes[0]).padStart(3,'0')}/${_numPartes[1]}`
             : _escapeHtml(String(p.numero || ''));
-        return `<tr data-proposta-id="${p.id}">
-            <td><span style="background:#0ea5e9; color:#fff; padding:2px 10px; border-radius:12px; font-size:0.82rem; font-weight:600;">${_numFmt}</span></td>
-            <td style="text-align:left;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_escapeHtml(p.cliente||'')}">${_escapeHtml(p.cliente || '-')}</td>
-            <td><span class="badge-rep ${repClass}">${_escapeHtml(p.representante || '-')}</span></td>
-            <td style="text-align:left">${produtoDisplay}</td>
-            <td style="text-align:center">${qtdDisplay}</td>
-            <td style="color:#16a34a; font-weight:600; text-align:right">${formatarMoedaValor(p.valorTotal || 0)}</td>
-            <td>${dataProposta}</td>
-            <td style="${validadeExpirada ? 'color:#ef4444; font-weight:600' : ''}">${dataValidade}</td>
-            <td><span class="badge-status-proposta ${statusConf.cls}">${statusConf.label}</span>${motivoRecusaSmall}</td>
-            <td style="font-weight:600">${_escapeHtml(String(contratoDisplay))}</td>
-            <td style="font-size:0.78rem;color:#dc2626;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${motivoRecusaEsc}">${p.status === 'recusada' && p.motivoRecusa ? motivoRecusaEsc : '—'}</td>
-            <td style="white-space:nowrap">
-                <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:flex-end">
-                    <button class="btn btn-outline btn-sm" onclick="abrirModalProposta('${p.id}')" title="Editar proposta" style="padding:4px 8px">✏️</button>
-                    <button class="btn btn-outline btn-sm" onclick="gerarPdfProposta('${p.id}','fiscal')" title="PDF com detalhamento fiscal" style="padding:4px 8px">🧾</button>
-                    ${podeConverter ? `<button class="btn btn-success btn-sm" data-admin="true" onclick="converterPropostaEmVenda('${p.id}')" title="Converter em Venda" style="padding:4px 8px">🔄</button>` : ''}
-                    ${(p.aguardandoAprovacao || p.status === 'aguardando_aprovacao') ? `<button class="btn btn-success btn-sm" data-admin="true" onclick="aprovarProposta('${p.id}')" title="Aprovar" style="padding:4px 8px">✅</button><button class="btn btn-danger btn-sm" data-admin="true" onclick="recusarAprovacaoProposta('${p.id}')" title="Recusar aprovação" style="padding:4px 8px">❌</button>` : ''}
-                    <button class="btn btn-outline btn-sm" data-admin="true" onclick="excluirProposta('${p.id}')" title="Excluir" style="padding:4px 8px;color:#ef4444">🗑️</button>
-                </div>
-            </td>
+
+        return `<tr data-proposta-id="${p.id}" class="${p.id === _propostaSelecionadaId ? 'active' : ''}" onclick="selecionarProposta('${p.id}')">
+            <td><span class="num" style="font-weight:600">${_numFmt}</span><span class="prop-cell-sub">${dataProposta}</span></td>
+            <td style="text-align:left"><div title="${_escapeHtml(p.cliente||'')}" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_escapeHtml(p.cliente || '-')}</div><span class="prop-cell-sub">${_escapeHtml(clienteSub || '-')}</span></td>
+            <td style="text-align:left">${produtoDisplay}<span class="prop-cell-sub">${totalUn} un</span></td>
+            <td class="num" style="text-align:right;font-weight:600">${formatarMoedaValor(p.valorTotal || 0)}</td>
+            <td>${dataValidade}<span class="prop-cell-sub ${validadeSubCls}">${validadeSub}</span></td>
+            <td><span class="badge-status-proposta ${statusConf.cls}"><span class="dot"></span>${statusConf.label}</span></td>
         </tr>`;
     }).join('');
+
+    renderizarStatusPillsPropostas();
+    if (_propostaSelecionadaId && !listaOrdenada.some(p => p.id === _propostaSelecionadaId)) {
+        fecharPropostaDrawer();
+    } else if (_propostaSelecionadaId) {
+        renderizarPropostaDrawer(_propostaSelecionadaId);
+    }
+}
+
+// Pastilhas de status com contagem (TODAS/RASCUNHO/.../VENCE EM 7 DIAS), lidas a
+// partir das <option> de #filtroStatusProposta (fonte de verdade do filtro).
+function renderizarStatusPillsPropostas() {
+    const wrap = document.getElementById('propStatusPills');
+    const selectEl = document.getElementById('filtroStatusProposta');
+    if (!wrap || !selectEl) return;
+
+    const agora = new Date();
+    const statusAtivo = selectEl.value || '';
+    const opcoes = Array.from(selectEl.options);
+    const vencendoCount = propostas.filter(p => _propostaVenceEm7Dias(p, agora)).length;
+
+    wrap.innerHTML = opcoes.map(opt => {
+        const valor = opt.value;
+        const count = valor ? propostas.filter(p => p.status === valor).length : propostas.length;
+        const label = valor ? (PROPOSTA_STATUS_CONF[valor]?.label || opt.textContent).toUpperCase() : 'TODAS';
+        const active = !_propFiltroVencendo && statusAtivo === valor;
+        return `<button type="button" class="prop-pill${active ? ' active' : ''}" onclick="_setFiltroStatusPropostaPill('${valor}')">${_escapeHtml(label)} ${count}</button>`;
+    }).join('') + `<button type="button" class="prop-pill prop-pill-vencendo${_propFiltroVencendo ? ' active' : ''}" onclick="_toggleFiltroVencendoProposta()">VENCE EM 7 DIAS ${vencendoCount}</button>`;
+}
+
+function _setFiltroStatusPropostaPill(valor) {
+    _propFiltroVencendo = false;
+    const selectEl = document.getElementById('filtroStatusProposta');
+    if (selectEl) selectEl.value = valor;
+    filtrarPropostas();
+}
+
+function _toggleFiltroVencendoProposta() {
+    _propFiltroVencendo = !_propFiltroVencendo;
+    if (_propFiltroVencendo) {
+        const selectEl = document.getElementById('filtroStatusProposta');
+        if (selectEl) selectEl.value = '';
+    }
+    filtrarPropostas();
+}
+
+// ── Painel de detalhe (drawer) ──────────────────────────────────────────
+function selecionarProposta(id) {
+    _propostaSelecionadaId = (_propostaSelecionadaId === id) ? null : id;
+    document.querySelectorAll('#tabelaPropostasBody tr[data-proposta-id]').forEach(tr => {
+        tr.classList.toggle('active', tr.getAttribute('data-proposta-id') === _propostaSelecionadaId);
+    });
+    if (_propostaSelecionadaId) renderizarPropostaDrawer(_propostaSelecionadaId);
+    else fecharPropostaDrawer();
+}
+
+function fecharPropostaDrawer() {
+    _propostaSelecionadaId = null;
+    const drawer = document.getElementById('propDrawer');
+    if (drawer) { drawer.hidden = true; drawer.innerHTML = ''; }
+    document.querySelectorAll('#tabelaPropostasBody tr[data-proposta-id].active').forEach(tr => tr.classList.remove('active'));
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && _propostaSelecionadaId && document.getElementById('tab-propostas')?.classList.contains('active')) {
+        fecharPropostaDrawer();
+    }
+});
+
+function renderizarPropostaDrawer(id) {
+    const drawer = document.getElementById('propDrawer');
+    if (!drawer) return;
+    const p = (propostas || []).find(x => x.id === id);
+    if (!p) { fecharPropostaDrawer(); return; }
+
+    drawer.hidden = false;
+    const statusConf = PROPOSTA_STATUS_CONF[p.status] || PROPOSTA_STATUS_CONF.rascunho;
+    const cliente = (clientes || []).find(c => c.nome === p.cliente);
+    const itensArr = Array.isArray(p.itens) ? p.itens : [];
+    const podeConverter = p.status === 'rascunho' || p.status === 'enviada';
+    const podeEnviar = p.status === 'rascunho';
+
+    // Rastro: precificação de origem, quando esta proposta foi gerada de uma
+    // (link inverso — a precificação grava propostaId ao ser convertida em proposta).
+    const precifOrigem = (precificacoesCliente || []).find(pc => pc.propostaId === p.id);
+    const rastroPartes = [];
+    if (precifOrigem) rastroPartes.push(`criada de PRECIF-${String(precifOrigem.id).slice(-6)}`);
+    if (p.dataCriacao) rastroPartes.push(new Date(p.dataCriacao).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }));
+
+    drawer.innerHTML = `
+        <div class="prop-drawer-head">
+            <span class="prop-drawer-num">${_escapeHtml(p.numero || '')}</span>
+            <button type="button" class="prop-drawer-close" onclick="fecharPropostaDrawer()">fechar ✕</button>
+        </div>
+        <div class="prop-drawer-cliente">${_escapeHtml(p.cliente || '-')}</div>
+        <div class="prop-drawer-doc">${_escapeHtml([cliente?.cnpj, p.representante].filter(Boolean).join(' · ') || '-')}</div>
+        <div class="prop-drawer-itens">
+            ${itensArr.length ? itensArr.map(it => `
+                <div class="prop-drawer-item">
+                    <span>${_escapeHtml(it.produtoNome || it.produto || '-')} · ${it.quantidade || 0}</span>
+                    <span class="v">${formatarMoedaValor(it.valorTotal || (it.quantidade||0)*(it.valorUnitario||it.valorUnit||0))}</span>
+                </div>`).join('') : '<div style="font-size:12.5px;color:#94a3b8">Sem itens</div>'}
+        </div>
+        <div class="prop-drawer-total">
+            <span class="lbl">TOTAL</span>
+            <span class="v">${formatarMoedaValor(p.valorTotal || 0)}</span>
+        </div>
+        <div style="margin-bottom:10px"><span class="badge-status-proposta ${statusConf.cls}"><span class="dot"></span>${statusConf.label}</span></div>
+        ${(p.status === 'recusada' && p.motivoRecusa) ? `<div class="prop-drawer-motivo">${_escapeHtml(p.motivoRecusa)}</div>` : ''}
+        ${p.contratoNumero ? `<div class="prop-drawer-contrato">Contrato ${_escapeHtml(String(p.contratoNumero))}</div>` : ''}
+        <div class="prop-drawer-actions">
+            ${podeEnviar ? `<button type="button" class="prop-drawer-btn primary" onclick="enviarPropostaAoCliente('${p.id}')">Enviar ao cliente</button>` : ''}
+            <div class="row">
+                <button type="button" class="prop-drawer-btn" onclick="gerarPdfProposta('${p.id}','fiscal')">Ver PDF</button>
+                <button type="button" class="prop-drawer-btn" onclick="duplicarProposta('${p.id}')">Duplicar</button>
+            </div>
+            <button type="button" class="prop-drawer-btn" onclick="abrirModalProposta('${p.id}')">Editar</button>
+            ${podeConverter ? `<button type="button" class="prop-drawer-btn" data-admin="true" onclick="converterPropostaEmVenda('${p.id}')">Registrar venda</button>` : ''}
+            ${(p.aguardandoAprovacao || p.status === 'aguardando_aprovacao') ? `<button type="button" class="prop-drawer-btn" data-admin="true" onclick="aprovarProposta('${p.id}')">Aprovar</button><button type="button" class="prop-drawer-btn" data-admin="true" onclick="recusarAprovacaoProposta('${p.id}')">Recusar aprovação</button>` : ''}
+            <button type="button" class="prop-drawer-btn" data-admin="true" style="color:#dc2626" onclick="excluirProposta('${p.id}')">Excluir</button>
+        </div>
+        ${rastroPartes.length ? `<div class="prop-drawer-rastro">${rastroPartes.map(_escapeHtml).join('<br>')}</div>` : ''}
+    `;
+}
+
+// Marca a proposta como enviada — não existia uma transição dedicada antes;
+// a única forma de setar 'enviada' era escolher o status manualmente no modal.
+function enviarPropostaAoCliente(id) {
+    const p = (propostas || []).find(x => x.id === id);
+    if (!p) return;
+    if (p.status !== 'rascunho') { mostrarNotificacao('Só é possível enviar propostas em rascunho.', 'warning'); return; }
+    p.status = 'enviada';
+    estoque.propostas = propostas;
+    salvarDados();
+    renderizarPropostas();
+    atualizarKPIsPropostas();
+    mostrarNotificacao(`Proposta ${p.numero} marcada como enviada.`, 'success');
+}
+
+// Clona uma proposta como novo rascunho (novo id/número/data), preservando
+// cliente, representante e itens — para reaproveitar uma oferta já montada.
+function duplicarProposta(id) {
+    const original = (propostas || []).find(x => x.id === id);
+    if (!original) return;
+
+    const clone = JSON.parse(JSON.stringify(original));
+    clone.id = Date.now().toString();
+    clone.numero = (typeof gerarNumeroProposta === 'function') ? gerarNumeroProposta() : (original.numero + '-cópia');
+    clone.status = 'rascunho';
+    clone.data = new Date().toISOString().split('T')[0];
+    clone.dataCriacao = new Date().toISOString();
+    const validadeDias = original.dataExpiracao && original.data
+        ? Math.max(1, Math.round((new Date(original.dataExpiracao) - new Date(original.data)) / 86400000))
+        : 30;
+    clone.dataExpiracao = new Date(Date.now() + validadeDias * 86400000).toISOString();
+    clone.contratoNumero = null;
+    clone.vendaId = null;
+    clone.motivoRecusa = null;
+    clone.aguardandoAprovacao = false;
+
+    propostas.push(clone);
+    estoque.propostas = propostas;
+    salvarDados();
+    renderizarPropostas();
+    atualizarKPIsPropostas();
+    selecionarProposta(clone.id);
+    mostrarNotificacao(`Proposta duplicada como ${clone.numero} (rascunho).`, 'success');
 }
 
 function toggleMenuPDF(id) {
@@ -25274,7 +25457,10 @@ function toggleMenuPDF(id) {
 
 function filtrarPropostas(valor) {
     const statusVal = document.getElementById('filtroStatusProposta')?.value || '';
-    renderizarPropostas(valor || '', statusVal);
+    // Sem argumento (pastilha de status/select), preserva o texto já digitado
+    // na busca em vez de descartá-lo — filtro por pastilha e por busca combinam.
+    if (valor === undefined) valor = document.getElementById('filtroProposta')?.value || '';
+    renderizarPropostas(valor, statusVal);
 }
 
 function irParaProposta(propostaId) {

@@ -17,23 +17,12 @@
     // ── Ícones (inline SVG, stroke currentColor) — dicionário único em icons.js ──
     var I = window.NexusIcons || {};
 
-    // Badge de pendência por etapa: função opcional que devolve um número (ou
-    // null/0 para não renderizar pastilha). Lê os arrays globais de app2.js
-    // (compartilham o escopo de script clássico do documento) via
-    // FluxoNavCalculos, puro e testado em tests/fluxo-nav-calculos.test.js.
-    function badgePropostasPendentes() {
-        try { return window.FluxoNavCalculos.contarPrecificacoesSemProposta(precificacoesCliente); } catch (e) { return null; }
-    }
-    function badgeVendasPendentes() {
-        try { return window.FluxoNavCalculos.contarPropostasAceitasSemVenda(propostas); } catch (e) { return null; }
-    }
-
     // ── Etapas do pipeline (Operação) ──
     var STEPS = [
         { tab: 'estoque', t: 'Estoque', s: 'o que temos', icon: I.box },
         { tab: 'precificacao', t: 'Precificação', s: 'quanto cobrar', icon: I.tag },
-        { tab: 'propostas', t: 'Proposta', s: 'montar oferta', icon: I.doc, badge: badgePropostasPendentes },
-        { tab: 'vendas', t: 'Venda', s: 'fechar contrato', icon: I.cart, badge: badgeVendasPendentes },
+        { tab: 'propostas', t: 'Proposta', s: 'montar oferta', icon: I.doc },
+        { tab: 'vendas', t: 'Venda', s: 'fechar contrato', icon: I.cart },
         { tab: 'envio', t: 'Envio', s: 'doc. e entrega', icon: I.truck, emDesenvolvimento: true }
     ];
 
@@ -139,7 +128,6 @@
             btn.innerHTML =
                 '<span class="pn">' + (i + 1) + '</span>' +
                 '<span class="pt">' + st.t + '</span>' +
-                '<span class="pbadge" hidden></span>' +
                 '<span class="ps">' + st.s + '</span>';
             btn.addEventListener('click', function () { goStep(i); });
             els.pipetrack.appendChild(btn);
@@ -280,14 +268,6 @@
                 if (pn) pn.textContent = (i + 1);
                 if (i === currentStep) { btn.classList.add('active'); btn.setAttribute('aria-current', 'step'); }
             }
-
-            var badgeEl = btn.querySelector('.pbadge');
-            if (badgeEl) {
-                var st = STEPS[i];
-                var count = (typeof st.badge === 'function') ? st.badge() : null;
-                if (count) { badgeEl.textContent = String(count); badgeEl.hidden = false; }
-                else { badgeEl.hidden = true; }
-            }
         });
     }
 
@@ -411,10 +391,6 @@
         // Aplica workspace inicial (dispara a navegação da etapa/aba correta)
         setWorkspace(savedWs);
         setTimeout(adjustHeaderHeight, 100);
-
-        // Repinta os badges de pendência periodicamente (dados podem mudar sem
-        // troca de etapa — ex.: salvar uma precificação em outra aba aberta).
-        setInterval(paintSteps, 4000);
 
         // Expõe API mínima para depuração
         window.FluxoNav = { goStep: goStep, setWorkspace: setWorkspace, get step() { return currentStep; } };

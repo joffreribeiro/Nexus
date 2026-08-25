@@ -26,7 +26,8 @@
       "Bash(findstr :5181)",
       "Bash(node test_ncm_fix.js)",
       "PowerShell(Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue)",
-      "PowerShell($indexPath = \"C:\\\\Users\\\\JoffreRibeiro\\\\OneDrive\\\\Área de Trabalho\\\\Nexus\\\\index.html\"; Invoke-Item $indexPath)"
+      "PowerShell($indexPath = \"C:\\\\Users\\\\JoffreRibeiro\\\\OneDrive\\\\Área de Trabalho\\\\Nexus\\\\index.html\"; Invoke-Item $indexPath)",
+      "PowerShell(Stop-Process -Id 11748 -Force -ErrorAction SilentlyContinue)"
     ]
   }
 }

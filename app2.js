@@ -23992,8 +23992,8 @@ function atualizarStatusPropostaNaPrecif(clienteId) {
                      +${propostasDoCliente.length-1} proposta(s) anterior(es)
                    </div>` : ''}
             <div style="margin-left:auto;display:flex;gap:6px">
-                <button class="btn btn-outline btn-sm" onclick="trocarAba('propostas')">
-                    Ver propostas →
+                <button class="btn btn-outline btn-sm" onclick="irParaProposta('${ultima.id}')">
+                    Ver proposta →
                 </button>
                 ${ultima.status === 'aceita'
                     ? `<button class="btn btn-success btn-sm"
@@ -24011,8 +24011,8 @@ function atualizarStatusPropostaNaPrecif(clienteId) {
                     ${propostasDoCliente.map(p => {
                         const s = statusColor[p.status] || statusColor.rascunho;
                         return `
-                            <div style="display:flex;align-items:center;gap:10px;
-                                        padding:6px 10px;background:#f8fafc;
+                            <div onclick="irParaProposta('${p.id}')" style="display:flex;align-items:center;gap:10px;
+                                        padding:6px 10px;background:#f8fafc;cursor:pointer;
                                         border-radius:6px;font-size:0.82rem">
                                 <span>${s.icon}</span>
                                 <span style="font-weight:600; color:#1e3a5f">${p.numero}</span>
@@ -25762,7 +25762,8 @@ function filtrarPropostas(valor) {
 function irParaProposta(propostaId) {
     const prop = (propostas || []).find(p => p.id === propostaId);
     if (!prop) return;
-    trocarAba('propostas');
+    if (typeof window.FluxoNav?.goStep === 'function') window.FluxoNav.goStep(2);
+    else trocarAba('propostas');
     setTimeout(() => {
         const filtroEl = document.getElementById('filtroProposta');
         if (filtroEl) {
@@ -25770,13 +25771,10 @@ function irParaProposta(propostaId) {
             filtrarPropostas(prop.numero);
         }
         setTimeout(() => {
+            // Abre o drawer de detalhe (fase 2) direto na proposta, em vez de só piscar a linha.
+            if (typeof selecionarProposta === 'function') selecionarProposta(propostaId);
             const row = document.querySelector(`tr[data-proposta-id="${propostaId}"]`);
-            if (row) {
-                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                row.style.transition = 'background 0.3s';
-                row.style.background = '#fef9c3';
-                setTimeout(() => { row.style.background = ''; }, 2000);
-            }
+            if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 300);
     }, 100);
 }

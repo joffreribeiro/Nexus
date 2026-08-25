@@ -1112,12 +1112,15 @@
                 </div>
             </div>
 
+            <!-- Proposta gerada desta precificação, se houver (fica logo depois do
+                 total pra responder "isso aqui já virou proposta?" sem trocar de aba) -->
+            <div id="precifStatusProposta" style="margin-bottom:10px"></div>
+
             <!-- Ações utilitárias -->
             <div class="pc-result-actions">
                 <button class="pc-btn" onclick="exportarPrecifCliente()">&#8679; EXPORTAR XLS</button>
                 <button class="pc-btn sm" style="margin-left:auto" onclick="imprimirPrecifCliente()">&#9113; IMPRIMIR</button>
             </div>
-            <div id="precifStatusProposta" style="margin-bottom:10px"></div>
             <div class="pc-table-wrap">
                 <table class="pc-table" id="tabelaPrecifCliente">
                     <thead>
@@ -5022,7 +5025,7 @@
          salvarNoCloud/carregarDoCloud em app2.js. Carrega antes por coerência
          com estoque-calculos.js. -->
     <script src="cloud-store.js?v=4cdb57cf"></script>
-    <script src="app2.js?v=42534bb5"></script>
+    <script src="app2.js?v=2668ac89"></script>
     <script src="icms-regras.js?v=4b4c0334"></script>
 
     <script src="crm-model.js?v=a047290b"></script>

@@ -23953,7 +23953,20 @@ function atualizarStatusPropostaNaPrecif(clienteId) {
             .sort((a,b) => new Date((b.dataCriacao||b.data||0)) - new Date((a.dataCriacao||a.data||0)));
                 const container = document.getElementById('precifStatusProposta');
                 if (!container) return;
-        if (!propostasDoCliente.length) { container.innerHTML = ''; return; }
+        if (!propostasDoCliente.length) {
+            // Painel sempre visível (mesmo sem proposta ainda) — sem isso, a
+            // opção "ver a proposta" só aparecia depois que uma já existisse,
+            // e não dava pra saber que o recurso estava ali.
+            container.innerHTML = `
+                <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:10px 14px;
+                            display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                    <span style="font-size:0.85rem;color:#94a3b8">Nenhuma proposta gerada ainda para este cliente</span>
+                    <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="criarPropostaDaPrecificacao()">
+                        &#9632; Gerar proposta
+                    </button>
+                </div>`;
+            return;
+        }
                 const statusColor = {
                         rascunho:  { bg:'#f1f5f9', text:'#64748b', icon:'📝' },
                         enviada:   { bg:'#eff6ff', text:'#1d4ed8', icon:'📤' },

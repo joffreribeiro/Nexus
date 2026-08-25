@@ -22906,15 +22906,19 @@ function calcularPrecificacaoPorCliente(opcoes = {}) {
     // filtros via checklist (fallback para texto, caso exista)
     const filtroProdutoTexto = (document.getElementById('precifFiltroProduto')?.value || '').toLowerCase().trim();
 
-    // Nova UX: verificar se há linhas de produto adicionadas
-    const linhasAdicionadas = document.querySelectorAll('.precif-linha-produto');
+    // Nova UX: verificar se há linhas de produto adicionadas (com produto
+    // escolhido — desde a fase 4 sempre existe 1 linha vazia "pronta pra
+    // digitar", então contar qualquer linha aqui disparava o cálculo do
+    // catálogo inteiro assim que um cliente era selecionado, antes de
+    // qualquer produto ser digitado).
+    const linhasAdicionadas = Array.from(document.querySelectorAll('.precif-linha-produto')).filter(l => l.dataset.nomeProduto);
     if (linhasAdicionadas.length === 0) {
         const resultado = document.getElementById('precifClienteResultado'); if (resultado) resultado.style.display = 'none';
         const empty = document.getElementById('precifClienteEmpty');
         if (empty) {
             empty.innerHTML = `<div style="font-size:2rem;margin-bottom:12px">📋</div>
                 <div style="font-size:1rem;font-weight:600;color:#1e3a5f;margin-bottom:8px">Adicione produtos para calcular</div>
-                <div style="font-size:0.85rem;color:#94a3b8">Clique em "+ Adicionar Produto" para inserir os produtos desta proposta, <br>ajuste a Taxa e o ROI de cada um e clique em 🧮 Calcular.</div>`;
+                <div style="font-size:0.85rem;color:#94a3b8">Digite o nome ou NCM do produto na linha acima para começar.</div>`;
             empty.style.display = 'block';
         }
         return;

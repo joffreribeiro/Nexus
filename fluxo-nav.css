@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════════════════
    NAVEGAÇÃO EM FLUXO DE TRABALHO
-   Barra global única (marca + workspace + esteira + busca + referência +
-   status) + workspace IMBEL/Relacionamento/Ponto/Processos separados.
+   Barra global + esteira de etapas (Operação) + faixa de referência
+   + workspace IMBEL separado.
    Estilo: navy/âmbar, densidade Bloomberg-terminal.
    Isolado do resto do sistema — só entra em ação com body.flow-nav-on.
    ════════════════════════════════════════════════════════════════ */
@@ -21,7 +21,7 @@
     --fn-amber-400: #f0b94f;
     --fn-amber-300: #f5cd7a;
     --fn-amber-100: #fdf3dc;
-    --fn-header-h: 56px;   /* faixa única do cabeçalho */
+    --fn-header-h: 108px;   /* barra global + esteira + faixa de referência */
     --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, 'Courier New', monospace;
 }
 
@@ -29,10 +29,12 @@
 body.flow-nav-on { padding-left: 0 !important; padding-top: var(--fn-header-h); }
 body.flow-nav-on .sidebar { display: none !important; }
 
-/* Uniformiza a largura das telas: todas preenchem a tela como o Estoque. */
+/* Uniformiza a largura das telas: todas preenchem a tela como o Estoque.
+   (Antes, Precificação/Proposta/Venda ficavam limitadas a max-width:1800px,
+   deixando um vazio à direita em monitores largos.) */
 body.flow-nav-on .content-area { max-width: none !important; }
 
-/* Container fixo do cabeçalho */
+/* Container fixo do cabeçalho novo */
 .flow-header {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -41,142 +43,53 @@ body.flow-nav-on .content-area { max-width: none !important; }
     box-shadow: 0 6px 20px rgba(0,0,0,0.35);
 }
 
-/* ── Faixa única ──────────────────────────────────────────── */
+/* ── Barra global ─────────────────────────────────────────── */
 .flow-globalbar {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
     background: linear-gradient(180deg, var(--fn-navy-950), var(--fn-navy-900));
     border-bottom: 1px solid var(--fn-navy-800);
     padding: 0 14px;
-    height: var(--fn-header-h);
+    height: 46px;
 }
 .flow-brand {
-    display: flex; align-items: center; gap: 8px;
-    font-weight: 600; font-size: 14px; letter-spacing: -0.01em;
-    color: #fff; white-space: nowrap; flex: none;
+    display: flex; align-items: center; gap: 9px;
+    font-weight: 600; font-size: 14px; letter-spacing: .2px;
+    color: #fff; white-space: nowrap;
 }
 .flow-brand .flow-brand-mark {
-    width: 24px; height: 24px; flex: none;
-    border-radius: 5px; overflow: hidden;
-    background: var(--fn-amber-500);
+    width: 26px; height: 26px; flex: none;
+    border-radius: 6px; overflow: hidden;
+    border: 1px solid rgba(229,161,40,.4);
+    background: linear-gradient(145deg,#0d1e30,#162840);
     display: flex; align-items: center; justify-content: center;
 }
 .flow-brand .flow-brand-mark svg { width: 100%; height: 100%; }
+.flow-brand .flow-brand-sub {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--fn-navy-300); font-weight: 600;
+    margin-left: 2px;
+}
 
-/* Seletor de workspace — só o ativo mostra o texto (rótulo completo custa
-   ~515px com os 5 nomes; em 1440px isso não deixa espaço pra esteira).
-   Os inativos ficam só com o ícone + title (tooltip nativo). */
-.ws-switch { display: flex; gap: 2px; flex: none; }
+/* Seletor de workspace */
+.ws-switch { display: flex; gap: 4px; background: var(--fn-navy-900); padding: 3px; border-radius: 5px; box-shadow: inset 0 0 0 1px var(--fn-navy-800); }
 .ws-btn {
     display: flex; align-items: center; gap: 6px;
-    font-size: 13px; font-weight: 500; padding: 6px 8px;
-    border-radius: 5px; color: var(--fn-navy-300);
+    font-size: 12.5px; font-weight: 600; padding: 6px 14px;
+    border-radius: 3px; color: var(--fn-navy-200);
     background: transparent; border: none; cursor: pointer;
     transition: background .12s, color .12s; white-space: nowrap;
 }
 .ws-btn:hover { color: #fff; }
 .ws-btn svg { width: 14px; height: 14px; flex: none; }
-.ws-btn span { display: none; }
-.ws-btn.active { background: var(--fn-navy-700); color: #fff; font-weight: 600; padding: 6px 12px; }
-.ws-btn.active span { display: inline; }
+.ws-btn.active { background: var(--fn-navy-700); color: #fff; }
 .ws-btn.imbel.active { background: var(--fn-amber-500); color: var(--fn-navy-950); }
 .ws-btn.relacionamento.active { background: #7c3aed; color: #fff; }
 
-.flow-sep { width: 1px; height: 22px; background: var(--fn-navy-700); flex: none; }
-
-/* ── Esteira de etapas (compacta, uma linha) ──────────────── */
-.pipetrack {
-    flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px;
-    overflow: hidden; white-space: nowrap;
-}
-.pstep {
-    flex: none; display: flex; align-items: center; gap: 7px;
-    padding: 5px 9px 5px 6px; border-radius: 5px;
-    background: transparent; border: none; cursor: pointer; white-space: nowrap;
-    transition: background .12s, box-shadow .12s;
-}
-.pstep:hover { background: rgba(255,255,255,.06); }
-.pstep.active { background: rgba(229,161,40,.16); box-shadow: inset 0 0 0 1px rgba(229,161,40,.45); }
-.pstep.active:hover { background: rgba(229,161,40,.20); }
-.pstep .pn {
-    width: 20px; height: 20px; flex: none; border-radius: 50%;
-    border: 1px solid var(--fn-navy-500);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--fn-navy-300); font-family: var(--font-mono);
-    font-size: 11px; font-weight: 600; transition: all .12s;
-}
-.pstep.active .pn { background: var(--fn-amber-500); border-color: var(--fn-amber-500); color: var(--fn-navy-950); }
-.pstep.done .pn { background: var(--fn-navy-600); border-color: var(--fn-navy-600); color: #fff; }
-.pstep.done .pn svg { width: 11px; height: 11px; }
-.pstep-dev:not(.active):not(.done) .pn { border-style: dashed; color: var(--fn-navy-400); }
-.pstep .pt {
-    font-size: 13px; font-weight: 500; color: var(--fn-navy-200); white-space: nowrap;
-}
-.pstep.active .pt { font-weight: 600; color: #fff; }
-.pstep-dev:not(.active) .pt { color: var(--fn-navy-400); }
-.pstep .ps { display: none; }
-/* Só a etapa ativa mostra o subtítulo, e só quando há espaço sobrando */
-@media (min-width: 1600px) {
-    .pstep.active .ps {
-        display: inline; font-family: var(--font-mono); font-size: 11px;
-        color: var(--fn-amber-300); margin-left: 2px; white-space: nowrap;
-    }
-    .pstep.active .ps::before { content: '· '; }
-}
-.parrow { flex: none; align-self: center; color: var(--fn-navy-600); display: flex; }
-.parrow svg { width: 12px; height: 12px; }
-
-/* ── Ferramentas: busca + referência ──────────────────────── */
-.flow-tools { display: flex; align-items: center; gap: 8px; flex: none; }
-.flow-search-btn {
-    display: flex; align-items: center; gap: 7px;
-    background: var(--fn-navy-800); border: 1px solid var(--fn-navy-700);
-    border-radius: 6px; padding: 6px 9px; cursor: pointer; color: var(--fn-navy-300);
-    white-space: nowrap;
-}
-.flow-search-btn:hover { color: #fff; border-color: var(--fn-navy-600); }
-.flow-search-btn svg { width: 13px; height: 13px; }
-.flow-search-kbd {
-    font-family: var(--font-mono); font-size: 10.5px; color: var(--fn-navy-400);
-    background: var(--fn-navy-950); border-radius: 3px; padding: 2px 5px;
-}
-
-.ref-dropdown { position: relative; flex: none; }
-.flow-ref-toggle {
-    display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500;
-    color: var(--fn-navy-200); border: 1px solid var(--fn-navy-700); border-radius: 6px;
-    padding: 7px 10px; background: transparent; cursor: pointer; white-space: nowrap;
-}
-.flow-ref-toggle:hover { color: #fff; border-color: var(--fn-navy-600); }
-.flow-ref-toggle svg { width: 11px; height: 11px; transition: transform .12s; }
-.ref-dropdown.open .flow-ref-toggle svg { transform: rotate(180deg); }
-.ref-dropdown-menu {
-    position: absolute; right: 0; top: calc(100% + 6px);
-    background: var(--fn-navy-900); border: 1px solid var(--fn-navy-700);
-    border-radius: 6px; padding: 6px; min-width: 190px;
-    box-shadow: 0 12px 30px rgba(0,0,0,.45); display: none; flex-direction: column; gap: 2px;
-    z-index: 2200;
-}
-.ref-dropdown.open .ref-dropdown-menu { display: flex; }
-.ref-dropdown-item {
-    display: flex; align-items: center; gap: 8px; width: 100%;
-    background: transparent; border: none; color: var(--fn-navy-200);
-    padding: 8px 10px; border-radius: 4px; font-size: 12.5px; font-weight: 500;
-    cursor: pointer; text-align: left; white-space: nowrap;
-}
-.ref-dropdown-item svg { width: 14px; height: 14px; flex: none; }
-.ref-dropdown-item:hover, .ref-dropdown-item.active { background: var(--fn-navy-800); color: var(--fn-amber-400); }
-.ref-dropdown-sep { height: 1px; background: var(--fn-navy-700); margin: 4px 2px; flex: none; }
-.ref-dropdown-group-lbl {
-    font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--fn-navy-400); padding: 6px 10px 2px;
-}
-
-/* ── Cluster de status/ações à direita ────────────────────── */
-.flow-status { margin-left: auto; display: flex; align-items: center; gap: 10px; flex: none; }
+/* Cluster de status/ações à direita (recebe #firestoreStatus e #authPanel realocados) */
+.flow-status { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .flow-status .cloud-status { margin: 0; }
-.flow-status .cloud-status .fs-text { display: none; }
 .flow-status .auth-panel,
 .flow-status .sidebar-footer-actions { margin: 0; }
 .flow-actions-menu { position: relative; }
@@ -184,7 +97,7 @@ body.flow-nav-on .content-area { max-width: none !important; }
     display: flex; align-items: center; gap: 6px;
     background: var(--fn-navy-800); color: var(--fn-navy-200);
     border: 1px solid var(--fn-navy-700); border-radius: 4px;
-    padding: 6px 11px; font-size: 12px; font-weight: 500; cursor: pointer;
+    padding: 6px 11px; font-size: 12px; font-weight: 600; cursor: pointer;
 }
 .flow-actions-toggle:hover { color: #fff; border-color: var(--fn-navy-600); }
 .flow-actions-toggle svg { width: 14px; height: 14px; }
@@ -210,6 +123,105 @@ body.flow-nav-on .content-area { max-width: none !important; }
 .flow-actions-drop .auth-panel { display: block; margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--fn-navy-800); }
 .flow-actions-sep { height: 1px; background: var(--fn-navy-800); margin: 4px 2px; flex: none; }
 
+/* ── Esteira de etapas (Operação) ─────────────────────────── */
+.pipebar {
+    background: linear-gradient(180deg, var(--fn-navy-900), var(--fn-navy-800));
+    padding: 11px 14px; display: flex; align-items: stretch; gap: 2px;
+}
+.pstep {
+    flex: 1; display: flex; align-items: center; gap: 11px;
+    padding: 9px 12px; border-radius: 5px; min-width: 0;
+    background: transparent; border: none; cursor: pointer; text-align: left;
+    transition: background .12s, box-shadow .12s;
+}
+.pstep:hover { background: rgba(255,255,255,.04); }
+.pstep.active { background: rgba(229,161,40,.14); box-shadow: inset 0 0 0 1px rgba(229,161,40,.5); }
+.pstep.active:hover { background: rgba(229,161,40,.18); }
+.pstep .pn {
+    width: 31px; height: 31px; flex: none; border-radius: 50%;
+    border: 1.5px solid var(--fn-navy-400);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--fn-navy-200); font-family: var(--font-mono);
+    font-size: 14px; font-weight: 600; transition: all .12s;
+}
+.pstep.active .pn { background: var(--fn-amber-500); border-color: var(--fn-amber-500); color: var(--fn-navy-950); }
+.pstep.done .pn { background: var(--fn-navy-600); border-color: var(--fn-navy-600); color: #fff; }
+.pstep .picon { flex: none; color: var(--fn-navy-400); display: flex; }
+.pstep .picon svg { width: 17px; height: 17px; }
+.pstep.active .picon { color: var(--fn-amber-400); }
+.pstep .pl { flex: 1; min-width: 0; overflow: hidden; }
+.pstep .pl .t {
+    display: block; font-size: 14px; font-weight: 600; color: #e4ebf3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pstep.active .pl .t { color: #fff; }
+.pstep .pl .s {
+    display: block; font-size: 11.5px; color: var(--fn-navy-300);
+    white-space: nowrap; font-family: var(--font-mono);
+    overflow: hidden; text-overflow: ellipsis;
+}
+.pstep.active .pl .s { color: var(--fn-amber-300); }
+.parrow { flex: none; align-self: center; color: var(--fn-navy-600); display: flex; }
+.parrow svg { width: 16px; height: 16px; }
+
+/* Botão "Próximo passo" no fim da esteira */
+.pnext {
+    flex: none; align-self: center; margin-left: 6px;
+    display: flex; align-items: center; gap: 7px;
+    background: var(--fn-amber-500); color: var(--fn-navy-950);
+    border: none; border-radius: 5px; padding: 8px 13px;
+    font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+    transition: background .12s;
+}
+.pnext:hover { background: var(--fn-amber-400); }
+.pnext:disabled { opacity: .35; cursor: default; }
+.pnext svg { width: 14px; height: 14px; }
+
+/* ── Faixa de Referência ──────────────────────────────────── */
+.refbar {
+    background: var(--fn-navy-950); display: flex; align-items: center;
+    gap: 2px; padding: 0 14px; height: 38px;
+    border-top: 1px solid var(--fn-navy-800); overflow-x: auto; scrollbar-width: thin;
+}
+.refbar::-webkit-scrollbar { height: 4px; }
+.refbar::-webkit-scrollbar-thumb { background: var(--fn-navy-700); border-radius: 2px; }
+.refbar-lbl {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.4px;
+    text-transform: uppercase; color: var(--fn-navy-400); margin-right: 12px;
+    flex: none; white-space: nowrap;
+}
+.ref-btn {
+    display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500;
+    color: var(--fn-navy-200); padding: 6px 12px; border-radius: 3px;
+    background: transparent; border: none; cursor: pointer; white-space: nowrap; flex: none;
+    transition: background .12s, color .12s;
+}
+.ref-btn svg { width: 14px; height: 14px; flex: none; }
+.ref-btn:hover, .ref-btn.active { background: var(--fn-navy-800); color: var(--fn-amber-400); }
+.refbar-sep { width: 1px; align-self: center; height: 18px; background: var(--fn-navy-800); margin: 0 6px; flex: none; }
+
+/* Grupo suspenso na faixa de referência (ex.: "Cadastro") */
+.ref-dropdown { position: relative; flex: none; }
+.ref-dropdown-toggle svg:last-child { width: 11px; height: 11px; margin-left: 1px; transition: transform .12s; transform: rotate(90deg); }
+.ref-dropdown.open .ref-dropdown-toggle svg:last-child { transform: rotate(-90deg); }
+.ref-dropdown-menu {
+    position: fixed;
+    background: var(--fn-navy-900); border: 1px solid var(--fn-navy-700);
+    border-radius: 6px; padding: 6px; min-width: 170px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.45); display: none; flex-direction: column; gap: 2px;
+    z-index: 2200;
+}
+.ref-dropdown-menu.open { display: flex; }
+.ref-dropdown-item {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    background: transparent; border: none; color: var(--fn-navy-200);
+    padding: 8px 10px; border-radius: 4px; font-size: 12.5px; font-weight: 500;
+    cursor: pointer; text-align: left; white-space: nowrap;
+}
+.ref-dropdown-item svg { width: 14px; height: 14px; flex: none; }
+.ref-dropdown-item:hover, .ref-dropdown-item.active { background: var(--fn-navy-800); color: var(--fn-amber-400); }
+.ref-dropdown-sep { height: 1px; background: var(--fn-navy-700); margin: 4px 2px; flex: none; }
+
 /* Em telas de referência que reaproveitam a Precificação, esconder a barra de sub-abas */
 body.flow-ref-precif .precif-subnav { display: none !important; }
 
@@ -233,14 +245,16 @@ body.flow-ref-precif .precif-subnav { display: none !important; }
 
 /* ── Responsivo ───────────────────────────────────────────── */
 @media (max-width: 1100px) {
-    .pstep .pt { max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
+    .pstep .pl .s { display: none; }
+    .flow-brand .flow-brand-sub { display: none; }
 }
-@media (max-width: 900px) {
-    .flow-search-kbd { display: none; }
+@media (max-width: 860px) {
+    :root { --fn-header-h: 150px; }
+    .pipebar { flex-wrap: wrap; }
+    .pstep { flex: 1 1 40%; }
+    .parrow, .pnext { display: none; }
 }
-@media (max-width: 760px) {
-    .flow-globalbar { height: auto; flex-wrap: wrap; padding: 8px 10px; gap: 8px; }
-    :root { --fn-header-h: 96px; }
-    .pipetrack { order: 3; width: 100%; overflow-x: auto; }
-    .flow-sep { display: none; }
+@media (max-width: 560px) {
+    .flow-globalbar { flex-wrap: wrap; height: auto; padding: 8px 10px; gap: 8px; }
+    .flow-brand .flow-brand-sub { display: none; }
 }

@@ -17,3 +17,6 @@ firestore-debug.log
 storage-debug.log
 ui-debug.log
 .firebase/
+
+# Worktrees isolados do Claude Code (não devem ser versionados)
+.claude/worktrees/

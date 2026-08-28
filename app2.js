@@ -2609,23 +2609,14 @@ async function salvarNoCloud() {
             const imbelDataToSave = (typeof loadImbel === 'function') ? loadImbel() : null;
             if (imbelDataToSave) estoque._imbelData = imbelDataToSave;
         } catch (e) { /* ignore */ }
-        const docRef = window.firestoreDB.collection('app_data').doc('latest');
-        // Escrita dupla (ver cloud-store.js): grava os três documentos por
-        // módulo — app_data/estoque, /crm, /ponto — e também o legado
-        // app_data/latest, no formato exato de antes. Enquanto o legado
-        // continuar sendo escrito, voltar ao código anterior é seguro e não
-        // perde nada. Os campos abaixo já vivem dentro de `estado`; seguem
-        // replicados no topo do documento legado só por compatibilidade.
-        await CloudStore.salvarComEscritaDupla(window.firestoreDB, firebase, estoque, {
-            precificacao,
-            precificacoesCliente: precificacoesCliente || [],
-            tabelaAliquotas,
-            tabelaICMS,
-            categoriaPorProduto,
-            impostosEditaveis: impostosEditaveis || {},
-            icmsEditavelPJ: icmsEditavelPJ || {},
-            icmsEditavelPF: icmsEditavelPF || {}
-        });
+        // Grava só nos três documentos por módulo — app_data/estoque, /crm,
+        // /ponto (ver cloud-store.js). A escrita no legado app_data/latest foi
+        // removida: com tudo num documento só, o conjunto passou de 1 MiB e o
+        // Firestore recusava a gravação, fazendo o save inteiro falhar. Os
+        // campos que o legado replicava no topo (precificacao, tabelaICMS, ...)
+        // já vivem dentro de `estoque`, e carregarDoCloud lê de lá.
+        const docRef = window.firestoreDB.collection('app_data').doc(CloudStore.NOMES_MODULO.ESTOQUE);
+        await CloudStore.salvarModulosNoCloud(window.firestoreDB, firebase, estoque);
         // ler o documento para obter o updatedAt do servidor
             try {
             const savedDoc = await docRef.get();
@@ -2653,14 +2644,16 @@ async function salvarNoCloud() {
             if (__cloudSyncResetTimer) clearTimeout(__cloudSyncResetTimer);
             __cloudSyncResetTimer = setTimeout(() => { window._cloudSyncedRecently = false; window._lastCloudSaveAt = 0; }, 30000);
         } catch (e) { _catchSilencioso(e, 'salvarNoCloud'); }
-        console.debug('Dados salvos no Firestore (coleção app_data / doc latest)');
+        console.debug('Dados salvos no Firestore (coleção app_data / docs estoque, crm, ponto)');
         return true;
     } catch (e) {
         console.error('Erro salvando no Firestore:', e);
         // Detectar esgotamento de writes no Firestore e pausar auto-save temporariamente
         try {
             const errMsg = (e && (e.code || e.message || e.toString())) ? (e.code || e.message || e.toString()) : '';
-            if (errMsg && (errMsg.indexOf('resource-exhausted') !== -1 || errMsg.indexOf('exhausted') !== -1)) {
+            if (errMsg && (errMsg.indexOf('exceeds the maximum allowed size') !== -1 || errMsg.indexOf('acima do limite de 1 MiB') !== -1)) {
+                try { if (typeof mostrarNotificacao === 'function') mostrarNotificacao('Backup grande demais para a nuvem: ' + errMsg, 'error'); } catch (_) { _catchSilencioso(_, 'salvarNoCloud'); }
+            } else if (errMsg && (errMsg.indexOf('resource-exhausted') !== -1 || errMsg.indexOf('exhausted') !== -1)) {
                 console.warn('Firestore resource-exhausted detectado — pausando auto-save por 60s.');
                 window.__AUTO_SAVE_CLOUD = window.__AUTO_SAVE_CLOUD || {};
                 window.__AUTO_SAVE_CLOUD.enabled = false;

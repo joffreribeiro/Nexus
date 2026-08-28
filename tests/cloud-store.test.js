@@ -76,3 +76,41 @@ describe('CloudStore.remontarEstoqueAPartirDeModulos', () => {
     expect(reconstruido).toEqual(original);
   });
 });
+
+describe('CloudStore.verificarTamanhoDosModulos (teto de 1 MiB por documento)', () => {
+  it('mede cada módulo separadamente, não o estoque inteiro somado', () => {
+    const tamanhos = CloudStore.tamanhosDosModulos({
+      observacoes: 'x'.repeat(1000),
+      crm: { historico: 'y'.repeat(5000) },
+      ponto: { registros: [] }
+    });
+    expect(tamanhos.estoque).toBeGreaterThan(1000);
+    expect(tamanhos.estoque).toBeLessThan(2000);
+    expect(tamanhos.crm).toBeGreaterThan(5000);
+    expect(tamanhos.ponto).toBeLessThan(100);
+  });
+
+  it('estoque dentro do limite passa sem lançar', () => {
+    expect(() => CloudStore.verificarTamanhoDosModulos({ produtos: [{ id: 1 }] })).not.toThrow();
+  });
+
+  it('módulo acima de 1 MiB lança apontando qual documento estourou', () => {
+    expect(() => CloudStore.verificarTamanhoDosModulos({
+      crm: { historico: 'x'.repeat(CloudStore.LIMITE_DOC_BYTES + 1000) }
+    })).toThrow(/app_data\/crm/);
+  });
+
+  it('soma acima de 1 MiB distribuída entre módulos não lança (era o caso que quebrava o legado)', () => {
+    const meio = 'x'.repeat(700 * 1024);
+    expect(() => CloudStore.verificarTamanhoDosModulos({
+      observacoes: meio,
+      crm: { historico: meio }
+    })).not.toThrow();
+  });
+
+  it('updatedAt (sentinela do SDK) não entra na conta', () => {
+    const semTs = CloudStore.tamanhoAproximadoBytes({ a: 1 });
+    const comTs = CloudStore.tamanhoAproximadoBytes({ a: 1, updatedAt: { sentinela: 'x'.repeat(500) } });
+    expect(comTs).toBeLessThan(semTs + 30);
+  });
+});

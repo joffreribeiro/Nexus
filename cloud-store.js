@@ -24,20 +24,23 @@
  * que mudou. É uma mudança de arquitetura bem maior, fora do escopo desta
  * primeira fase.
  *
- * ESTADO ATUAL — cutover feito, em modo de escrita dupla:
- *   - `salvarNoCloud()` (app2.js) grava via `salvarComEscritaDupla()`: os três
- *     documentos novos E o legado `app_data/latest`, todos com o mesmo
- *     carimbo de tempo.
+ * ESTADO ATUAL — cutover concluído, escrita dupla removida:
+ *   - `salvarNoCloud()` (app2.js) grava via `salvarModulosNoCloud()`, só nos
+ *     três documentos por módulo. A escrita no legado `app_data/latest` foi
+ *     removida porque o conjunto passou de 1 MiB e o Firestore recusava a
+ *     gravação inteira ("size exceeds the maximum allowed size"), derrubando
+ *     todo o save. Agora cada módulo tem o seu próprio orçamento de 1 MiB.
  *   - As leituras (`carregarDoCloud`, `carregarDoCloudAuto`) passam por
  *     `lerEstadoCompativel()`, que escolhe a fonte mais recente e devolve
- *     sempre o formato antigo, mantendo o resto dessas funções intacto.
- *   - Nada é apagado: `app_data/latest` continua existindo e atualizado, o
- *     que torna a volta ao código anterior segura e sem perda de dados.
- *
- * PRÓXIMO PASSO (não feito, requer decisão): remover a escrita no documento
- * legado. Só então o teto de 1 MiB deixa de valer para o conjunto todo — até
- * lá, o ganho é o isolamento entre módulos (um save do CRM não sobrescreve o
- * Ponto) e a arquitetura já pronta.
+ *     sempre o formato antigo, mantendo o resto dessas funções intacto. O
+ *     legado continua sendo LIDO como fallback, então a base antiga ainda
+ *     serve de origem enquanto os documentos por módulo não forem gravados.
+ *   - `app_data/latest` não é apagado, mas a partir daqui fica congelado: o
+ *     rollback para o código anterior perde as alterações feitas depois deste
+ *     ponto (e, de todo modo, o código antigo já não conseguia gravar).
+ *   - `verificarTamanhoDosModulos()` roda antes de cada save e falha com uma
+ *     mensagem dizendo QUAL módulo estourou o 1 MiB — o erro cru do Firestore
+ *     só informa o total do documento.
  *
  * Funções puras (dividirEstoqueEmModulos/remontarEstoqueAPartirDeModulos) não
  * tocam Firestore e são testadas isoladamente com Vitest. As demais exigem
@@ -50,6 +53,10 @@
     var NOMES_MODULO = { ESTOQUE: 'estoque', CRM: 'crm', PONTO: 'ponto' };
     var COLECAO = 'app_data';
     var DOC_LEGADO = 'latest';
+    // Teto de 1 MiB por documento imposto pelo Firestore, e o ponto a partir
+    // do qual já vale avisar (80%).
+    var LIMITE_DOC_BYTES = 1048576;
+    var AVISO_BYTES = Math.floor(LIMITE_DOC_BYTES * 0.8);
 
     /**
      * Devolve uma cópia sem a chave `updatedAt` — cada documento de módulo
@@ -127,8 +134,71 @@
      * @param {object} estoque - objeto estoque completo (com .crm/.ponto)
      * @returns {Promise<{estoqueCore: object, crm: object, ponto: object}>} os dados efetivamente gravados, já com updatedAt
      */
+    /**
+     * Tamanho aproximado, em bytes, que um payload ocupará no Firestore.
+     * Não é a fórmula exata do Firestore (que soma nome do documento, nomes
+     * de campo e overhead de índices), mas o JSON serializado em UTF-8 é uma
+     * aproximação boa o bastante para avisar antes de bater no teto.
+     */
+    function tamanhoAproximadoBytes(valor) {
+        try {
+            var json = JSON.stringify(valor, function (k, v) {
+                // serverTimestamp() é um sentinela do SDK, não serializa —
+                // vira ~8 bytes no documento final.
+                return (k === 'updatedAt') ? null : v;
+            });
+            if (!json) return 0;
+            if (typeof Blob !== 'undefined') return new Blob([json]).size;
+            if (typeof Buffer !== 'undefined') return Buffer.byteLength(json, 'utf8');
+            return json.length;
+        } catch (e) { return 0; }
+    }
+
+    /**
+     * Tamanho aproximado de cada um dos três documentos de módulo. Útil para
+     * diagnosticar de onde vem o peso quando o save falha por tamanho.
+     * @returns {{estoque: number, crm: number, ponto: number}}
+     */
+    function tamanhosDosModulos(estoque) {
+        var modulos = dividirEstoqueEmModulos(estoque);
+        return {
+            estoque: tamanhoAproximadoBytes(modulos.estoqueCore),
+            crm: tamanhoAproximadoBytes(modulos.crm || {}),
+            ponto: tamanhoAproximadoBytes(modulos.ponto || {})
+        };
+    }
+
+    /**
+     * Barra o save antes de ir ao Firestore quando algum módulo passou do
+     * teto de 1 MiB, com uma mensagem que diz QUAL módulo estourou e quanto
+     * ele ocupa — o erro cru do Firestore só informa o total do documento.
+     * Acima de AVISO_BYTES apenas registra um aviso no console.
+     * @throws {Error} se algum módulo exceder LIMITE_DOC_BYTES
+     */
+    function verificarTamanhoDosModulos(estoque) {
+        var tamanhos = tamanhosDosModulos(estoque);
+        var excedidos = Object.keys(tamanhos).filter(function (m) { return tamanhos[m] > LIMITE_DOC_BYTES; });
+        if (excedidos.length) {
+            var detalhe = excedidos.map(function (m) {
+                return 'app_data/' + m + ' (' + Math.round(tamanhos[m] / 1024) + ' KiB)';
+            }).join(', ');
+            throw new Error(
+                'Documento acima do limite de 1 MiB do Firestore: ' + detalhe +
+                '. Reduza o histórico desse módulo antes de salvar na nuvem.'
+            );
+        }
+        Object.keys(tamanhos).forEach(function (m) {
+            if (tamanhos[m] > AVISO_BYTES) {
+                console.warn('CloudStore: app_data/' + m + ' está em ' + Math.round(tamanhos[m] / 1024) +
+                    ' KiB, perto do teto de 1024 KiB por documento do Firestore.');
+            }
+        });
+        return tamanhos;
+    }
+
     async function salvarModulosNoCloud(db, firebaseNS, estoque) {
         if (!db) throw new Error('salvarModulosNoCloud: db é obrigatório');
+        verificarTamanhoDosModulos(estoque);
         var modulos = dividirEstoqueEmModulos(estoque);
         var timestamp = (firebaseNS && firebaseNS.firestore && firebaseNS.firestore.FieldValue)
             ? firebaseNS.firestore.FieldValue.serverTimestamp()
@@ -239,47 +309,6 @@
     }
 
     /**
-     * Grava nos três documentos novos E no documento legado, com um único
-     * carimbo de tempo para os quatro.
-     *
-     * Por que continuar escrevendo no legado: é a rede de segurança do
-     * cutover. Enquanto a escrita for dupla, `app_data/latest` permanece
-     * atualizado — então reverter o código para a versão anterior não perde
-     * nenhuma alteração feita nesse meio-tempo. O ganho de espaço do teto de
-     * 1 MiB só se concretiza quando essa escrita legada for removida, num
-     * passo posterior, depois de a leitura pelos módulos estar comprovada em
-     * uso real.
-     *
-     * @param {object} db
-     * @param {object} firebaseNS - namespace `firebase` (para FieldValue)
-     * @param {object} estoque - objeto estoque completo (com .crm/.ponto)
-     * @param {object} [extras] - campos redundantes que o documento legado
-     *        sempre carregou no nível de topo (precificacao, tabelaICMS, ...);
-     *        já estão dentro de `estado`, mas são preservados para que uma
-     *        eventual volta ao código antigo encontre o documento no formato
-     *        exato que ele espera.
-     */
-    async function salvarComEscritaDupla(db, firebaseNS, estoque, extras) {
-        if (!db) throw new Error('salvarComEscritaDupla: db é obrigatório');
-        var modulos = dividirEstoqueEmModulos(estoque);
-        var timestamp = (firebaseNS && firebaseNS.firestore && firebaseNS.firestore.FieldValue)
-            ? firebaseNS.firestore.FieldValue.serverTimestamp()
-            : new Date();
-
-        var payloadLegado = Object.assign({}, extras || {}, {
-            estado: estoque,
-            updatedAt: timestamp
-        });
-
-        await Promise.all([
-            db.collection(COLECAO).doc(NOMES_MODULO.ESTOQUE).set(Object.assign({}, modulos.estoqueCore, { updatedAt: timestamp })),
-            db.collection(COLECAO).doc(NOMES_MODULO.CRM).set(Object.assign({}, modulos.crm || {}, { updatedAt: timestamp })),
-            db.collection(COLECAO).doc(NOMES_MODULO.PONTO).set(Object.assign({}, modulos.ponto || {}, { updatedAt: timestamp })),
-            db.collection(COLECAO).doc(DOC_LEGADO).set(payloadLegado)
-        ]);
-    }
-
-    /**
      * Lê o estado da nuvem devolvendo SEMPRE o mesmo formato que o documento
      * legado tinha (`{ estado, precificacoesCliente, updatedAt, ... }`), venha
      * ele dos documentos novos ou do legado — é o que permite trocar a fonte
@@ -347,7 +376,10 @@
         salvarModulosNoCloud: salvarModulosNoCloud,
         carregarModulosDoCloud: carregarModulosDoCloud,
         migrarDocumentoUnico: migrarDocumentoUnico,
-        salvarComEscritaDupla: salvarComEscritaDupla,
+        tamanhoAproximadoBytes: tamanhoAproximadoBytes,
+        tamanhosDosModulos: tamanhosDosModulos,
+        verificarTamanhoDosModulos: verificarTamanhoDosModulos,
+        LIMITE_DOC_BYTES: LIMITE_DOC_BYTES,
         lerEstadoCompativel: lerEstadoCompativel,
         timestampMaisRecenteDeSnapshot: timestampMaisRecenteDeSnapshot,
         NOMES_MODULO: NOMES_MODULO

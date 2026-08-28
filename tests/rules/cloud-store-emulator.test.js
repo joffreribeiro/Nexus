@@ -186,39 +186,39 @@ describe('CloudStore.migrarDocumentoUnico', () => {
     });
 });
 
-describe('CloudStore.salvarComEscritaDupla (rede de segurança do cutover)', () => {
-    it('grava nos três documentos novos E no legado, tudo de uma vez', async () => {
-        const estoque = {
+describe('CloudStore: escrita dupla removida (teto de 1 MiB)', () => {
+    it('não escreve mais no documento legado app_data/latest', async () => {
+        await CloudStore.salvarModulosNoCloud(db, firebaseNSFake, {
             produtos: [{ id: 1, nome: 'CARABINA' }],
-            crm: { negocios: [{ id: 'n1' }] },
-            ponto: { registros: [{ data: '2026-01-01' }] }
-        };
-        await CloudStore.salvarComEscritaDupla(db, firebaseNSFake, estoque, { tabelaICMS: [{ aliquota: 18 }] });
-
-        const [docEstoque, docCrm, docPonto, docLegado] = await Promise.all([
-            db.collection('app_data').doc('estoque').get(),
-            db.collection('app_data').doc('crm').get(),
-            db.collection('app_data').doc('ponto').get(),
-            db.collection('app_data').doc('latest').get()
-        ]);
-        expect(docEstoque.data().produtos).toEqual(estoque.produtos);
-        expect(docCrm.data().negocios).toEqual(estoque.crm.negocios);
-        expect(docPonto.data().registros).toEqual(estoque.ponto.registros);
-        // O legado continua no formato exato que o código antigo espera:
-        // tudo dentro de `estado`, mais os campos redundantes de topo.
-        expect(docLegado.exists).toBe(true);
-        expect(docLegado.data().estado.produtos).toEqual(estoque.produtos);
-        expect(docLegado.data().estado.crm).toEqual(estoque.crm);
-        expect(docLegado.data().tabelaICMS).toEqual([{ aliquota: 18 }]);
+            crm: { negocios: [{ id: 'n1' }] }
+        });
+        const docLegado = await db.collection('app_data').doc('latest').get();
+        expect(docLegado.exists).toBe(false);
     });
 
-    it('reverter o código para a versão antiga não perderia dados (legado fica atualizado)', async () => {
-        await CloudStore.salvarComEscritaDupla(db, firebaseNSFake, { produtos: [{ id: 1 }] }, {});
-        await CloudStore.salvarComEscritaDupla(db, firebaseNSFake, { produtos: [{ id: 1 }, { id: 2 }] }, {});
+    it('um módulo grande não derruba o save dos outros (cada doc tem seu próprio 1 MiB)', async () => {
+        // ~700 KiB em crm + ~700 KiB em estoque: passava de 1 MiB somado, que
+        // era exatamente o que o documento legado recusava.
+        const encher = (n) => 'x'.repeat(n);
+        await CloudStore.salvarModulosNoCloud(db, firebaseNSFake, {
+            observacoes: encher(700 * 1024),
+            crm: { historico: encher(700 * 1024) }
+        });
+        const [docEstoque, docCrm] = await Promise.all([
+            db.collection('app_data').doc('estoque').get(),
+            db.collection('app_data').doc('crm').get()
+        ]);
+        expect(docEstoque.data().observacoes).toHaveLength(700 * 1024);
+        expect(docCrm.data().historico).toHaveLength(700 * 1024);
+    });
 
-        // Simula o código antigo lendo `app_data/latest` diretamente.
-        const docLegado = await db.collection('app_data').doc('latest').get();
-        expect(docLegado.data().estado.produtos).toEqual([{ id: 1 }, { id: 2 }]);
+    it('módulo acima de 1 MiB falha antes do Firestore, dizendo qual módulo estourou', async () => {
+        await expect(
+            CloudStore.salvarModulosNoCloud(db, firebaseNSFake, { crm: { historico: 'x'.repeat(1100 * 1024) } })
+        ).rejects.toThrow(/app_data\/crm/);
+        // Nada foi gravado: o save é barrado antes de tocar no Firestore.
+        const docCrm = await db.collection('app_data').doc('crm').get();
+        expect(docCrm.exists).toBe(false);
     });
 });
 
@@ -271,14 +271,14 @@ describe('CloudStore.lerEstadoCompativel (escolha da fonte)', () => {
         expect(origem).toBeNull();
     });
 
-    it('round-trip pelo caminho real do app: escrita dupla seguida de leitura compatível', async () => {
+    it('round-trip pelo caminho real do app: save por módulos seguido de leitura compatível', async () => {
         const estoque = {
             produtos: [{ id: 1, nome: 'FUZIL' }],
             clientes: [{ id: 'c1' }],
             crm: { negocios: [{ id: 'n1', titulo: 'Negócio' }] },
             ponto: { registros: [{ data: '2026-03-01', entrada: '08:00' }] }
         };
-        await CloudStore.salvarComEscritaDupla(db, firebaseNSFake, estoque, {});
+        await CloudStore.salvarModulosNoCloud(db, firebaseNSFake, estoque);
         const { data } = await CloudStore.lerEstadoCompativel(db);
 
         expect(data.estado.produtos).toEqual(estoque.produtos);
@@ -290,7 +290,7 @@ describe('CloudStore.lerEstadoCompativel (escolha da fonte)', () => {
 
 describe('CloudStore.timestampMaisRecenteDeSnapshot (listener em tempo real)', () => {
     it('devolve o timestamp mais recente entre os documentos da coleção', async () => {
-        await CloudStore.salvarComEscritaDupla(db, firebaseNSFake, { produtos: [] }, {});
+        await CloudStore.salvarModulosNoCloud(db, firebaseNSFake, { produtos: [] });
         const snap = await db.collection('app_data').get();
         const ts = CloudStore.timestampMaisRecenteDeSnapshot(snap);
         expect(typeof ts).toBe('number');

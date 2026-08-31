@@ -53,7 +53,13 @@
  */
 (function () {
 
-    var NOMES_MODULO = { ESTOQUE: 'estoque', CRM: 'crm', PONTO: 'ponto' };
+    var NOMES_MODULO = { ESTOQUE: 'estoque', CRM: 'crm', PONTO: 'ponto', AUDITORIA: 'auditoria' };
+    // Ordem usada em todas as operações que percorrem os módulos.
+    var TODOS_MODULOS = [NOMES_MODULO.ESTOQUE, NOMES_MODULO.CRM, NOMES_MODULO.PONTO, NOMES_MODULO.AUDITORIA];
+    // Chave do estoque que vira o documento de auditoria. Diferente de crm e
+    // ponto, que já são sub-objetos, esta é um array — e array não pode ser a
+    // raiz de um documento Firestore, daí o envelope { registros: [...] }.
+    var CHAVE_AUDITORIA = 'auditoriaVendas';
     var COLECAO = 'app_data';
     var DOC_LEGADO = 'latest';
     // Teto de 1 MiB por documento imposto pelo Firestore, e o ponto a partir
@@ -85,27 +91,35 @@
     }
 
     /**
-     * Separa o objeto `estoque` (hoje um único blob com tudo) em três partes
-     * independentes. `crm` e `ponto` já são sub-objetos isolados dentro de
-     * `estoque` (ver crm-store.js/ponto-store.js — "Único ponto que escreve
-     * em estoque.crm/estoque.ponto"); esta função só formaliza essa fronteira
-     * que já existe na prática.
+     * Separa o objeto `estoque` em partes independentes. `crm` e `ponto` já
+     * são sub-objetos isolados dentro de `estoque` (ver crm-store.js/
+     * ponto-store.js — "Único ponto que escreve em estoque.crm/estoque.ponto");
+     * para eles esta função só formaliza uma fronteira que já existe.
+     *
+     * `auditoriaVendas` saiu depois, por peso: sozinha ocupava metade do
+     * documento `app_data/estoque`. É um log append-only, lido só pelas telas
+     * de auditoria, então tirá-lo do caminho do resto do estoque não custa
+     * nada. Como é um array e array não pode ser a raiz de um documento
+     * Firestore, vai dentro de `{ registros: [...] }`.
      * @param {object} estoque
-     * @returns {{estoqueCore: object, crm: object|null, ponto: object|null}}
+     * @returns {{estoqueCore: object, crm: object|null, ponto: object|null, auditoria: {registros: Array}|null}}
      */
     function dividirEstoqueEmModulos(estoque) {
         if (!estoque || typeof estoque !== 'object') {
-            return { estoqueCore: {}, crm: null, ponto: null };
+            return { estoqueCore: {}, crm: null, ponto: null, auditoria: null };
         }
         var estoqueCore = {};
         Object.keys(estoque).forEach(function (chave) {
-            if (chave === 'crm' || chave === 'ponto') return;
+            if (chave === 'crm' || chave === 'ponto' || chave === CHAVE_AUDITORIA) return;
             estoqueCore[chave] = estoque[chave];
         });
         return {
             estoqueCore: estoqueCore,
             crm: (estoque.crm !== undefined) ? estoque.crm : null,
-            ponto: (estoque.ponto !== undefined) ? estoque.ponto : null
+            ponto: (estoque.ponto !== undefined) ? estoque.ponto : null,
+            auditoria: (estoque[CHAVE_AUDITORIA] !== undefined)
+                ? { registros: estoque[CHAVE_AUDITORIA] }
+                : null
         };
     }
 
@@ -125,6 +139,15 @@
         Object.keys(estoqueCore).forEach(function (chave) { estoque[chave] = estoqueCore[chave]; });
         if (modulos && modulos.crm !== undefined && modulos.crm !== null) estoque.crm = modulos.crm;
         if (modulos && modulos.ponto !== undefined && modulos.ponto !== null) estoque.ponto = modulos.ponto;
+        // Auditoria: quando `auditoriaVendas` ainda aparece dentro do
+        // estoqueCore, ele vence — só uma versão anterior à separação grava
+        // assim, e ela grava depois, então é o valor mais novo (o documento
+        // app_data/auditoria ficou para trás naquele save). No fluxo normal a
+        // chave não existe no estoqueCore e o documento próprio é a fonte.
+        if (modulos && modulos.auditoria && Array.isArray(modulos.auditoria.registros)
+            && !Array.isArray(estoque[CHAVE_AUDITORIA])) {
+            estoque[CHAVE_AUDITORIA] = modulos.auditoria.registros;
+        }
         return estoque;
     }
 
@@ -167,7 +190,8 @@
         return {
             estoque: tamanhoAproximadoBytes(modulos.estoqueCore),
             crm: tamanhoAproximadoBytes(modulos.crm || {}),
-            ponto: tamanhoAproximadoBytes(modulos.ponto || {})
+            ponto: tamanhoAproximadoBytes(modulos.ponto || {}),
+            auditoria: tamanhoAproximadoBytes(modulos.auditoria || {})
         };
     }
 
@@ -210,14 +234,19 @@
         var payloadEstoque = Object.assign({}, modulos.estoqueCore, { updatedAt: timestamp });
         var payloadCrm = Object.assign({}, modulos.crm || {}, { updatedAt: timestamp });
         var payloadPonto = Object.assign({}, modulos.ponto || {}, { updatedAt: timestamp });
+        // Sem `registros: []` como default: um estoque que nunca teve auditoria
+        // não deve ganhar a chave de volta na leitura (mesma simetria de
+        // crm/ponto, e o que mantém o round-trip fiel ao original).
+        var payloadAuditoria = Object.assign({}, modulos.auditoria || {}, { updatedAt: timestamp });
 
         await Promise.all([
             db.collection(COLECAO).doc(NOMES_MODULO.ESTOQUE).set(payloadEstoque),
             db.collection(COLECAO).doc(NOMES_MODULO.CRM).set(payloadCrm),
-            db.collection(COLECAO).doc(NOMES_MODULO.PONTO).set(payloadPonto)
+            db.collection(COLECAO).doc(NOMES_MODULO.PONTO).set(payloadPonto),
+            db.collection(COLECAO).doc(NOMES_MODULO.AUDITORIA).set(payloadAuditoria)
         ]);
 
-        return { estoqueCore: payloadEstoque, crm: payloadCrm, ponto: payloadPonto };
+        return { estoqueCore: payloadEstoque, crm: payloadCrm, ponto: payloadPonto, auditoria: payloadAuditoria };
     }
 
     /**
@@ -236,11 +265,7 @@
      * @returns {Promise<{estoque: object, updatedAtRaw: *, updatedAtDate: Date|null, existeAlgum: boolean}>}
      */
     async function _lerModulos(db) {
-        var refs = [
-            db.collection(COLECAO).doc(NOMES_MODULO.ESTOQUE),
-            db.collection(COLECAO).doc(NOMES_MODULO.CRM),
-            db.collection(COLECAO).doc(NOMES_MODULO.PONTO)
-        ];
+        var refs = TODOS_MODULOS.map(function (nome) { return db.collection(COLECAO).doc(nome); });
         var snaps = await Promise.all(refs.map(function (ref) { return ref.get(); }));
         var dados = snaps.map(function (s) { return s.exists ? (s.data() || {}) : null; });
 
@@ -261,7 +286,8 @@
         var estoque = remontarEstoqueAPartirDeModulos({
             estoqueCore: dados[0] ? semUpdatedAt(dados[0]) : {},
             crm: dados[1] ? semUpdatedAt(dados[1]) : null,
-            ponto: dados[2] ? semUpdatedAt(dados[2]) : null
+            ponto: dados[2] ? semUpdatedAt(dados[2]) : null,
+            auditoria: dados[3] ? semUpdatedAt(dados[3]) : null
         });
 
         return {
@@ -373,7 +399,7 @@
      */
     async function diagnosticoDosDocumentos(db) {
         if (!db) throw new Error('diagnosticoDosDocumentos: db é obrigatório');
-        var nomes = [NOMES_MODULO.ESTOQUE, NOMES_MODULO.CRM, NOMES_MODULO.PONTO, DOC_LEGADO];
+        var nomes = TODOS_MODULOS.concat([DOC_LEGADO]);
         var snaps = await Promise.all(nomes.map(function (n) {
             return db.collection(COLECAO).doc(n).get();
         }));

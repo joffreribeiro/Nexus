@@ -13388,9 +13388,11 @@ table.est-v2-table thead th.est-prod-hdr {
     border-bottom: 0;
     vertical-align: middle; cursor: pointer;
 }
+/* Única coluna fora do alinhamento central da tabela: nome de produto se lê
+   melhor alinhado à esquerda, como qualquer lista de nomes. */
 table.est-v2-table tbody td.est-prod-cell {
-    position: sticky; left: 0; z-index: 2;
-    background: #fff; min-width: 240px; max-width: 270px;
+    position: sticky; left: 0; z-index: 2; text-align: left;
+    background: #fff; min-width: 260px; max-width: 344px;
     border-right: 2px solid var(--tv-navy-200);
     box-shadow: 3px 0 6px -2px rgba(10,24,40,0.07);
     vertical-align: middle; padding: 6px 12px;
@@ -13404,7 +13406,15 @@ table.est-v2-table tfoot td.est-prod-cell {
 }
 .est-prod-nm {
     font-weight: 600; font-size: 0.82rem; color: var(--tv-navy-900);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 235px;
+    /* Sem largura fixa: o max-width de 235px que havia aqui truncava o nome
+       antes do fim da célula, deixando espaço sobrando à direita. Agora o
+       corte só acontece quando o nome realmente não cabe — e aí o título
+       completo continua no atributo title. */
+    /* 324px = largura útil da célula (max-width 344px menos os 10px de
+       padding de cada lado imposto por "#tabelaEstoque th, #tabelaEstoque td").
+       Casar os dois números é o que faz o nome ir até a borda da célula sem
+       deixar sobra — antes eram 235px fixos dentro de uma célula maior. */
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 324px;
     cursor: pointer;
 }
 .est-prod-nm:hover { color: var(--tv-amber-600); }
@@ -13447,7 +13457,7 @@ table.est-v2-table thead tr.est-hdr-sub th {
     background: var(--tv-navy-900); color: #fff !important;
     font-family: var(--tv-font-display); font-size: 0.62rem; font-weight: 600;
     letter-spacing: 0.08em; text-transform: uppercase;
-    height: 24px; padding: 0 10px; text-align: right; white-space: nowrap;
+    height: 24px; padding: 0 10px; text-align: center; white-space: nowrap;
     border-right: 1px solid var(--tv-navy-700);
     border-bottom: 2px solid var(--tv-amber-500);
     cursor: pointer; user-select: none;
@@ -13480,7 +13490,7 @@ table.est-v2-table tbody td {
     border-right: 1px solid var(--tv-navy-100);
     vertical-align: middle; white-space: nowrap;
     font-family: var(--tv-font-mono); font-variant-numeric: tabular-nums;
-    text-align: right; font-size: 0.78rem; color: var(--tv-navy-700);
+    text-align: center; font-size: 0.78rem; color: var(--tv-navy-700);
 }
 table.est-v2-table tbody tr:hover td { background: var(--tv-navy-50) !important; }
 table.est-v2-table tbody tr:hover td.est-prod-cell { background: var(--tv-navy-50) !important; }
@@ -13524,7 +13534,7 @@ table.est-v2-table tfoot td {
     border-right: 1px solid var(--tv-navy-700);
     border-top: 2px solid var(--tv-amber-500);
     font-family: var(--tv-font-mono); font-variant-numeric: tabular-nums;
-    text-align: right; font-size: 0.78rem; font-weight: 600; white-space: nowrap;
+    text-align: center; font-size: 0.78rem; font-weight: 600; white-space: nowrap;
 }
 table.est-v2-table tfoot td.est-grp-alt-foot { background: #112236 !important; }
 table.est-v2-table tfoot td.est-consol-cell { background: #2a2010 !important; color: var(--tv-amber-300) !important; }
@@ -13582,6 +13592,23 @@ table.imp-matrix thead th {
 /* Exceções de z-index para tabelas com sticky columns */
 #tabelaEstoque thead th,
 table.est-v2-table thead th { z-index: 1300 !important; }
+
+/* Alinhamento dos cabeçalhos da tabela de Estoque. Precisa de !important
+   porque o padrão global logo acima impõe text-align:left a todo thead th —
+   aqui as colunas de dados acompanham o corpo, que é centralizado, e só a
+   coluna PRODUTOS fica à esquerda. */
+table.est-v2-table thead tr.est-hdr-group th,
+table.est-v2-table thead tr.est-hdr-sub th { text-align: center !important; }
+
+/* A coluna PRODUTOS precisa de seletor com ID para vencer o
+   "#tabelaEstoque th, #tabelaEstoque td { text-align: center }" herdado da
+   versão anterior da tabela (styles.css ~3086). A exceção de alinhamento que
+   acompanha aquela regra usa as classes antigas .col-produto/.produto-nome,
+   que esta tabela não gera mais — por isso o nome do produto vinha
+   centralizado junto com os números. */
+#tabelaEstoque thead th.est-prod-hdr,
+#tabelaEstoque tbody td.est-prod-cell,
+#tabelaEstoque tfoot td.est-prod-cell { text-align: left !important; }
 
 /* Hover em colunas sortáveis */
 table.dashboard-table thead th.sortable:hover,

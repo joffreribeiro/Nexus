@@ -18,15 +18,26 @@ describe('CloudStore.dividirEstoqueEmModulos', () => {
     expect(ponto).toEqual({ registros: [{ data: '2026-01-01' }] });
   });
 
-  it('crm/ponto ausentes viram null (não quebra em estoque sem esses módulos ainda)', () => {
-    const { crm, ponto } = CloudStore.dividirEstoqueEmModulos({ produtos: [] });
+  it('crm/ponto/auditoria ausentes viram null (não quebra em estoque sem esses módulos ainda)', () => {
+    const { crm, ponto, auditoria } = CloudStore.dividirEstoqueEmModulos({ produtos: [] });
     expect(crm).toBeNull();
     expect(ponto).toBeNull();
+    expect(auditoria).toBeNull();
+  });
+
+  it('auditoriaVendas sai do estoqueCore e vira o envelope { registros } (array não pode ser raiz de documento)', () => {
+    const { estoqueCore, auditoria } = CloudStore.dividirEstoqueEmModulos({
+      produtos: [{ id: 1 }],
+      auditoriaVendas: [{ id: 'a1', acao: 'EDIÇÃO' }]
+    });
+    expect(estoqueCore.auditoriaVendas).toBeUndefined();
+    expect(auditoria).toEqual({ registros: [{ id: 'a1', acao: 'EDIÇÃO' }] });
   });
 
   it('estoque nulo ou não-objeto retorna estrutura vazia segura', () => {
-    expect(CloudStore.dividirEstoqueEmModulos(null)).toEqual({ estoqueCore: {}, crm: null, ponto: null });
-    expect(CloudStore.dividirEstoqueEmModulos(undefined)).toEqual({ estoqueCore: {}, crm: null, ponto: null });
+    const vazio = { estoqueCore: {}, crm: null, ponto: null, auditoria: null };
+    expect(CloudStore.dividirEstoqueEmModulos(null)).toEqual(vazio);
+    expect(CloudStore.dividirEstoqueEmModulos(undefined)).toEqual(vazio);
   });
 
   it('não muta o objeto estoque original', () => {
@@ -52,10 +63,35 @@ describe('CloudStore.remontarEstoqueAPartirDeModulos', () => {
 
   it('crm/ponto null (documento ainda não existe) não vira chave no estoque remontado', () => {
     const estoque = CloudStore.remontarEstoqueAPartirDeModulos({
-      estoqueCore: { produtos: [] }, crm: null, ponto: null
+      estoqueCore: { produtos: [] }, crm: null, ponto: null, auditoria: null
     });
     expect('crm' in estoque).toBe(false);
     expect('ponto' in estoque).toBe(false);
+    expect('auditoriaVendas' in estoque).toBe(false);
+  });
+
+  it('auditoria volta do envelope para estoque.auditoriaVendas', () => {
+    const estoque = CloudStore.remontarEstoqueAPartirDeModulos({
+      estoqueCore: { produtos: [] },
+      auditoria: { registros: [{ id: 'a1' }] }
+    });
+    expect(estoque.auditoriaVendas).toEqual([{ id: 'a1' }]);
+  });
+
+  it('auditoria dentro do estoqueCore vence a do documento próprio (versão antiga gravou depois)', () => {
+    const estoque = CloudStore.remontarEstoqueAPartirDeModulos({
+      estoqueCore: { produtos: [], auditoriaVendas: [{ id: 'gravado-pela-versao-antiga' }] },
+      auditoria: { registros: [{ id: 'obsoleto' }] }
+    });
+    expect(estoque.auditoriaVendas).toEqual([{ id: 'gravado-pela-versao-antiga' }]);
+  });
+
+  it('base gravada antes da separação mantém a auditoria que veio dentro do estoqueCore', () => {
+    const estoque = CloudStore.remontarEstoqueAPartirDeModulos({
+      estoqueCore: { produtos: [], auditoriaVendas: [{ id: 'antigo' }] },
+      auditoria: null
+    });
+    expect(estoque.auditoriaVendas).toEqual([{ id: 'antigo' }]);
   });
 
   it('modulos ausente ou parcial não lança — retorna o que der pra montar', () => {
@@ -69,7 +105,8 @@ describe('CloudStore.remontarEstoqueAPartirDeModulos', () => {
       registroVendas: [{ id: 'v1', valorTotal: 500 }],
       clientes: [{ id: 'c1', nome: 'Cliente X' }],
       crm: { negocios: [{ id: 'n1', titulo: 'Negócio' }], funis: [] },
-      ponto: { registros: [{ data: '2026-01-01', entrada: '08:00' }], acordos: [] }
+      ponto: { registros: [{ data: '2026-01-01', entrada: '08:00' }], acordos: [] },
+      auditoriaVendas: [{ id: 'a1', acao: 'EDIÇÃO', contrato: '123' }]
     };
     const modulos = CloudStore.dividirEstoqueEmModulos(original);
     const reconstruido = CloudStore.remontarEstoqueAPartirDeModulos(modulos);
@@ -88,10 +125,20 @@ describe('CloudStore.verificarTamanhoDosModulos (teto de 1 MiB por documento)', 
     expect(tamanhos.estoque).toBeLessThan(2000);
     expect(tamanhos.crm).toBeGreaterThan(5000);
     expect(tamanhos.ponto).toBeLessThan(100);
+    expect(tamanhos.auditoria).toBeLessThan(100);
   });
 
   it('estoque dentro do limite passa sem lançar', () => {
     expect(() => CloudStore.verificarTamanhoDosModulos({ produtos: [{ id: 1 }] })).not.toThrow();
+  });
+
+  it('auditoria grande não conta mais para o documento estoque', () => {
+    const tamanhos = CloudStore.tamanhosDosModulos({
+      produtos: [{ id: 1 }],
+      auditoriaVendas: [{ detalhes: 'z'.repeat(400 * 1024) }]
+    });
+    expect(tamanhos.estoque).toBeLessThan(1024);
+    expect(tamanhos.auditoria).toBeGreaterThan(400 * 1024);
   });
 
   it('módulo acima de 1 MiB lança apontando qual documento estourou', () => {

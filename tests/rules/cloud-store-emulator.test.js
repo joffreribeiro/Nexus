@@ -48,11 +48,12 @@ beforeEach(async () => {
 const firebaseNSFake = { firestore: { FieldValue: admin.firestore.FieldValue } };
 
 describe('CloudStore.salvarModulosNoCloud / carregarModulosDoCloud', () => {
-    it('grava em três documentos separados (app_data/estoque, /crm, /ponto), não em um só', async () => {
+    it('grava em documentos separados (app_data/estoque, /crm, /ponto, /auditoria), não em um só', async () => {
         const estoque = {
             produtos: [{ id: 1, nome: 'CARABINA' }],
             crm: { negocios: [{ id: 'n1' }] },
-            ponto: { registros: [{ data: '2026-01-01' }] }
+            ponto: { registros: [{ data: '2026-01-01' }] },
+            auditoriaVendas: [{ id: 'a1', acao: 'EDIÇÃO' }]
         };
         await CloudStore.salvarModulosNoCloud(db, firebaseNSFake, estoque);
 
@@ -68,8 +69,34 @@ describe('CloudStore.salvarModulosNoCloud / carregarModulosDoCloud', () => {
         expect(docCrm.data().negocios).toEqual([{ id: 'n1' }]);
         expect(docPonto.exists).toBe(true);
         expect(docPonto.data().registros).toEqual([{ data: '2026-01-01' }]);
+        // A auditoria saiu do documento estoque e foi para o seu próprio.
+        expect(docEstoque.data().auditoriaVendas).toBeUndefined();
+        const docAuditoria = await db.collection('app_data').doc('auditoria').get();
+        expect(docAuditoria.data().registros).toEqual([{ id: 'a1', acao: 'EDIÇÃO' }]);
         // Não deve ter criado nem tocado o documento legado.
         expect(docLegado.exists).toBe(false);
+    });
+
+    it('auditoria gravada antes da separação (dentro do estoque) é migrada no primeiro save', async () => {
+        // Estado como ficou gravado pela versão anterior: auditoriaVendas
+        // dentro do próprio documento app_data/estoque.
+        await db.collection('app_data').doc('estoque').set({
+            produtos: [{ id: 1 }],
+            auditoriaVendas: [{ id: 'antigo' }],
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        // A leitura ainda enxerga a auditoria antiga...
+        const lido = await CloudStore.carregarModulosDoCloud(db);
+        expect(lido.auditoriaVendas).toEqual([{ id: 'antigo' }]);
+
+        // ...e o save seguinte a move para o documento próprio.
+        await CloudStore.salvarModulosNoCloud(db, firebaseNSFake, lido);
+        const [docEstoque, docAuditoria] = await Promise.all([
+            db.collection('app_data').doc('estoque').get(),
+            db.collection('app_data').doc('auditoria').get()
+        ]);
+        expect(docEstoque.data().auditoriaVendas).toBeUndefined();
+        expect(docAuditoria.data().registros).toEqual([{ id: 'antigo' }]);
     });
 
     it('round-trip completo: salvar e carregar de volta reproduz o estoque original', async () => {
@@ -78,7 +105,8 @@ describe('CloudStore.salvarModulosNoCloud / carregarModulosDoCloud', () => {
             registroVendas: [{ id: 'v1', valorTotal: 5000 }],
             clientes: [{ id: 'c1', nome: 'Loja X' }],
             crm: { negocios: [{ id: 'n1', titulo: 'Negócio A' }], funis: [{ id: 'f1' }] },
-            ponto: { registros: [{ data: '2026-02-10', entrada: '08:00' }], acordos: [] }
+            ponto: { registros: [{ data: '2026-02-10', entrada: '08:00' }], acordos: [] },
+            auditoriaVendas: [{ id: 'a1', acao: 'CRIAÇÃO', contrato: '123' }]
         };
         await CloudStore.salvarModulosNoCloud(db, firebaseNSFake, estoque);
         const recarregado = await CloudStore.carregarModulosDoCloud(db);
@@ -311,6 +339,7 @@ describe('CloudStore.diagnosticoDosDocumentos', () => {
         expect(porNome['app_data/estoque'].existe).toBe(true);
         expect(porNome['app_data/estoque'].updatedAt).toBeInstanceOf(Date);
         expect(porNome['app_data/estoque'].bytes).toBeGreaterThan(0);
+        expect(porNome['app_data/auditoria'].existe).toBe(true);
         expect(porNome['app_data/latest'].existe).toBe(false);
         expect(porNome['app_data/latest'].bytes).toBe(0);
     });

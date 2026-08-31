@@ -2350,9 +2350,7 @@ function carregarDados() {
         if (!estoque.controleEnvio) {
             estoque.controleEnvio = {};
         }
-        if (!Array.isArray(estoque.auditoriaVendas)) {
-            estoque.auditoriaVendas = [];
-        }
+        normalizarAuditoria();
         if (!Array.isArray(estoque.fechamentosComissoes)) {
             estoque.fechamentosComissoes = [];
         }
@@ -2779,6 +2777,32 @@ async function diagnosticoCloud() {
 }
 window.diagnosticoCloud = diagnosticoCloud;
 
+// Peso de cada chave de topo do estado, da maior para a menor. Complemento do
+// diagnosticoCloud(): aquele diz que o documento está perto do teto de 1 MiB,
+// este diz o que está ocupando o espaço.
+function diagnosticoTamanho(quantas) {
+    const linhas = Object.keys(estoque || {}).map((chave) => {
+        let bytes = 0;
+        let itens = null;
+        try {
+            bytes = JSON.stringify(estoque[chave] === undefined ? null : estoque[chave]).length;
+            if (Array.isArray(estoque[chave])) itens = estoque[chave].length;
+        } catch (e) { _catchSilencioso(e, 'diagnosticoTamanho'); }
+        return { chave, bytes, itens };
+    }).sort((a, b) => b.bytes - a.bytes);
+
+    const total = linhas.reduce((soma, l) => soma + l.bytes, 0);
+    console.table(linhas.slice(0, quantas || 20).map((l) => ({
+        chave: l.chave,
+        KiB: Math.round(l.bytes / 1024),
+        '% do total': (l.bytes / total * 100).toFixed(1),
+        itens: l.itens === null ? '—' : l.itens
+    })));
+    console.info('Total do estado local: ' + Math.round(total / 1024) + ' KiB (teto do Firestore: 1024 KiB por documento).');
+    return linhas;
+}
+window.diagnosticoTamanho = diagnosticoTamanho;
+
 async function carregarDoCloud({confirmOverwrite=true} = {}) {
     if (!window.firestoreDB) {
         console.warn('Firestore não inicializado. Impossível carregar do cloud.');
@@ -2834,7 +2858,7 @@ async function carregarDoCloud({confirmOverwrite=true} = {}) {
         precificacoesCliente = estoque.precificacoesCliente;
         try { atualizarIndicadoresPrecificacao(); } catch (e) { _catchSilencioso(e, 'carregarDoCloud'); }
         try { localStorage.setItem('precificacoesClienteBackupV1', JSON.stringify(precificacoesCliente || [])); } catch (e) { _catchSilencioso(e, 'carregarDoCloud'); }
-        if (!Array.isArray(estoque.auditoriaVendas)) estoque.auditoriaVendas = [];
+        normalizarAuditoria();
         if (!Array.isArray(estoque.fechamentosComissoes)) estoque.fechamentosComissoes = [];
         if (!Array.isArray(estoque.clientes)) estoque.clientes = [];
         clientes = estoque.clientes;
@@ -2959,7 +2983,7 @@ async function carregarDoCloudAuto() {
             precificacoesCliente = estoque.precificacoesCliente; // sincroniza variável global
             try { atualizarIndicadoresPrecificacao(); } catch (e) { _catchSilencioso(e, 'carregarDoCloudAuto'); }
             try { localStorage.setItem('precificacoesClienteBackupV1', JSON.stringify(precificacoesCliente || [])); } catch (e) { _catchSilencioso(e, 'carregarDoCloudAuto'); }
-            if (!Array.isArray(estoque.auditoriaVendas)) estoque.auditoriaVendas = [];
+            normalizarAuditoria();
             if (!Array.isArray(estoque.fechamentosComissoes)) estoque.fechamentosComissoes = [];
             if (!Array.isArray(estoque.clientes)) estoque.clientes = [];
             clientes = estoque.clientes;
@@ -3445,6 +3469,53 @@ function getUsuarioAtual() {
     return usuario;
 }
 
+// Campos de `antes`/`depois` que as telas de auditoria realmente exibem:
+// renderizarAuditoria compara valorTotal/representante/contrato/loja, e
+// abrirModalCancelamentos lê contrato/loja/representante/canceladoEm/
+// canceladoPor. O modal de histórico por contrato nem toca nesses objetos.
+const CAMPOS_AUDITORIA = ['id', 'contrato', 'loja', 'representante', 'valorTotal', 'canceladoEm', 'canceladoPor'];
+
+// Reduz um objeto de venda ao que a auditoria exibe. Guardar a venda inteira
+// custava ~440 bytes por entrada × 1000 entradas = 430 KiB no documento
+// app_data/estoque, mais da metade dele, sendo que o excedente (itens,
+// demais campos) nunca era lido em lugar nenhum.
+function resumirParaAuditoria(obj) {
+    if (!obj || typeof obj !== 'object') return obj || null;
+    const resumo = {};
+    CAMPOS_AUDITORIA.forEach((campo) => {
+        if (obj[campo] !== undefined) resumo[campo] = obj[campo];
+    });
+    return resumo;
+}
+
+// Compactação única do histórico já gravado, aplicada na carga. Roda uma vez
+// por entrada: depois de compactada, resumirParaAuditoria é idempotente.
+function compactarAuditoriaExistente() {
+    if (!Array.isArray(estoque.auditoriaVendas)) return 0;
+    let alteradas = 0;
+    estoque.auditoriaVendas.forEach((entrada) => {
+        if (!entrada || typeof entrada !== 'object') return;
+        ['antes', 'depois'].forEach((lado) => {
+            const original = entrada[lado];
+            if (!original || typeof original !== 'object') return;
+            const resumo = resumirParaAuditoria(original);
+            if (Object.keys(original).length !== Object.keys(resumo).length) {
+                entrada[lado] = resumo;
+                alteradas++;
+            }
+        });
+    });
+    return alteradas;
+}
+
+// Ponto único chamado em toda carga (local, cloud manual e cloud automática):
+// garante o array e compacta o que veio no formato antigo.
+function normalizarAuditoria() {
+    if (!Array.isArray(estoque.auditoriaVendas)) estoque.auditoriaVendas = [];
+    const compactadas = compactarAuditoriaExistente();
+    if (compactadas) console.info('Auditoria: ' + compactadas + ' campo(s) antes/depois compactado(s) para o formato enxuto.');
+}
+
 // Auditoria genérica para qualquer operação (distribuição, cadastro, etc.)
 function registrarAuditoria(acao, antes, depois, detalhes) {
     if (!Array.isArray(estoque.auditoriaVendas)) estoque.auditoriaVendas = [];
@@ -3454,8 +3525,8 @@ function registrarAuditoria(acao, antes, depois, detalhes) {
         quem: getUsuarioAtual(),
         acao: acao,
         contrato: '-',
-        antes: antes || null,
-        depois: depois || null,
+        antes: resumirParaAuditoria(antes),
+        depois: resumirParaAuditoria(depois),
         detalhes: detalhes || ''
     };
     estoque.auditoriaVendas.push(entry);
@@ -3475,8 +3546,8 @@ function registrarAuditoriaVenda(acao, vendaAntes, vendaDepois, detalhes = '') {
         acao: acao,
         contrato: contrato || '-',
         vendaId: base.id || null,
-        antes: vendaAntes || null,
-        depois: vendaDepois || null,
+        antes: resumirParaAuditoria(vendaAntes),
+        depois: resumirParaAuditoria(vendaDepois),
         detalhes: detalhes || ''
     };
     estoque.auditoriaVendas.push(entry);

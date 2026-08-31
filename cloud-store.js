@@ -32,9 +32,12 @@
  *     todo o save. Agora cada módulo tem o seu próprio orçamento de 1 MiB.
  *   - As leituras (`carregarDoCloud`, `carregarDoCloudAuto`) passam por
  *     `lerEstadoCompativel()`, que escolhe a fonte mais recente e devolve
- *     sempre o formato antigo, mantendo o resto dessas funções intacto. O
- *     legado continua sendo LIDO como fallback, então a base antiga ainda
- *     serve de origem enquanto os documentos por módulo não forem gravados.
+ *     sempre o formato antigo, mantendo o resto dessas funções intacto. A
+ *     fonte são sempre os módulos quando existe pelo menos um deles; o legado
+ *     só é lido numa base que nunca passou pela migração. Ele NÃO disputa
+ *     mais por carimbo de tempo: congelado como está, vencer essa disputa
+ *     significava o app reverter para um estado antigo (ver
+ *     lerEstadoCompativel).
  *   - `app_data/latest` não é apagado, mas a partir daqui fica congelado: o
  *     rollback para o código anterior perde as alterações feitas depois deste
  *     ponto (e, de todo modo, o código antigo já não conseguia gravar).
@@ -314,11 +317,24 @@
      * ele dos documentos novos ou do legado — é o que permite trocar a fonte
      * em app2.js sem reescrever as funções que consomem esses campos.
      *
-     * Escolhe a fonte pelo `updatedAt` mais recente. Durante a escrita dupla
-     * as duas fontes são equivalentes (mesmo carimbo), então a escolha é
-     * indiferente; a comparação existe para cobrir os períodos de transição:
-     * dados migrados mas ainda não regravados, ou uma sessão com código antigo
-     * que gravou só no legado.
+     * A fonte são SEMPRE os documentos por módulo, quando existe pelo menos
+     * um deles. O legado só é lido quando nenhum módulo existe ainda — ou
+     * seja, numa base que nunca passou pela migração.
+     *
+     * Antes esta função escolhia pelo `updatedAt` mais recente, e isso virou
+     * um bug de perda de dados quando a escrita no legado parou (documento
+     * acima de 1 MiB): `app_data/latest` congelou com um estado antigo, mas
+     * continuava elegível a vencer a comparação. Bastava os módulos virem sem
+     * carimbo legível — `updatedAt` ainda pendente logo após um save, leitura
+     * servida do cache offline, documento gravado por um caminho que não
+     * setou o campo — para `mods.updatedAtDate` ser null, o legado ser
+     * escolhido, e o app substituir o estado atual por aquela versão velha.
+     * Como o `carregarDoCloud` seguinte persiste o que leu, a reversão se
+     * propagava para o local e para a nuvem.
+     *
+     * Comparar carimbos só fazia sentido enquanto as duas fontes eram
+     * escritas juntas. Com o legado congelado, ele nunca pode ser a versão
+     * mais nova — então não entra mais na disputa.
      *
      * @param {object} db
      * @returns {Promise<{data: object|null, origem: 'modulos'|'legado'|null}>}
@@ -332,9 +348,8 @@
         var mods = resultados[0];
         var legadoSnap = resultados[1];
         var legadoData = legadoSnap.exists ? legadoSnap.data() : null;
-        var legadoDate = legadoData ? paraDate(legadoData.updatedAt) : null;
 
-        function respostaDosModulos() {
+        if (mods.existeAlgum) {
             return {
                 origem: 'modulos',
                 data: {
@@ -344,13 +359,33 @@
                 }
             };
         }
-
-        var modulosMaisNovos = mods.existeAlgum && mods.updatedAtDate &&
-            (!legadoDate || mods.updatedAtDate.getTime() > legadoDate.getTime());
-        if (modulosMaisNovos) return respostaDosModulos();
         if (legadoData) return { origem: 'legado', data: legadoData };
-        if (mods.existeAlgum) return respostaDosModulos();
         return { origem: null, data: null };
+    }
+
+    /**
+     * Fotografia dos quatro documentos de `app_data` — qual existe, quando
+     * foi atualizado e quanto ocupa. Serve para responder "qual máquina está
+     * com o estado certo e de onde ela leu", sem abrir o console do Firebase.
+     * Só lê; não escreve nada.
+     * @param {object} db
+     * @returns {Promise<Array<{doc: string, existe: boolean, updatedAt: Date|null, bytes: number}>>}
+     */
+    async function diagnosticoDosDocumentos(db) {
+        if (!db) throw new Error('diagnosticoDosDocumentos: db é obrigatório');
+        var nomes = [NOMES_MODULO.ESTOQUE, NOMES_MODULO.CRM, NOMES_MODULO.PONTO, DOC_LEGADO];
+        var snaps = await Promise.all(nomes.map(function (n) {
+            return db.collection(COLECAO).doc(n).get();
+        }));
+        return snaps.map(function (snap, i) {
+            var dados = snap.exists ? (snap.data() || {}) : null;
+            return {
+                doc: COLECAO + '/' + nomes[i],
+                existe: !!dados,
+                updatedAt: dados ? paraDate(dados.updatedAt) : null,
+                bytes: dados ? tamanhoAproximadoBytes(dados) : 0
+            };
+        });
     }
 
     /**
@@ -382,6 +417,7 @@
         LIMITE_DOC_BYTES: LIMITE_DOC_BYTES,
         lerEstadoCompativel: lerEstadoCompativel,
         timestampMaisRecenteDeSnapshot: timestampMaisRecenteDeSnapshot,
+        diagnosticoDosDocumentos: diagnosticoDosDocumentos,
         NOMES_MODULO: NOMES_MODULO
     };
 

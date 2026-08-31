@@ -2709,6 +2709,76 @@ async function carregarDoCloudUI() {
     }
 }
 
+// Antes de QUALQUER sobrescrita vinda da nuvem, guarda o estado local que
+// está prestes a ser descartado. Existe por causa de um caso real: uma leitura
+// escolheu um documento antigo e o app substituiu o estado atual por ele,
+// levando as alterações do dia junto. Agora dá para desfazer com
+// restaurarEstadoAntesDoCloud() no console, enquanto a cópia não for
+// sobrescrita pela próxima carga.
+function guardarEstadoAntesDoCloud(origem) {
+    try {
+        if (!estoque || typeof estoque !== 'object') return;
+        const pacote = JSON.stringify({
+            salvoEm: new Date().toISOString(),
+            origem: origem || null,
+            estado: estoque
+        });
+        try {
+            if (window.LZString) localStorage.setItem('_estadoAntesDoCloudLz', LZString.compressToUTF16(pacote));
+            else localStorage.setItem('_estadoAntesDoCloud', pacote);
+        } catch (e) {
+            // Sem espaço no localStorage: a cópia é um extra, nunca pode
+            // impedir o carregamento em si.
+            console.warn('Não foi possível guardar o estado anterior ao cloud:', e);
+        }
+    } catch (e) { _catchSilencioso(e, 'guardarEstadoAntesDoCloud'); }
+}
+
+// Desfaz a última substituição feita por uma carga da nuvem, devolvendo o
+// estado que havia antes dela. Não envia nada para a nuvem: revisa-se o
+// resultado na tela e, se estiver certo, salva-se normalmente.
+function restaurarEstadoAntesDoCloud() {
+    let bruto = null;
+    try {
+        const comp = localStorage.getItem('_estadoAntesDoCloudLz');
+        if (comp && window.LZString) bruto = LZString.decompressFromUTF16(comp);
+        if (!bruto) bruto = localStorage.getItem('_estadoAntesDoCloud');
+    } catch (e) { _catchSilencioso(e, 'restaurarEstadoAntesDoCloud'); }
+    if (!bruto) { console.warn('Nenhum estado anterior ao cloud guardado.'); return false; }
+    let pacote;
+    try { pacote = JSON.parse(bruto); } catch (e) { console.error('Cópia anterior ao cloud ilegível:', e); return false; }
+    if (!pacote || !pacote.estado) { console.warn('Cópia anterior ao cloud sem estado.'); return false; }
+    estoque = pacote.estado;
+    try { if (window.CrmStore) window.CrmStore.ensureCrmDefault(); } catch (e) { console.error('CRM ensureCrmDefault (restauro):', e); }
+    try { if (window.PontoStore) window.PontoStore.ensurePontoDefault(); } catch (e) { console.error('Ponto ensurePontoDefault (restauro):', e); }
+    try { if (window.ProcessosStore) window.ProcessosStore.ensureProcessosDefault(); } catch (e) { console.error('Processos ensureProcessosDefault (restauro):', e); }
+    clientes = Array.isArray(estoque.clientes) ? estoque.clientes : (estoque.clientes = []);
+    propostas = Array.isArray(estoque.propostas) ? estoque.propostas : (estoque.propostas = []);
+    precificacoesCliente = estoque.precificacoesCliente || [];
+    if (estoque.precificacao && typeof estoque.precificacao === 'object') precificacao = estoque.precificacao;
+    try { salvarDados({ imediato: true }); } catch (e) { _catchSilencioso(e, 'restaurarEstadoAntesDoCloud'); }
+    console.info('Estado restaurado para a cópia de', pacote.salvoEm, '(origem da carga que o substituiu:', pacote.origem + ')');
+    console.info('Confira na tela e, se estiver correto, salve no Cloud.');
+    try { location.reload(); } catch (e) { _catchSilencioso(e, 'restaurarEstadoAntesDoCloud'); }
+    return true;
+}
+window.restaurarEstadoAntesDoCloud = restaurarEstadoAntesDoCloud;
+
+// Fotografia dos documentos de app_data (qual existe, quando mudou, tamanho).
+// Atalho de console para comparar duas máquinas sem abrir o Firebase.
+async function diagnosticoCloud() {
+    if (!window.firestoreDB) { console.warn('Firestore não inicializado.'); return null; }
+    const docs = await CloudStore.diagnosticoDosDocumentos(window.firestoreDB);
+    console.table(docs.map((d) => ({
+        documento: d.doc,
+        existe: d.existe,
+        atualizadoEm: d.updatedAt ? d.updatedAt.toLocaleString('pt-BR') : '—',
+        KiB: Math.round(d.bytes / 1024)
+    })));
+    return docs;
+}
+window.diagnosticoCloud = diagnosticoCloud;
+
 async function carregarDoCloud({confirmOverwrite=true} = {}) {
     if (!window.firestoreDB) {
         console.warn('Firestore não inicializado. Impossível carregar do cloud.');
@@ -2739,6 +2809,7 @@ async function carregarDoCloud({confirmOverwrite=true} = {}) {
             const ok = confirm('Carregar dados do cloud irá substituir os dados locais. Deseja continuar?');
             if (!ok) { window._carregandoDoCloud = false; return false; }
         }
+        guardarEstadoAntesDoCloud(origem);
         estoque = data.estado;
         try { if (window.CrmStore) window.CrmStore.ensureCrmDefault(); } catch (e) { console.error('CRM ensureCrmDefault (cloud):', e); }
         try { if (window.PontoStore) window.PontoStore.ensurePontoDefault(); } catch (e) { console.error('Ponto ensurePontoDefault (cloud):', e); }
@@ -2865,6 +2936,7 @@ async function carregarDoCloudAuto() {
         if (window._dadosAlterados) { window._carregandoDoCloud = false; return false; }
         if (remoteUpdated && remoteUpdated > localUpdated + 1000) {
             // substituir local automaticamente
+            guardarEstadoAntesDoCloud('auto');
             estoque = data.estado;
             try { if (window.CrmStore) window.CrmStore.ensureCrmDefault(); } catch (e) { console.error('CRM ensureCrmDefault (cloud auto):', e); }
             try { if (window.PontoStore) window.PontoStore.ensurePontoDefault(); } catch (e) { console.error('Ponto ensurePontoDefault (cloud auto):', e); }

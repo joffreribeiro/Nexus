@@ -238,30 +238,44 @@ describe('CloudStore.lerEstadoCompativel (escolha da fonte)', () => {
         expect(typeof data.updatedAt.toDate).toBe('function');
     });
 
-    it('prefere o legado quando ele é mais recente (sessão com código antigo gravou só nele)', async () => {
-        await CloudStore.salvarModulosNoCloud(db, firebaseNSFake, { produtos: [{ id: 1 }] });
-        // Depois, uma gravação só no legado — como faria o código anterior.
+    it('ignora o legado mesmo quando ele tem carimbo mais recente (ele está congelado)', async () => {
+        await CloudStore.salvarModulosNoCloud(db, firebaseNSFake, {
+            produtos: [{ id: 1 }, { id: 2, nome: 'ATUAL' }]
+        });
+        // Legado gravado DEPOIS, com um estado antigo: era esse o caso que
+        // fazia o app reverter as alterações do dia.
         await db.collection('app_data').doc('latest').set({
-            estado: { produtos: [{ id: 1 }, { id: 99, nome: 'MAIS NOVO' }] },
+            estado: { produtos: [{ id: 1 }] },
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        const { data, origem } = await CloudStore.lerEstadoCompativel(db);
+        expect(origem).toBe('modulos');
+        expect(data.estado.produtos).toHaveLength(2);
+    });
+
+    it('módulo sem updatedAt legível não faz o legado vencer', async () => {
+        // Reproduz a leitura logo após um save, quando o serverTimestamp
+        // ainda está pendente e volta nulo.
+        await db.collection('app_data').doc('estoque').set({ produtos: [{ id: 1 }, { id: 2 }] });
+        await db.collection('app_data').doc('latest').set({
+            estado: { produtos: [{ id: 1 }] },
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        const { data, origem } = await CloudStore.lerEstadoCompativel(db);
+        expect(origem).toBe('modulos');
+        expect(data.estado.produtos).toHaveLength(2);
+    });
+
+    it('lê o legado só quando nenhum documento de módulo existe (base ainda não migrada)', async () => {
+        await db.collection('app_data').doc('latest').set({
+            estado: { produtos: [{ id: 1 }, { id: 99 }] },
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
         const { data, origem } = await CloudStore.lerEstadoCompativel(db);
         expect(origem).toBe('legado');
-        expect(data.estado.produtos).toHaveLength(2);
-    });
-
-    it('prefere os módulos quando eles são mais recentes que o legado', async () => {
-        await db.collection('app_data').doc('latest').set({
-            estado: { produtos: [{ id: 1 }] },
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-        await CloudStore.salvarModulosNoCloud(db, firebaseNSFake, {
-            produtos: [{ id: 1 }, { id: 2, nome: 'MAIS NOVO' }]
-        });
-
-        const { data, origem } = await CloudStore.lerEstadoCompativel(db);
-        expect(origem).toBe('modulos');
         expect(data.estado.produtos).toHaveLength(2);
     });
 
@@ -285,6 +299,20 @@ describe('CloudStore.lerEstadoCompativel (escolha da fonte)', () => {
         expect(data.estado.clientes).toEqual(estoque.clientes);
         expect(data.estado.crm).toEqual(estoque.crm);
         expect(data.estado.ponto).toEqual(estoque.ponto);
+    });
+});
+
+describe('CloudStore.diagnosticoDosDocumentos', () => {
+    it('relata existência, carimbo e tamanho dos quatro documentos', async () => {
+        await CloudStore.salvarModulosNoCloud(db, firebaseNSFake, { produtos: [{ id: 1, nome: 'CARABINA' }] });
+        const docs = await CloudStore.diagnosticoDosDocumentos(db);
+
+        const porNome = Object.fromEntries(docs.map((d) => [d.doc, d]));
+        expect(porNome['app_data/estoque'].existe).toBe(true);
+        expect(porNome['app_data/estoque'].updatedAt).toBeInstanceOf(Date);
+        expect(porNome['app_data/estoque'].bytes).toBeGreaterThan(0);
+        expect(porNome['app_data/latest'].existe).toBe(false);
+        expect(porNome['app_data/latest'].bytes).toBe(0);
     });
 });
 

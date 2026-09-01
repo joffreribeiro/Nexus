@@ -103,12 +103,27 @@ function _numeroCampo(id) {
  * Registra, sem nunca lançar, um erro que o chamador decidiu tolerar (catch
  * silencioso). Usa `console.debug`, que este arquivo já desativa fora de
  * localhost (ver abaixo) — em produção continua tão silencioso quanto um
- * catch vazio; em desenvolvimento, o que antes desaparecia sem rastro agora
- * aparece no console, com a origem de quem chamou.
+ * catch vazio no console; em desenvolvimento, o que antes desaparecia sem
+ * rastro agora aparece no console, com a origem de quem chamou.
+ *
+ * Além disso guarda os últimos 50 em `window.__erros` (sempre ativo,
+ * independente de ambiente) — sem isso, um bug real em produção (ex.: um
+ * cálculo de proposta que falha) desaparecia sem deixar vestígio nenhum;
+ * agora dá pra inspecionar `window.__erros` no DevTools de quem relatar
+ * o problema, mesmo sem acesso ao console de dev.
  * @param {*} e - o erro capturado
  * @param {string} [origem] - identifica o ponto de chamada (ex.: nome da função)
  */
 function _catchSilencioso(e, origem) {
+    try {
+        if (!window.__erros) window.__erros = [];
+        window.__erros.push({
+            origem: origem || null,
+            mensagem: (e && e.message) || String(e),
+            quando: new Date().toISOString()
+        });
+        if (window.__erros.length > 50) window.__erros.shift();
+    } catch (_) { /* nunca derruba quem chamou */ }
     try {
         console.debug(origem ? `[ignorado] ${origem}:` : '[ignorado]', e);
     } catch (_) { /* console.debug nunca deve derrubar quem chamou */ }
@@ -3703,6 +3718,12 @@ function renderizarAuditoria() {
     const cnt = document.getElementById('auditoriaCount');
     if (cnt) cnt.textContent = `${lista.length} de ${(estoque.auditoriaVendas||[]).length} registros`;
 }
+
+// auditoriaVendas é um log que só cresce (append-only) — o filtro de texto
+// merece debounce mais do que os outros, já que a lista tende a ficar grande.
+const renderizarAuditoriaDebounced = window.Debounce
+    ? Debounce.criar(renderizarAuditoria, 250)
+    : renderizarAuditoria;
 
 function exportarAuditoria() {
     const lista = (estoque.auditoriaVendas||[]).slice().reverse();
@@ -7483,7 +7504,7 @@ function onImbelTipoChange() {
             const p = getImbelPrecoAtual(produtoId);
             if (p) {
                 precoRef.style.display = 'block';
-                precoRef.innerHTML = `\n          💰 Preço de referência ${p.ano}: \n          <strong>R$ ${Number(p.valor).toLocaleString('pt-BR', {minimumFractionDigits:2})}</strong>\n          ${p.obs ? `<span style="color:#b45309"> — ${p.obs}</span>` : ''}\n          <br>\n          <span style="font-size:0.78rem;color:#b45309">\n            Deixe o campo Valor em branco para usar este preço.\n          </span>`;
+                precoRef.innerHTML = `\n          💰 Preço de referência ${p.ano}: \n          <strong>R$ ${Number(p.valor).toLocaleString('pt-BR', {minimumFractionDigits:2})}</strong>\n          ${p.obs ? `<span style="color:#b45309"> — ${_escapeHtml(p.obs)}</span>` : ''}\n          <br>\n          <span style="font-size:0.78rem;color:#b45309">\n            Deixe o campo Valor em branco para usar este preço.\n          </span>`;
             } else {
                 precoRef.style.display = 'block';
                 precoRef.innerHTML = `\n          ⚠️ Nenhum preço de referência definido para este produto.\n          <a href="#" onclick="trocarSubAbaControleImbel('precos'); fecharModalPrecoImbel();return false;" style="color:#d97706">\n            Definir preço →\n          </a>`;
@@ -12417,6 +12438,10 @@ function filtrarVendas() {
     renderizarRegistroVendas();
 }
 
+const filtrarVendasDebounced = window.Debounce
+    ? Debounce.criar(filtrarVendas, 250)
+    : filtrarVendas;
+
 function limparFiltrosVendas() {
     const fields = [
         'filtroRepresentante',
@@ -14116,7 +14141,10 @@ function mostrarNotificacao(mensagem, tipo = 'info') {
         max-width: 400px;
     `;
     
-    notificacao.innerHTML = `<span style="font-size: 1.2rem;">${cor.icon}</span> ${mensagem}`;
+    // mensagem pode conter nome de produto/cliente vindo de dados sincronizados
+    // (Firestore) — sem escapar, um nome como <img src=x onerror=...> vira XSS
+    // armazenado disparado no navegador de qualquer usuário que veja a notificação.
+    notificacao.innerHTML = `<span style="font-size: 1.2rem;">${cor.icon}</span> ${_escapeHtml(mensagem)}`;
     
     const style = document.createElement('style');
     style.textContent = `
@@ -15072,6 +15100,10 @@ function renderizarControleEnvio() {
 
     if (houveLimpeza) salvarDados();
 }
+
+const renderizarControleEnvioDebounced = window.Debounce
+    ? Debounce.criar(renderizarControleEnvio, 250)
+    : renderizarControleEnvio;
 
 function irParaControleEnvio(contrato) {
     // Controle de Envio unificado — navegar para a linha na tabela de Vendas/Envio
@@ -16543,6 +16575,13 @@ function filtrarClientes() {
     _cliTipo = document.getElementById('clienteFiltroTipo')?.value || '';
     renderizarClientes();
 }
+
+// Versão com debounce para o campo de busca por texto: evita re-renderizar a
+// lista inteira a cada tecla digitada (os <select> de representante/tipo
+// continuam chamando filtrarClientes() direto — mudam pouco, não precisam).
+const filtrarClientesDebounced = window.Debounce
+    ? Debounce.criar(filtrarClientes, 250)
+    : filtrarClientes;
 
 function atualizarKPIsClientes() {
     const totalEl = document.getElementById('kpiTotalClientes');
@@ -21057,6 +21096,10 @@ function renderizarTabelaCI() {
     try { atualizarKPIsCI(); } catch (e) { _catchSilencioso(e, 'renderizarTabelaCI'); }
 }
 
+const renderizarTabelaCIDebounced = window.Debounce
+    ? Debounce.criar(renderizarTabelaCI, 250)
+    : renderizarTabelaCI;
+
 function exibirHistoricoCI(nomeProduto) {
     const painel = document.getElementById('painelHistoricoCI');
     const titulo = document.getElementById('painelHistoricoCITitulo');
@@ -21900,10 +21943,16 @@ window._pcSelecionarCliente = function(id) {
     window._pcAtualizarKpiTaxaROI();
 };
 
+// Render debounced: a lista de clientes pode crescer bastante, então não
+// refaz o innerHTML a cada tecla — só o estado de busca é atualizado na hora.
+const _pcRenderizarListaDebounced = window.Debounce
+    ? Debounce.criar(window._pcRenderizarLista, 250)
+    : window._pcRenderizarLista;
+
 window._pcFiltrarLista = function(val) {
     const v = (val !== undefined ? val : '') || '';
     window._pcEstado.busca = v;
-    window._pcRenderizarLista();
+    _pcRenderizarListaDebounced();
 };
 
 // Garantir binding do campo de busca após qualquer re-render
@@ -21912,8 +21961,10 @@ window._pcFiltrarLista = function(val) {
         const el = document.getElementById('pcBuscaCliente');
         if (!el || el._pcBound) return;
         el._pcBound = true;
+        // Um único listener 'input' basta (cobre digitação, colar, autocompletar);
+        // o índice.html não repete mais 'oninput'/'onkeyup' inline pra evitar
+        // disparar o filtro em dobro/quádruplo a cada tecla.
         el.addEventListener('input', function() { window._pcFiltrarLista(this.value); });
-        el.addEventListener('keyup',  function() { window._pcFiltrarLista(this.value); });
     }
     document.addEventListener('DOMContentLoaded', bind);
     // Também tentar imediatamente caso o DOM já esteja carregado
@@ -22260,10 +22311,17 @@ function selModalSetCat(btn, cat) {
     _selModalRenderizar();
 }
 
+// Debounce só na renderização — o estado de busca fica sempre atualizado na
+// hora, só o innerHTML pesado da tabela (agrupada por NCM, com peças
+// aninhadas) espera a digitação parar.
+const _selModalRenderizarDebounced = window.Debounce
+    ? Debounce.criar(_selModalRenderizar, 200)
+    : _selModalRenderizar;
+
 function selModalFiltrar() {
     const buscaEl = document.getElementById('selModalBusca');
     _selMod.busca = buscaEl ? buscaEl.value : '';
-    _selModalRenderizar();
+    _selModalRenderizarDebounced();
 }
 
 function _selModalFiltrado() {
@@ -23210,6 +23268,16 @@ function calcularPrecificacaoPorCliente(opcoes = {}) {
         contEl.textContent = `${produtosFiltrados.length} produto(s) sendo calculado(s)`;
     }
 
+    // Consulta o DOM UMA vez e indexa por nome — antes, o loop de rateio de
+    // frete e o de cálculo por produto refaziam querySelectorAll('.precif-
+    // linha-produto') a cada iteração (O(n²) com o nº de itens da proposta).
+    // Mantém o mesmo critério de .find(): a primeira linha com aquele nome.
+    const linhaPorNomeProduto = new Map();
+    document.querySelectorAll('.precif-linha-produto').forEach(l => {
+        const nome = l.dataset.nomeProduto;
+        if (nome && !linhaPorNomeProduto.has(nome)) linhaPorNomeProduto.set(nome, l);
+    });
+
     // Frete global do pedido
     const freteGlobal = parseFloat(document.getElementById('precifFreteGlobal')?.value) || 0;
     const freteModo = document.getElementById('precifFreteModo')?.value || 'proporcional';
@@ -23233,7 +23301,7 @@ function calcularPrecificacaoPorCliente(opcoes = {}) {
             const pValImp = pValBase + pValBase*pIcms/100 + pValBase*pPis/100 + pValBase*pCof/100;
             const pIpiR   = pValImp * pIpi / 100;
             const pPrecoFinal = pValImp + pIpiR;
-            const pLinha = Array.from(document.querySelectorAll('.precif-linha-produto')).find(l => l.dataset.nomeProduto === p.nome);
+            const pLinha = linhaPorNomeProduto.get(p.nome) || null;
             const pQtd = parseInt(pLinha?.querySelector('.precif-linha-quant')?.value, 10) || 1;
             somaSubtotalProporcional += pPrecoFinal * pQtd;
         });
@@ -23247,12 +23315,7 @@ function calcularPrecificacaoPorCliente(opcoes = {}) {
         const ncm = produto.ncm || detectarNCM(produto.nome) || '—';
 
         // Verificar se existe linha individual para este produto (nova UX)
-        const linhaIndividual = (() => {
-            try {
-                return Array.from(document.querySelectorAll('.precif-linha-produto'))
-                    .find(l => l.dataset.nomeProduto === produto.nome) || null;
-            } catch (e) { return null; }
-        })();
+        const linhaIndividual = linhaPorNomeProduto.get(produto.nome) || null;
 
         let ci;
         if (linhaIndividual) {
@@ -26043,6 +26106,12 @@ function filtrarPropostas(valor) {
     renderizarPropostas(valor, statusVal);
 }
 
+// Debounce só para o campo de busca por texto; pastilhas de status e o
+// <select> hidden continuam chamando filtrarPropostas() direto.
+const filtrarPropostasDebounced = window.Debounce
+    ? Debounce.criar(filtrarPropostas, 250)
+    : filtrarPropostas;
+
 function irParaProposta(propostaId) {
     const prop = (propostas || []).find(p => p.id === propostaId);
     if (!prop) return;
@@ -27144,6 +27213,12 @@ function renderizarBuscaGlobal() {
     window._buscaGlobalAcoes = itens.slice(0, 12).map(it => it.acao);
     res.style.display = 'block';
 }
+
+// Debounce: varre 5 arrays (produtos, clientes, vendas, propostas,
+// precificações) a cada chamada — não precisa rodar a cada tecla.
+const renderizarBuscaGlobalDebounced = window.Debounce
+    ? Debounce.criar(renderizarBuscaGlobal, 250)
+    : renderizarBuscaGlobal;
 
 // =============================
 // Fechamento Mensal por Representante (item 11)

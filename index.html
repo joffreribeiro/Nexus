@@ -187,7 +187,7 @@
             <div style="position:relative">
                 <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.5;pointer-events:none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input id="buscaGlobalInput" type="text" placeholder="Buscar produto, cliente ou contrato… (Esc para fechar)"
-                    oninput="renderizarBuscaGlobal()"
+                    oninput="renderizarBuscaGlobalDebounced()"
                     onkeydown="if(event.key==='Escape')fecharBuscaGlobal()"
                     style="width:100%;padding:10px 12px 10px 36px;font-size:0.9rem;border:2px solid #3b82f6;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.2);outline:none;background:#fff;box-sizing:border-box">
             </div>
@@ -418,7 +418,7 @@
                             <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                             <input type="text" id="filtroClientesBusca" class="prod-search-input"
                                    placeholder="Buscar por nome, CNPJ, UF ou contato…"
-                                   oninput="filtrarClientes()" autocomplete="off">
+                                   oninput="filtrarClientesDebounced()" autocomplete="off">
                         </div>
                         <select id="clienteFiltroRep" class="prod-filter-select" onchange="filtrarClientes()">
                             <option value="">Todos os representantes</option>
@@ -622,7 +622,7 @@
                             <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                             <input type="text" id="filtroProposta" class="prod-search-input"
                                    placeholder="Nº, cliente ou representante..."
-                                   oninput="filtrarPropostas(this.value)">
+                                   oninput="filtrarPropostasDebounced(this.value)">
                         </div>
                         <button class="btn btn-primary" data-admin="true" onclick="abrirModalProposta()">
                             <span class="btn-icon">+</span> Nova Proposta
@@ -888,7 +888,7 @@
 <div class="pc-command-bar">
     <div class="pc-search-wrap">
         <svg class="pc-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l3 3"/></svg>
-        <input type="text" id="pcBuscaCliente" class="pc-search-input" placeholder="Buscar cliente, CNPJ, cidade…" oninput="window._pcFiltrarLista(this.value)" onkeyup="window._pcFiltrarLista(this.value)">
+        <input type="text" id="pcBuscaCliente" class="pc-search-input" placeholder="Buscar cliente, CNPJ, cidade…">
     </div>
     <div class="pc-bar-divider"></div>
     <div class="pc-seg" id="pcFiltroStatus">
@@ -1407,7 +1407,7 @@
                                         <div class="produtos-toolbar" style="margin-bottom:12px">
                                             <div class="prod-search-wrap">
                                                 <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                                                <input type="text" id="ciFiltroProduto" class="prod-search-input" oninput="renderizarTabelaCI()" placeholder="Buscar produto…" autocomplete="off">
+                                                <input type="text" id="ciFiltroProduto" class="prod-search-input" oninput="renderizarTabelaCIDebounced()" placeholder="Buscar produto…" autocomplete="off">
                                             </div>
                                             <span id="ciContador" class="prod-result-count"></span>
                                         </div>
@@ -1595,7 +1595,7 @@
                         <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                         <input type="text" id="filtroVendasBusca" class="prod-search-input"
                                placeholder="Loja, cliente ou nº contrato..."
-                               oninput="filtrarVendas()">
+                               oninput="filtrarVendasDebounced()">
                     </div>
                     <select id="filtroRepresentante" class="prod-filter-select" onchange="filtrarVendas()"></select>
                     <select id="filtroProduto" class="prod-filter-select" onchange="filtrarVendas()">
@@ -2321,7 +2321,7 @@
                         <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                         <input type="text" id="filtroControleEnvioBusca" class="prod-search-input"
                                placeholder="Contrato ou cliente..."
-                               oninput="renderizarControleEnvio()">
+                               oninput="renderizarControleEnvioDebounced()">
                     </div>
                     <select id="filtroControleEnvioRep" class="prod-filter-select" onchange="renderizarControleEnvio()"></select>
                     <select id="filtroControleEnvioProgresso" class="prod-filter-select" onchange="renderizarControleEnvio()">
@@ -3083,7 +3083,7 @@
                                 <div class="cfg-panel-head-sub">Registro de todas as ações sobre contratos</div>
                             </div>
                             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                                <input type="text" id="auditoriaBusca" placeholder="Buscar contrato ou usuário..." oninput="renderizarAuditoria()"
+                                <input type="text" id="auditoriaBusca" placeholder="Buscar contrato ou usuário..." oninput="renderizarAuditoriaDebounced()"
                                        style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.8rem;width:220px;background:#f8fafc">
                                 <select id="auditoriaFiltroAcao" onchange="renderizarAuditoria()"
                                         style="padding:7px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.8rem;background:#f8fafc">
@@ -4589,7 +4589,7 @@
                             <label for="crmNegocioClienteBusca">Cliente</label>
                             <div class="crm-campo-com-acao">
                                 <input type="text" id="crmNegocioClienteBusca" autocomplete="off" placeholder="Buscar cliente..."
-                                       oninput="Crm.buscarCliente(this.value)" onfocus="Crm.buscarCliente(this.value)">
+                                       oninput="Crm.buscarCliente(this.value)" onfocus="Crm.buscarClienteImediato(this.value)">
                                 <button type="button" class="crm-btn-mini" id="crmNegocioBtnEditarCliente"
                                         onclick="Crm.editarClienteDoNegocio()" title="Abrir cadastro do cliente" disabled>✎ Cadastro</button>
                             </div>
@@ -4754,7 +4754,7 @@
                             <div class="form-group crm-autocomplete">
                                 <label for="crmAnotacaoNegocioBusca">Negócio vinculado (opcional)</label>
                                 <input type="text" id="crmAnotacaoNegocioBusca" autocomplete="off" placeholder="Buscar negócio por título ou cliente..."
-                                       oninput="Crm.buscarNegocioParaAnotacao(this.value)" onfocus="Crm.buscarNegocioParaAnotacao(this.value)">
+                                       oninput="Crm.buscarNegocioParaAnotacao(this.value)" onfocus="Crm.buscarNegocioParaAnotacaoImediato(this.value)">
                                 <div id="crmAnotacaoNegocioLista" class="crm-ac-lista" style="display:none"></div>
                             </div>
                             <div class="form-group" style="flex:0 0 auto;align-self:flex-end">

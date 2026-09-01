@@ -3605,13 +3605,24 @@
     }
 
     // ──────────────────────────────────────────────
+    //  DEBOUNCE — campos de busca por texto (oninput). Evita re-renderizar
+    //  o Kanban/lista/autocomplete a cada tecla; onfocus (abrir a lista de
+    //  sugestões ao clicar no campo) continua chamando a versão imediata.
+    // ──────────────────────────────────────────────
+    var _debounce = window.Debounce ? window.Debounce.criar : function (fn) { return fn; };
+    var setBuscaDebounced = _debounce(setBusca, 250);
+    var setListaBuscaDebounced = _debounce(setListaBusca, 250);
+    var buscarClienteDebounced = _debounce(buscarCliente, 250);
+    var buscarNegocioParaAnotacaoDebounced = _debounce(buscarNegocioParaAnotacao, 250);
+
+    // ──────────────────────────────────────────────
     //  EXPORT
     // ──────────────────────────────────────────────
 
     window.Crm = {
         renderizar: renderizar,
         trocarFunil: trocarFunil,
-        setBusca: setBusca,
+        setBusca: setBuscaDebounced,
         setMostrarFechados: setMostrarFechados,
         setOrdenarPor: setOrdenarPor,
         setTimelineAgrupar: setTimelineAgrupar,
@@ -3619,7 +3630,7 @@
         verNoPainelDoAviso: verNoPainelDoAviso,
         descartarAvisoPrazos: descartarAvisoPrazos,
 
-        setListaBusca: setListaBusca,
+        setListaBusca: setListaBuscaDebounced,
         setListaFiltro: setListaFiltro,
         limparListaFiltros: limparListaFiltros,
         setOrdenacaoLista: setOrdenacaoLista,
@@ -3627,7 +3638,8 @@
 
         abrirModalNegocio: abrirModalNegocio,
         salvarNegocio: salvarNegocio,
-        buscarCliente: buscarCliente,
+        buscarCliente: buscarClienteDebounced,
+        buscarClienteImediato: buscarCliente,
         abrirCadastroCliente: abrirCadastroCliente,
         editarClienteDoNegocio: editarClienteDoNegocio,
         adicionarItem: adicionarItem,
@@ -3637,7 +3649,8 @@
         salvarRegistroRapido: salvarRegistroRapido,
         salvarAnotacao: salvarAnotacao,
         excluirAnotacao: excluirAnotacao,
-        buscarNegocioParaAnotacao: buscarNegocioParaAnotacao,
+        buscarNegocioParaAnotacao: buscarNegocioParaAnotacaoDebounced,
+        buscarNegocioParaAnotacaoImediato: buscarNegocioParaAnotacao,
         desvincularNegocioAnotacao: desvincularNegocioAnotacao,
         aoTrocarFunilAnotacao: aoTrocarFunilAnotacao,
         aoTrocarSituacaoAnotacao: aoTrocarSituacaoAnotacao,

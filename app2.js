@@ -10370,6 +10370,38 @@ function converterMoedaParaNumero(valor) {
 // FUNÇÕES DOS MODAIS
 // ========================================
 
+// Datalist do campo Componente: lista os produtos PRINCIPAIS (candidatos a
+// pai de uma peça) para reduzir erro de digitação — a causa mais comum de
+// peça "órfã" (componente aponta pra um nome que não existe de fato).
+function _produtoComponentePopularDatalist() {
+    const dl = document.getElementById('produtoComponenteDatalist');
+    if (!dl) return;
+    const principais = (estoque.produtos || [])
+        .filter(p => !p.componente || p.componente.trim() === '' || p.componente.trim() === '-')
+        .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
+    dl.innerHTML = principais.map(p => '<option value="' + _escapeHtml(p.nome) + '"></option>').join('');
+}
+
+// Aviso não-bloqueante: se o texto digitado não bate com nenhum produto
+// cadastrado, avisa na hora — em vez de deixar a peça nascer órfã e só
+// descobrir isso semanas depois, na hora de precificar.
+function _produtoComponenteAtualizarAviso() {
+    const input = document.getElementById('produtoComponente');
+    const aviso = document.getElementById('produtoComponenteAviso');
+    if (!input || !aviso) return;
+    const texto = (input.value || '').trim();
+    if (!texto) { aviso.style.display = 'none'; return; }
+    const existe = (estoque.produtos || []).some(p =>
+        (p.nome || '').trim().toUpperCase() === texto.toUpperCase() &&
+        (!p.componente || p.componente.trim() === '' || p.componente.trim() === '-'));
+    if (existe) {
+        aviso.style.display = 'none';
+    } else {
+        aviso.style.display = 'block';
+        aviso.innerHTML = '<b>Nenhum produto cadastrado com esse nome.</b> Ao salvar, esta peça fica sem armamento-pai e aparece como "peça avulsa" no seletor de precificação — confira a grafia ou escolha um item da lista.';
+    }
+}
+
 function abrirModalProduto() {
     if (!requireAdminOrNotify()) return;
     // Abrir em modo de criar novo produto
@@ -10385,6 +10417,9 @@ function abrirModalProduto() {
     if (submitBtn) submitBtn.textContent = 'Salvar Produto';
     const labelEstoque = document.getElementById('labelEstoqueTotal');
     if (labelEstoque) labelEstoque.innerHTML = 'Quantidade Inicial (IMBEL) <span class="required">*</span>';
+    _produtoComponentePopularDatalist();
+    const avisoNovo = document.getElementById('produtoComponenteAviso');
+    if (avisoNovo) avisoNovo.style.display = 'none';
 }
 
 function abrirModalNovoProduto() {
@@ -10428,6 +10463,8 @@ function abrirModalEditarProduto(produtoId) {
     const nomeFabricaInput = document.getElementById('produtoNomeFabrica');
     if (nomeFabricaInput) nomeFabricaInput.value = produto.nomeFabrica || '';
     if (compInput) compInput.value = produto.componente || '';
+    _produtoComponentePopularDatalist();
+    _produtoComponenteAtualizarAviso();
     const exibirEstoqueInput = document.getElementById('produtoExibirNoEstoque');
     if (exibirEstoqueInput) exibirEstoqueInput.checked = produto.exibirNoEstoque === true;
     // Ajustar título e botão para modo edição
@@ -22052,10 +22089,37 @@ const _selMod = {
     selecionados: new Set(),   // nomes dos produtos marcados
     expandidos: new Set(),     // nomes dos pais expandidos
     catAtiva: 'todos',
+    filtroCI: 'todos',        // 'todos' | 'com' | 'sem'
     busca: '',
     todosCache: [],
     pecasPorPai: {},           // NOME_PAI_UPPER → [produtos filhos]
+    nomesCadastrados: new Set(),// NOME_UPPER de todo produto do catálogo
 };
+
+// Uma peça só é "filha" se o campo `componente` apontar pra um produto que
+// existe de fato no catálogo. Se o pai não existe (nome digitado diferente, pai
+// ainda não cadastrado), a peça é ÓRFÃ: ela não pode ficar escondida embaixo de
+// um pai inexistente, tem que aparecer como linha de topo — senão some do
+// seletor e o usuário não consegue precificar o que acabou de cadastrar.
+function _selCompDe(p) {
+    const c = (p && p.componente ? String(p.componente) : '').trim();
+    return (c === '' || c === '-') ? '' : c;
+}
+function _selPecaTemPai(p) {
+    const c = _selCompDe(p);
+    return !!c && _selMod.nomesCadastrados.has(c.toUpperCase());
+}
+function _selEhOrfa(p) {
+    return !!_selCompDe(p) && !_selPecaTemPai(p);
+}
+function _selModalCasaBusca(p, q) {
+    if (!q) return true;
+    return (p.nome || '').toLowerCase().includes(q) ||
+           (p.pn || '').toLowerCase().includes(q) ||
+           (p.ncm || '').toLowerCase().includes(q) ||
+           (p.nomeFabrica || '').toLowerCase().includes(q) ||
+           (p.componente || '').toLowerCase().includes(q);
+}
 
 // Mapa de rótulos por NCM
 const _SEL_NCM_LABELS = {
@@ -22074,6 +22138,50 @@ function _selNcmLabel(ncm) {
     return ncm;
 }
 
+// Célula de CI editável: clique para digitar sem sair do modal — é o que
+// elimina a ida até a aba de custos só para lançar um CI que falta.
+function _selModalCiCellHtml(p) {
+    const ci = _selCiDe(p);
+    const nomeAttr = _escapeHtml(p.nome).replace(/"/g, '&quot;');
+    return '<td class="sel-td-ci" onclick="event.stopPropagation()">' +
+        '<input type="text" class="sel-ci-input' + (ci > 0 ? '' : ' vazio') + '"' +
+        ' value="' + (ci > 0 ? _fmtMoeda(ci) : '') + '"' +
+        ' placeholder="Definir CI"' +
+        ' oninput="this.value = formatCurrencyBRLInput(this.value)"' +
+        " onchange=\"_selModalDefinirCI(this,'" + nomeAttr + "')\"" +
+        ' onclick="event.stopPropagation()">' +
+        '</td>';
+}
+
+function _selModalDefinirCI(inputEl, nome) {
+    const valor = parseCurrencyBRLToNumber(inputEl.value) || 0;
+    if (!precificacao[nome]) precificacao[nome] = {};
+    precificacao[nome].ci = valor;
+    precificacao[nome].ciAtualizadoEm = new Date().toISOString();
+    estoque.precificacao = precificacao;
+    const prod = (estoque.produtos || []).find(p => p.nome === nome);
+    if (prod) prod.ci = valor;
+    try { salvarDados(); } catch (e) { try { localStorage.setItem('estoqueArmasV2', JSON.stringify(estoque)); } catch (e2) { _catchSilencioso(e2, '_selModalDefinirCI'); } }
+    inputEl.value = valor > 0 ? _fmtMoeda(valor) : '';
+    inputEl.classList.toggle('vazio', !(valor > 0));
+    try { atualizarResumoPrecificacaoCI(); } catch (e) { _catchSilencioso(e, '_selModalDefinirCI'); }
+    try { renderizarPrecificacao(); } catch (e) { _catchSilencioso(e, '_selModalDefinirCI'); }
+    _selModalAtualizarRodape();
+    mostrarNotificacao && mostrarNotificacao('CI de "' + nome + '" ' + (valor > 0 ? 'salvo' : 'limpo') + '.', 'success');
+}
+
+function selModalSetFiltroCI(btn, valor) {
+    _selMod.filtroCI = valor;
+    document.querySelectorAll('.sel-seg-btn').forEach(b => b.classList.remove('ativo'));
+    btn.classList.add('ativo');
+    _selModalRenderizar();
+}
+
+// CI efetivo de um produto: override em precificacao[nome], senão o cadastrado no produto.
+function _selCiDe(p) {
+    return parseFloat(precificacao[p?.nome]?.ci ?? p?.ci ?? 0) || 0;
+}
+
 function precifAbrirModalProdutos() {
     const modal = document.getElementById('selProdModal');
     if (!modal) return;
@@ -22083,10 +22191,12 @@ function precifAbrirModalProdutos() {
         (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
 
     _selMod.todosCache = todos;
+    _selMod.nomesCadastrados = new Set(
+        todos.map(p => (p.nome || '').trim().toUpperCase()).filter(Boolean));
     _selMod.pecasPorPai = {};
-    todos.filter(p => p.componente && p.componente.trim() !== '' && p.componente.trim() !== '-')
+    todos.filter(p => _selPecaTemPai(p))
         .forEach(p => {
-            const pai = p.componente.trim().toUpperCase();
+            const pai = _selCompDe(p).toUpperCase();
             if (!_selMod.pecasPorPai[pai]) _selMod.pecasPorPai[pai] = [];
             _selMod.pecasPorPai[pai].push(p);
         });
@@ -22098,6 +22208,7 @@ function precifAbrirModalProdutos() {
     );
     _selMod.expandidos = new Set();
     _selMod.catAtiva = 'todos';
+    _selMod.filtroCI = 'todos';
     _selMod.busca = '';
 
     // Subtítulo do header
@@ -22125,11 +22236,9 @@ function _selModalMontarCats() {
     const catsEl = document.getElementById('selModalCats');
     if (!catsEl) return;
 
-    // Coleta NCMs presentes
-    const principais = _selMod.todosCache.filter(p =>
-        !p.componente || p.componente.trim() === '' || p.componente.trim() === '-');
-
-    const ncmsPresentes = [...new Set(principais.map(p => p.ncm || ''))];
+    // Coleta NCMs presentes — inclui os das peças, senão um NCM que só existe
+    // em peça (ex.: 9305 Acessórios) nunca ganha pílula.
+    const ncmsPresentes = [...new Set(_selMod.todosCache.map(p => p.ncm || ''))];
 
     // Monta pílulas: Todos + uma por NCM
     const cats = [{ key: 'todos', label: 'Todos' }];
@@ -22160,17 +22269,23 @@ function selModalFiltrar() {
 function _selModalFiltrado() {
     const q = (_selMod.busca || '').trim().toLowerCase();
     const cat = _selMod.catAtiva;
+    const fCI = _selMod.filtroCI;
 
-    const principais = _selMod.todosCache.filter(p =>
-        !p.componente || p.componente.trim() === '' || p.componente.trim() === '-');
+    // Linhas de topo = produtos principais + peças órfãs (pai inexistente).
+    const principais = _selMod.todosCache.filter(p => !_selPecaTemPai(p));
+
+    const passaCI = p => fCI === 'todos' ? true : (fCI === 'com' ? _selCiDe(p) > 0 : _selCiDe(p) <= 0);
 
     return principais.filter(p => {
-        if (cat !== 'todos' && (p.ncm || '') !== cat) return false;
+        const pecas = _selMod.pecasPorPai[(p.nome || '').toUpperCase()] || [];
+        // O pai continua na lista se ele OU alguma peça dele casa com o filtro —
+        // caso contrário, buscar pelo nome de uma peça não retornava nada.
+        if (cat !== 'todos' &&
+            (p.ncm || '') !== cat &&
+            !pecas.some(pc => (pc.ncm || '') === cat)) return false;
+        if (fCI !== 'todos' && !passaCI(p) && !pecas.some(passaCI)) return false;
         if (!q) return true;
-        return (p.nome || '').toLowerCase().includes(q) ||
-               (p.pn || '').toLowerCase().includes(q) ||
-               (p.ncm || '').toLowerCase().includes(q) ||
-               (p.nomeFabrica || '').toLowerCase().includes(q);
+        return _selModalCasaBusca(p, q) || pecas.some(pc => _selModalCasaBusca(pc, q));
     });
 }
 
@@ -22179,6 +22294,7 @@ function _selModalRenderizar() {
     const vazioEl = document.getElementById('selModalVazio');
     if (!tbody) return;
 
+    const q = (_selMod.busca || '').trim().toLowerCase();
     const filtrados = _selModalFiltrado();
 
     if (filtrados.length === 0) {
@@ -22216,28 +22332,41 @@ function _selModalRenderizar() {
             const pecas = _selMod.pecasPorPai[nomeUp] || [];
             const temPecas = pecas.length > 0;
             const sel = _selMod.selecionados.has(prod.nome);
-            const expandido = _selMod.expandidos.has(prod.nome);
-            const ci = parseFloat(precificacao[prod.nome]?.ci || prod.ci || 0);
+            // Quando a busca casou só com peças deste pai, abre o pai sozinho e
+            // mostra apenas as peças que casaram — buscar o nome de uma peça
+            // tem que levar até ela, não parar no pai fechado.
+            const paiCasa = _selModalCasaBusca(prod, q);
+            const pecasMatch = q ? pecas.filter(pc => _selModalCasaBusca(pc, q)) : pecas;
+            const autoExp = !!q && !paiCasa && pecasMatch.length > 0;
+            const expandido = autoExp || _selMod.expandidos.has(prod.nome);
+            const pecasFiltroTexto = (q && !paiCasa) ? pecasMatch : pecas;
+            const pecasVisiveis = _selMod.filtroCI === 'todos'
+                ? pecasFiltroTexto
+                : pecasFiltroTexto.filter(pc => _selMod.filtroCI === 'com' ? _selCiDe(pc) > 0 : _selCiDe(pc) <= 0);
             const catTag = prod.categoria ? `<span class="sel-cat-tag">${_escapeHtml(prod.categoria)}</span>` : '';
             const pecasBadge = temPecas ? `<span class="sel-pecas-badge">${pecas.length} peça${pecas.length > 1 ? 's' : ''}</span>` : '';
+            // Peça cujo pai não está cadastrado: aparece como linha de topo e
+            // avisa o porquê, em vez de simplesmente sumir da lista.
+            const orfaTag = _selEhOrfa(prod)
+                ? `<span class="sel-orfa-tag" title="Peça de «${_escapeHtml(_selCompDe(prod))}» — esse produto não está cadastrado, por isso ela aparece solta aqui">peça sem pai</span>`
+                : '';
 
             html += `<tr class="sel-prod${sel ? ' on' : ''}" onclick="selModalToggleItem(event,'${_escapeHtml(prod.nome)}')">
                 <td class="sel-td-expand">
-                    ${temPecas ? `<button class="sel-exp-btn${expandido ? ' aberto' : ''}" onclick="selModalToggleExpand(event,'${_escapeHtml(prod.nome)}')">&#9658;</button>` : ''}
+                    ${temPecas && !autoExp ? `<button class="sel-exp-btn${expandido ? ' aberto' : ''}" onclick="selModalToggleExpand(event,'${_escapeHtml(prod.nome)}')">&#9658;</button>` : ''}
                 </td>
                 <td class="sel-td-chk"><span class="sel-cbox">${sel ? '✓' : ''}</span></td>
                 <td class="sel-td-pn">${_escapeHtml(prod.pn || '—')}</td>
                 <td class="sel-td-ncm">${_escapeHtml(prod.ncm || '—')}</td>
                 <td class="sel-td-fab">${_escapeHtml(prod.nomeFabrica || '—')}</td>
-                <td class="sel-td-nome">${_escapeHtml(prod.nome)}${catTag}${pecasBadge}</td>
-                <td class="sel-td-ci">${ci > 0 ? _fmtMoeda(ci) : '—'}</td>
+                <td class="sel-td-nome">${_escapeHtml(prod.nome)}${catTag}${pecasBadge}${orfaTag}</td>
+                ${_selModalCiCellHtml(prod)}
             </tr>`;
 
             // Peças aninhadas (visíveis apenas se expandido)
             if (temPecas && expandido) {
-                pecas.forEach(peca => {
+                pecasVisiveis.forEach(peca => {
                     const selP = _selMod.selecionados.has(peca.nome);
-                    const ciP = parseFloat(precificacao[peca.nome]?.ci || peca.ci || 0);
                     html += `<tr class="sel-prod sel-peca${selP ? ' on' : ''}" onclick="selModalToggleItem(event,'${_escapeHtml(peca.nome)}')">
                         <td class="sel-td-expand"></td>
                         <td class="sel-td-chk"><span class="sel-cbox">${selP ? '✓' : ''}</span></td>
@@ -22245,7 +22374,7 @@ function _selModalRenderizar() {
                         <td class="sel-td-ncm">${_escapeHtml(peca.ncm || '—')}</td>
                         <td class="sel-td-fab"><span class="sel-peca-hier">└</span>${_escapeHtml(peca.nomeFabrica || '—')}</td>
                         <td class="sel-td-nome">${_escapeHtml(peca.nome)}<span class="sel-peca-tag">peça</span></td>
-                        <td class="sel-td-ci">${ciP > 0 ? _fmtMoeda(ciP) : '—'}</td>
+                        ${_selModalCiCellHtml(peca)}
                     </tr>`;
                 });
             }
@@ -22490,68 +22619,59 @@ function precifAdicionarProdutoLinha(nomeProduto = '', taxaOvr = null, roiOvr = 
     const glob = precifGetGlobais();
 
     const linhaId = 'precif-linha-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
-    const div = document.createElement('div');
-    div.className = 'precif-linha-produto';
-    div.dataset.nomeProduto = nomeProduto;
-    div.id = linhaId;
-    div.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 0.9fr 0.9fr 0.9fr 0.9fr 0.8fr auto;gap:8px;align-items:center;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px';
+    // <tr> em vez de <div>-grid: um cabeçalho só pra tabela toda, em vez de
+    // repetir os 7 rótulos (Produto/CI/Taxa/ROI/Comissão/Frete/Qtd) acima dos
+    // campos em cada linha. As colunas "Preço unit." e "Total" (preenchidas
+    // por calcularPrecificacaoPorCliente) dão o resultado sem sair da linha.
+    const tr = document.createElement('tr');
+    tr.className = 'precif-linha-produto';
+    tr.dataset.nomeProduto = nomeProduto;
+    tr.id = linhaId;
 
-    div.innerHTML = `
-        <div>
-            <label style="font-size:0.75rem;font-weight:600;color:#64748b;display:block;margin-bottom:3px">Produto</label>
+    tr.innerHTML = `
+        <td class="c-produto">
             <input type="text" class="precif-linha-produto-input" list="precifProdutosDatalist" autocomplete="off"
                 value="${_escapeHtml(nomeProduto)}" placeholder="Nome ou NCM do produto…"
-                onchange="precifLinhaAtualizarProduto(this)" oninput="precifLinhaAtualizarProduto(this)"
-                style="width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:0.85rem">
-        </div>
-        <div>
-            <label style="font-size:0.75rem;font-weight:600;color:#64748b;display:block;margin-bottom:3px">CI</label>
+                onchange="precifLinhaAtualizarProduto(this)" oninput="precifLinhaAtualizarProduto(this)">
+        </td>
+        <td class="c-ci">
             <input type="text" class="precif-linha-ci" placeholder="—"
                 oninput="this.value = formatCurrencyBRLInput(this.value)"
-                style="width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:0.85rem;background:#fff;color:#1e3a5f;font-weight:600"
                 title="CI usado nesta linha — altera apenas este cálculo">
-        </div>
-        <div>
-            <label style="font-size:0.75rem;font-weight:600;color:#64748b;display:block;margin-bottom:3px">Taxa (%)</label>
-            <input type="number" class="precif-linha-taxa" min="0" step="0.01" value="${taxaOvr !== null ? taxaOvr : glob.taxa}" placeholder="${glob.taxa}"
-                style="width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:0.85rem">
-        </div>
-        <div>
-            <label style="font-size:0.75rem;font-weight:600;color:#64748b;display:block;margin-bottom:3px">ROI (%)</label>
-            <input type="number" class="precif-linha-roi" min="0" step="0.01" value="${roiOvr !== null ? roiOvr : glob.roi}" placeholder="${glob.roi}"
-                style="width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:0.85rem">
-        </div>
-        <div>
-            <label style="font-size:0.75rem;font-weight:600;color:#64748b;display:block;margin-bottom:3px">Comissão (%)</label>
-            <input type="number" class="precif-linha-comissao" min="0" step="0.01" value="${comOvr !== null ? comOvr : glob.com}" placeholder="${glob.com}"
-                style="width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:0.85rem">
-        </div>
-        <div>
-            <label style="font-size:0.75rem;font-weight:600;color:#64748b;display:block;margin-bottom:3px">Frete individual (R$)</label>
+        </td>
+        <td class="c-pct">
+            <input type="number" class="precif-linha-taxa" min="0" step="0.01" value="${taxaOvr !== null ? taxaOvr : glob.taxa}" placeholder="${glob.taxa}">
+        </td>
+        <td class="c-pct">
+            <input type="number" class="precif-linha-roi" min="0" step="0.01" value="${roiOvr !== null ? roiOvr : glob.roi}" placeholder="${glob.roi}">
+        </td>
+        <td class="c-pct">
+            <input type="number" class="precif-linha-comissao" min="0" step="0.01" value="${comOvr !== null ? comOvr : glob.com}" placeholder="${glob.com}">
+        </td>
+        <td class="c-frete">
             <input type="number" class="precif-linha-frete" min="0" step="0.01" value="${(typeof freteVal !== 'undefined' && freteVal !== null) ? freteVal : ''}" placeholder="0,00"
-                title="Frete exclusivo deste item. Use o campo 'Frete do Pedido' para repartir um frete único entre todos os produtos."
-                style="width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:0.85rem">
-        </div>
-        <div>
-            <label style="font-size:0.75rem;font-weight:600;color:#64748b;display:block;margin-bottom:3px">Qtd</label>
-            <input type="number" class="precif-linha-quant" min="1" step="1" value="${(typeof quantidade !== 'undefined' && quantidade !== null) ? quantidade : 1}" placeholder="1"
-                style="width:100%;padding:6px 8px;border:1px solid #e2e8f0;border-radius:5px;font-size:0.85rem">
-        </div>
-        <button type="button" tabindex="-1" onclick="precifRemoverLinha('${linhaId}')"
-            title="Remover produto"
-            style="background:none;border:1px solid #fca5a5;color:#dc2626;border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;margin-top:18px">✕</button>
+                title="Frete exclusivo deste item. Use o campo 'Frete do Pedido' para repartir um frete único entre todos os produtos.">
+        </td>
+        <td class="c-qtd">
+            <input type="number" class="precif-linha-quant" min="1" step="1" value="${(typeof quantidade !== 'undefined' && quantidade !== null) ? quantidade : 1}" placeholder="1">
+        </td>
+        <td class="c-out precif-linha-preco-unit">—</td>
+        <td class="c-out precif-linha-total">—</td>
+        <td class="c-rm">
+            <button type="button" tabindex="-1" class="pc-linha-rm-btn" onclick="precifRemoverLinha('${linhaId}')" title="Remover produto">✕</button>
+        </td>
     `;
 
     // Se produto já estava selecionado, preenche CI (formatado)
     if (nomeProduto) {
         const ci = parseFloat(precificacao[nomeProduto]?.ci || 0);
-        const ciInput = div.querySelector('.precif-linha-ci');
+        const ciInput = tr.querySelector('.precif-linha-ci');
         if (ciInput && ci > 0) ciInput.value = _fmtMoeda(ci);
     }
 
-    container.appendChild(div);
+    container.appendChild(tr);
     atualizarContadorLinhasPrecif();
-    return div;
+    return tr;
 }
 
 function precifRemoverLinha(linhaId) {
@@ -22692,7 +22812,7 @@ function atualizarContadorLinhasPrecif() {
             // Mostrar placeholder
             const container = document.getElementById('precifLinhasProdutos');
             if (container && !container.querySelector('[data-placeholder]')) {
-                container.innerHTML = '<div data-placeholder style="color:#94a3b8;font-size:0.85rem;text-align:center;padding:14px;background:#f8fafc;border-radius:8px;border:1px dashed #e2e8f0">Digite o nome de um produto para iniciar</div>';
+                container.innerHTML = '<tr class="pc-linhas-empty-row" data-placeholder><td colspan="10">Digite o nome de um produto para iniciar</td></tr>';
             }
         } else {
             el.textContent = `${preenchidas.length} item(ns) · ${preenchidas.reduce((s,l) => s + (parseInt(l.querySelector('.precif-linha-quant')?.value,10)||0), 0)} un`;
@@ -22898,7 +23018,7 @@ function aplicarEstadoPrecificacaoSalva(registro) {
             // produto (mesmo nome, mesma CI, como se tivesse 2 unidades).
             container.innerHTML = '';
             if (itens.length === 0) {
-                container.innerHTML = '<div data-placeholder style="color:#94a3b8;font-size:0.85rem;text-align:center;padding:14px;background:#f8fafc;border-radius:8px;border:1px dashed #e2e8f0">Clique em "+ Adicionar Produto" para iniciar</div>';
+                container.innerHTML = '<tr class="pc-linhas-empty-row" data-placeholder><td colspan="10">Clique em "+ Adicionar Produto" para iniciar</td></tr>';
             } else {
                 itens.forEach(it => {
                     try {
@@ -23148,6 +23268,12 @@ function calcularPrecificacaoPorCliente(opcoes = {}) {
         if (ci === 0) {
             produtosSemCI++;
             const nomeId = (produto.nome || '').replace(/[^a-z0-9]/gi, '_');
+            if (linhaIndividual) {
+                const puEl = linhaIndividual.querySelector('.precif-linha-preco-unit');
+                const totEl = linhaIndividual.querySelector('.precif-linha-total');
+                if (puEl) puEl.textContent = 'sem CI';
+                if (totEl) totEl.textContent = '—';
+            }
             return `
                 <tr id="precif_row_${nomeId}" style="opacity:0.45">
                     <td style="text-align:left; padding-left:15px; font-weight:500; position:sticky; left:0; background:#fff; z-index:1">${_escapeHtml(produto.nome)}<span style="font-size:0.7rem; color:#94a3b8; margin-left:6px">sem CI</span></td>
@@ -23247,6 +23373,15 @@ function calcularPrecificacaoPorCliente(opcoes = {}) {
         }
         const freteVal = freteLinhaVal + freteGlobalRateado;
         const valorTotalCalc = subtotalProduto + freteVal;
+
+        // Resultado na própria linha de entrada — visão rápida sem descer até
+        // a tabela detalhada mais abaixo.
+        if (linhaIndividual) {
+            const puEl = linhaIndividual.querySelector('.precif-linha-preco-unit');
+            const totEl = linhaIndividual.querySelector('.precif-linha-total');
+            if (puEl) puEl.textContent = fmt(valorFinalCalc);
+            if (totEl) totEl.textContent = fmt(valorTotalCalc);
+        }
 
         itensCalculados.push({
             produto: produto.nome,

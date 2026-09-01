@@ -9812,22 +9812,99 @@ table.rastr-detail-table tbody td {
     margin-left: 6px;
 }
 
-/* ── Linhas de produtos ── */
-.pc-linhas-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+/* ── Linhas de produtos: tabela compacta, um cabeçalho só (antes cada linha
+   repetia os 7 rótulos acima dos campos — com 10 itens eram 70 rótulos) ── */
+.pc-linhas-tabela-wrap {
+    border: 1px solid var(--tv-navy-200);
+    border-radius: 6px;
+    overflow: hidden;
     min-height: 44px;
 }
-.pc-linhas-empty {
+.pc-linhas-tabela {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+.pc-linhas-tabela thead th {
+    background: var(--tv-navy-800);
+    color: rgba(255,255,255,.68);
+    font-family: var(--tv-font-display);
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: right;
+    padding: 7px 8px;
+    white-space: nowrap;
+}
+.pc-linhas-tabela thead th.l { text-align: left; }
+.pc-linhas-tabela thead th.r { background: var(--tv-navy-700); }
+.pc-linhas-tabela thead th.rm { width: 34px; padding: 7px 4px; }
+.pc-linhas-tabela tbody tr.precif-linha-produto {
+    border-bottom: 1px solid var(--tv-navy-100);
+}
+.pc-linhas-tabela tbody tr.precif-linha-produto:last-child { border-bottom: none; }
+.pc-linhas-tabela tbody td {
+    padding: 4px 6px;
+    vertical-align: middle;
+}
+.pc-linhas-tabela tbody td.c-produto { width: 26%; }
+.pc-linhas-tabela tbody td.c-rm { width: 34px; text-align: center; padding: 4px; }
+.pc-linhas-tabela tbody td input {
+    box-sizing: border-box;
+    width: 100%;
+    border: 1px solid var(--tv-navy-200);
+    border-radius: 4px;
+    padding: 5px 7px;
+    font-size: 0.8rem;
+    background: #fff;
+    color: var(--tv-navy-700);
+    font-family: var(--tv-font-primary, inherit);
+}
+.pc-linhas-tabela tbody td.c-ci input {
+    font-family: var(--tv-font-mono);
+    font-weight: 600;
+    color: var(--tv-amber-700);
+    text-align: right;
+}
+.pc-linhas-tabela tbody td.c-pct input,
+.pc-linhas-tabela tbody td.c-frete input,
+.pc-linhas-tabela tbody td.c-qtd input {
+    text-align: right;
+    font-family: var(--tv-font-mono);
+}
+.pc-linhas-tabela tbody td.c-out {
+    text-align: right;
+    font-family: var(--tv-font-mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--tv-navy-700);
+    white-space: nowrap;
+}
+.pc-linhas-tabela tbody td.precif-linha-total {
+    color: var(--tv-amber-700);
+    font-weight: 700;
+}
+.pc-linha-rm-btn {
+    background: none;
+    border: 1px solid #fca5a5;
+    color: #dc2626;
+    border-radius: 5px;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.pc-linhas-tabela tbody tr.pc-linhas-empty-row td {
     color: var(--tv-navy-400);
     font-family: var(--tv-font-mono);
     font-size: 0.75rem;
     text-align: center;
     padding: 12px;
     background: var(--tv-navy-50);
-    border: 1px dashed var(--tv-navy-200);
-    border-radius: 2px;
 }
 .pc-contador {
     font-family: var(--tv-font-mono);
@@ -10097,9 +10174,59 @@ tr.on .sel-cbox {
     font-weight: 600;
     color: #b8922a;
     text-align: right;
-    padding: 8px 12px 8px 10px;
+    padding: 8px 10px 8px 6px;
     white-space: nowrap;
 }
+
+/* Campo de CI editável direto na linha do seletor — elimina a ida até a
+   aba de custos só para lançar um CI que falta. */
+.sel-ci-input {
+    width: 92px;
+    box-sizing: border-box;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 4px 7px;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #b8922a;
+    text-align: right;
+    background: #fff;
+    outline: none;
+    transition: border-color .12s, background .12s;
+}
+.sel-ci-input:focus { border-color: #b8922a; }
+.sel-ci-input.vazio {
+    color: #a6720d;
+    border-color: #f0b94f;
+    background: #fdf3dc;
+    font-weight: 600;
+}
+.sel-ci-input.vazio::placeholder { color: #c98a14; opacity: 1; }
+
+/* Segmentado Todos / Com CI / Sem CI */
+.sel-seg {
+    display: flex;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.sel-seg-btn {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    padding: 6px 11px;
+    border: none;
+    border-right: 1px solid #cbd5e1;
+    background: #fff;
+    color: #475569;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.sel-seg-btn:last-child { border-right: none; }
+.sel-seg-btn.ativo { background: #0a1828; color: #fff; }
 
 /* Tag categoria no nome */
 .sel-cat-tag {
@@ -10192,6 +10319,22 @@ tr.on .sel-cbox {
     border-radius: 2px;
     margin-left: 6px;
     vertical-align: middle;
+}
+
+/* Peça cujo produto-pai não está cadastrado — aparece como linha de topo */
+.sel-orfa-tag {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: #a6720d;
+    background: #fdf3dc;
+    border: 1px solid #f0b94f;
+    padding: 0 5px;
+    border-radius: 2px;
+    margin-left: 6px;
+    vertical-align: middle;
+    white-space: nowrap;
+    cursor: help;
 }
 
 /* Estado vazio */

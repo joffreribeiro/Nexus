@@ -13528,8 +13528,7 @@ function excluirDevolucao(devId) {
     const produto = estoque.produtos.find(p => p.id === dev.produtoId);
     if (produto) {
         if ((dev.destino || '').toUpperCase() === 'IMBEL') {
-            // Se a devolução foi para o consolidado (IMBEL), reduzir o consolidado
-            produto.estoqueConsolidado = Math.max(0, (Number(produto.estoqueConsolidado) || 0) - dev.quantidade);
+            // Devolução para IMBEL nunca alterou o consolidado (cadastro) — só recolocar no representante.
             produto.distribuicao[dev.origem] = (produto.distribuicao[dev.origem] || 0) + dev.quantidade;
         } else {
             produto.distribuicao[dev.destino] = Math.max(0, (produto.distribuicao[dev.destino] || 0) - dev.quantidade);
@@ -14064,10 +14063,9 @@ function salvarDevolucao(event) {
         produto.distribuicao[representante] = (produto.distribuicao[representante] || 0) - item.quantidade;
         if (produto.distribuicao[representante] < 0) produto.distribuicao[representante] = 0;
 
-        // Garantir chave de destino: se destino for IMBEL, incrementar o consolidado
-        if ((destino || '').toString().toUpperCase() === 'IMBEL') {
-            produto.estoqueConsolidado = (Number(produto.estoqueConsolidado) || 0) + item.quantidade;
-        } else {
+        // Nota: quando destino é IMBEL, a quantidade já faz parte do `estoqueConsolidado`
+        // (cadastro) — devolução é só realocação interna, não deve incrementá-lo.
+        if ((destino || '').toString().toUpperCase() !== 'IMBEL') {
             produto.distribuicao[destino] = (produto.distribuicao[destino] || 0) + item.quantidade;
         }
 
@@ -25496,9 +25494,13 @@ function salvarProposta(event) {
     const condicaoPagamento = _valorCampo('propostaCondicaoPagamento');
     const itens = _coletarItensProposta();
 
+    if (!numero.trim()) { mostrarNotificacao('Informe o número da proposta.', 'error'); return; }
     if (!cliente) { mostrarNotificacao('Informe o cliente.', 'error'); return; }
     if (!representante) { mostrarNotificacao('Selecione o representante.', 'error'); return; }
     if (itens.length === 0) { mostrarNotificacao('Adicione pelo menos um item.', 'error'); return; }
+
+    const duplicada = propostas.find(p => p.numero === numero && p.id !== editId);
+    if (duplicada) { mostrarNotificacao(`Já existe uma proposta com o número ${numero}.`, 'error'); return; }
 
     // Verificar se algum item excede o desconto máximo configurado
     let precisaAprovacao = false;
@@ -25535,6 +25537,7 @@ function salvarProposta(event) {
     if (editId) {
         const idx = propostas.findIndex(p => p.id === editId);
         if (idx !== -1) {
+            propostas[idx].numero = numero;
             propostas[idx].cliente = cliente;
             if (clienteSel) propostas[idx].clienteId = clienteSel.id;
             propostas[idx].representante = representante;

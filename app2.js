@@ -13547,6 +13547,58 @@ function excluirDevolucao(devId) {
     mostrarNotificacao(`Devolução excluída e estoque revertido (${dev.quantidade} unidades).`, 'success');
 }
 
+/**
+ * Correção única do bug em que devoluções para IMBEL incrementavam
+ * indevidamente `estoqueConsolidado` (cadastro), inflando o "Disponível" do
+ * Consolidado. Para cada produto, desconta do consolidado a soma das
+ * devoluções ATIVAS com destino IMBEL (devoluções já excluídas não entram —
+ * `excluirDevolucao` já reverteu o incremento delas). Rodar uma única vez
+ * após o deploy da correção do bug; idempotente (rodar de novo não altera
+ * nada, pois após a correção não há mais devoluções "não contabilizadas").
+ */
+function corrigirInflacaoConsolidadoDevolucoes() {
+    if (!requireAdminOrNotify()) return;
+
+    const porProduto = {};
+    (estoque.registroDevolucoes || []).forEach(d => {
+        if ((d.destino || '').toString().toUpperCase() !== 'IMBEL') return;
+        porProduto[d.produtoId] = (porProduto[d.produtoId] || 0) + (Number(d.quantidade) || 0);
+    });
+
+    const afetados = [];
+    Object.keys(porProduto).forEach(produtoId => {
+        const produto = estoque.produtos.find(p => String(p.id) === String(produtoId));
+        if (!produto) return;
+        const inflacao = porProduto[produtoId];
+        if (inflacao <= 0) return;
+        const antes = Number(produto.estoqueConsolidado) || 0;
+        const depois = Math.max(0, antes - inflacao);
+        if (depois === antes) return;
+        afetados.push({ produto, antes, depois, inflacao });
+    });
+
+    if (afetados.length === 0) {
+        mostrarNotificacao('Nenhum produto com consolidado inflado por devoluções encontrado.', 'info');
+        return;
+    }
+
+    const resumo = afetados.map(a => `• ${a.produto.nome}: ${a.antes} → ${a.depois} (−${a.inflacao})`).join('\n');
+    if (!confirm(`Corrigir o "Disponível" do Consolidado nos seguintes produtos?\n\n${resumo}\n\nEsta ação ajusta os dados salvos e não pode ser desfeita automaticamente.`)) {
+        return;
+    }
+
+    afetados.forEach(a => {
+        a.produto.estoqueConsolidado = a.depois;
+        try { registrarAuditoria('correcao-inflacao-consolidado', { estoqueConsolidado: a.antes }, { estoqueConsolidado: a.depois }, `Correção do bug de devolução: ${a.produto.nome} (−${a.inflacao})`); } catch (e) { _catchSilencioso(e, 'corrigirInflacaoConsolidadoDevolucoes'); }
+    });
+
+    salvarDados();
+    renderizarTabela();
+    renderizarDashboard();
+    mostrarNotificacao(`Consolidado corrigido em ${afetados.length} produto(s). Veja o console para detalhes.`, 'success');
+    console.table(afetados.map(a => ({ produto: a.produto.nome, antes: a.antes, depois: a.depois, inflacao: a.inflacao })));
+}
+
 function exportarDistribuicao() {
     const distribuicoes = estoque.registroDistribuicao || [];
     

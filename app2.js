@@ -4358,6 +4358,21 @@ function _togglePecas(el, nomePai) {
     if (icon) icon.textContent = expandido ? '▶' : '▼';
 }
 
+// Mostra/esconde, na tabela de Cadastro de Produtos, as peças que compõem um
+// conjunto (produto.composicao) — linhas injetadas por _renderLinhaProduto
+// logo abaixo da linha do conjunto, marcadas com data-composicao-de.
+function toggleComposicaoCadastro(e, produtoId) {
+    if (e) e.stopPropagation();
+    const tbody = document.getElementById('corpoCadastroProdutos');
+    if (!tbody) return;
+    const icon = document.getElementById('conjunto-icon-' + produtoId);
+    const expandido = icon && icon.textContent.trim() === '▼';
+    tbody.querySelectorAll(`tr[data-composicao-de="${produtoId}"]`).forEach(tr => {
+        tr.style.display = expandido ? 'none' : 'table-row';
+    });
+    if (icon) icon.textContent = expandido ? '▶' : '▼';
+}
+
 function renderizarCadastroProdutos() {
     const tbody = document.getElementById('corpoCadastroProdutos');
     const empty = document.getElementById('cadastroProdutosEmpty');
@@ -4450,7 +4465,7 @@ function renderizarCadastroProdutos() {
         const icon = th.querySelector('.sort-icon');
         if (icon) icon.textContent = '↕';
     });
-    const colMap = { nome: 6, categoria: 1, pn: 2, nomeFabrica: 4, ci: 7, saldo: 8, atualizado: 9 };
+    const colMap = { nome: 5, categoria: 1, pn: 2, nomeFabrica: 3, ci: 7, saldo: 8, atualizado: 9 };
     const colIdx = colMap[_cadProdSort.col];
     if (colIdx !== undefined) {
         const ths = document.querySelectorAll('#tabelaCadastroProdutos thead th');
@@ -4522,9 +4537,10 @@ function renderizarCadastroProdutos() {
         // registrar consumo de estoque ao vender um conjunto (ver
         // _expandirItensComComposicao) e nunca é vendido avulso.
         const composicaoProduto = Array.isArray(produto.composicao) ? produto.composicao : [];
+        const idProdutoNum = Number(produto.id);
         let pecaCell = produto.pecaRef ? _escapeHtml(produto.pecaRef) : '-';
         if (composicaoProduto.length > 0) {
-            pecaCell += ` <span title="Vendido apenas como conjunto — inclui ${composicaoProduto.length} peça(s)" style="display:inline-block;background:#fef3c7;color:#92400e;border-radius:8px;padding:0 6px;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin-left:4px;white-space:nowrap">conjunto · ${composicaoProduto.length}</span>`;
+            pecaCell += ` <span onclick="toggleComposicaoCadastro(event, ${idProdutoNum})" title="Clique para ver as ${composicaoProduto.length} peça(s) deste conjunto" style="cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:3px;background:#fef3c7;color:#92400e;border-radius:8px;padding:0 6px;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin-left:4px;white-space:nowrap"><span id="conjunto-icon-${idProdutoNum}" class="conjunto-expand-icon">▶</span> conjunto · ${composicaoProduto.length}</span>`;
         }
         if (produto.criadoAutomaticamente === true) {
             pecaCell += ` <span title="Criada automaticamente ao vender um conjunto — não é vendida separadamente" style="display:inline-block;background:#fee2e2;color:#991b1b;border-radius:8px;padding:0 6px;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin-left:4px;white-space:nowrap">só no conjunto</span>`;
@@ -4542,10 +4558,10 @@ function renderizarCadastroProdutos() {
             <td style="font-family:monospace;font-size:0.85rem;white-space:nowrap" title="${_escapeHtml(ncmDescricao)}">${_escapeHtml(ncmCodigo)}</td>
             <td>${categoriaBadge}</td>
             <td style="font-family:monospace;${isPeca ? 'color:#64748b;font-size:0.85rem' : ''}">${_escapeHtml(pn)}<span id="${expandSlotId}"></span></td>
-            <td style="font-family:monospace;font-size:0.85rem;white-space:nowrap">${pecaCell}</td>
             <td>${_escapeHtml(nomeFabrica)}</td>
             <td>${_escapeHtml(componente)}</td>
             <td style="text-align:left;font-weight:600;${isPeca ? 'padding-left:12px;color:#475569' : ''}">${isPeca ? '↳ ' : ''}${_escapeHtml(nome)}</td>
+            <td style="font-family:monospace;font-size:0.85rem;white-space:nowrap">${pecaCell}</td>
             <td>${ci > 0 ? formatarMoedaValor(ci) : '-'}</td>
             <td class="${saldoConsolidadoClasse}" style="color:${saldoConsolidadoCor};font-weight:700;font-family:monospace">${saldoConsolidadoTexto}</td>
             <td>${atualizadoTxt}</td>
@@ -4560,7 +4576,34 @@ function renderizarCadastroProdutos() {
             document.querySelectorAll('#corpoCadastroProdutos tr.row-selected').forEach(r => r.classList.remove('row-selected'));
             tr.classList.add('row-selected');
         });
+
+        // Peças do conjunto: linhas ocultas logo abaixo, reveladas pelo selo
+        // "conjunto" (ver pecaCell acima e toggleComposicaoCadastro). Nenhuma
+        // delas existe como produto à parte — só o conjunto tem PN/CI/estoque.
+        tr._composicaoRows = composicaoProduto.map(c => {
+            const trc = document.createElement('tr');
+            trc.style.cssText = 'background:#fafbfd;display:none';
+            trc.dataset.composicaoDe = String(idProdutoNum);
+            trc.innerHTML = `
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td style="text-align:left;padding-left:12px;color:#94a3b8;font-size:0.85rem">↳ ${_escapeHtml(c.nome || '')}</td>
+                <td style="font-family:monospace;font-size:0.8rem;color:#94a3b8">${_escapeHtml(c.peca || '-')}</td>
+                <td colspan="5" style="color:#94a3b8;font-size:0.72rem;font-style:italic">vendido apenas no conjunto acima</td>
+            `;
+            return trc;
+        });
         return tr;
+    }
+
+    // Anexa a linha do produto e, logo em seguida, as linhas ocultas das peças
+    // do conjunto (se houver) — mantém a ordem certa no tbody.
+    function _appendLinhaComComposicao(tr) {
+        tbody.appendChild(tr);
+        (tr._composicaoRows || []).forEach(trc => tbody.appendChild(trc));
     }
 
     // Renderizar produtos principais com botão expand se tiver peças, e as peças
@@ -4571,7 +4614,7 @@ function renderizarCadastroProdutos() {
         const temPecas = filhas.length > 0;
         const tr = _renderLinhaProduto(produto, false);
 
-        tbody.appendChild(tr);
+        _appendLinhaComComposicao(tr);
 
         if (temPecas) {
             // Busca o slot APÓS o tr estar no DOM
@@ -4601,7 +4644,7 @@ function renderizarCadastroProdutos() {
 
         // Renderizar linhas das peças (ocultas por padrão)
         filhas.forEach(peca => {
-            tbody.appendChild(_renderLinhaProduto(peca, true));
+            _appendLinhaComComposicao(_renderLinhaProduto(peca, true));
         });
     }
 
@@ -4610,7 +4653,7 @@ function renderizarCadastroProdutos() {
 
     function _renderUnidade(unidade) {
         if (unidade.tipo === 'principal') _renderUnidadeProdutoPrincipal(unidade.produto);
-        else tbody.appendChild(_renderLinhaProduto(unidade.produto, false));
+        else _appendLinhaComComposicao(_renderLinhaProduto(unidade.produto, false));
     }
 
     if (window.LazyLoader) {
@@ -4620,7 +4663,7 @@ function renderizarCadastroProdutos() {
                 const tr = document.createElement('tr');
                 tr.className = 'lazy-sentinela';
                 const td = document.createElement('td');
-                td.colSpan = 11;
+                td.colSpan = 12;
                 td.style.cssText = 'text-align:center;padding:12px;color:#94a3b8;font-size:0.8rem';
                 td.textContent = `Carregando mais produtos... (${restantes} restante${restantes !== 1 ? 's' : ''})`;
                 tr.appendChild(td);
@@ -20251,7 +20294,11 @@ function importarTabelaPrecoVendaExcel(event) {
                 const ci = _parseNumBR(_val(r, iCI));
                 atual = {
                     nome: repNome,
-                    pecaRef: _limparCelula(_val(r, iPecaRep)),
+                    // Peça vendida avulsa (mesmo nome nos dois lados) às vezes vem com
+                    // "0" na coluna de reposição em vez do número real — _limparCelula
+                    // trata "0" como artefato e limpa pra vazio, então cai pro número do
+                    // lado "interesse" (a mesma peça física, catalogada com outro código).
+                    pecaRef: _limparCelula(_val(r, iPecaRep)) || _limparCelula(_val(r, iPecaInt)),
                     pn: String(_val(r, iPN) || '').trim(),
                     ci: (ci !== null && ci > 0) ? ci : 0,
                     ipi: _parsePctBR(_val(r, iIPI)) || 0,

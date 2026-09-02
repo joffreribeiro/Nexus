@@ -363,6 +363,127 @@ function calcularPrecoFinal(p) {
 }
 
 /**
+ * Matemática pura de UM item da Precificação por Cliente — núcleo de
+ * `calcularPrecificacaoPorCliente` (app2.js). Extraída pra ser testável sem
+ * DOM: essa função de app2.js mistura a conta com leitura de campo, render
+ * de tabela e rateio de frete entre produtos — nada disso era possível
+ * testar isoladamente antes.
+ *
+ * NÃO é a mesma fórmula de `calcularPrecoFinal` (aba Por Produto), apesar de
+ * começarem iguais — aqui a comissão ENTRA no preço final (é o que o cliente
+ * paga, cobrindo o custo de comissão do representante); lá a comissão é só
+ * informativa. As duas existem por bom motivo; não devem ser unificadas.
+ *
+ * Sequência:
+ *   1. valorBase = CI × (1 + Taxa% + ROI%)
+ *   2. ICMS/PIS/COFINS proporcionais sobre valorBase
+ *   3. IPI sobre valorImpostos (valorBase + os três impostos acima)
+ *   4. comissão sobre valorImpostos — ENTRA no preço final (diferente da
+ *      aba Por Produto)
+ *   5. precoFinal = valorImpostos + IPI + comissão
+ *   6. subtotalProduto = precoFinal × quantidade (SEM frete — o rateio de
+ *      frete entre produtos depende do subtotal de todos os itens da
+ *      proposta ao mesmo tempo, então continua calculado em app2.js; esta
+ *      função devolve `subtotalProduto` pronto pra ele somar o frete depois)
+ *
+ * @param {object} p
+ * @param {number} p.ci - custo interno (0 ou ausente ⇒ item não calculável)
+ * @param {number} p.taxaPct
+ * @param {number} p.roiPct
+ * @param {number} p.comissaoPct
+ * @param {number} p.pisPct
+ * @param {number} p.cofinsPct
+ * @param {number} p.ipiPct
+ * @param {number} p.icmsPct
+ * @param {number} [p.quantidade] - padrão 1 quando ausente/≤0
+ * @param {number|null} [p.margemMinima] - percentual; null/ausente ⇒ sem checagem
+ * @returns {object|null} null quando ci <= 0 (sem CI, preço não calculável)
+ */
+function calcularItemPrecificacaoCliente(p) {
+    const ci = Number(p && p.ci) || 0;
+    if (ci === 0) return null;
+
+    const taxaPct = Number(p.taxaPct) || 0;
+    const roiPct = Number(p.roiPct) || 0;
+    const comissaoPct = Number(p.comissaoPct) || 0;
+    const pisPct = Number(p.pisPct) || 0;
+    const cofinsPct = Number(p.cofinsPct) || 0;
+    const ipiPct = Number(p.ipiPct) || 0;
+    const icmsPct = Number(p.icmsPct) || 0;
+    const quantidade = Number(p.quantidade) > 0 ? Number(p.quantidade) : 1;
+    const margemMinima = (p.margemMinima === null || p.margemMinima === undefined || p.margemMinima === '')
+        ? null : Number(p.margemMinima);
+
+    const valorBase = ci * (1 + taxaPct / 100 + roiPct / 100);
+    const icmsR = valorBase * icmsPct / 100;
+    const pisR = valorBase * pisPct / 100;
+    const cofinsR = valorBase * cofinsPct / 100;
+    const valorImpostos = valorBase + icmsR + pisR + cofinsR;
+    const ipiR = valorImpostos * ipiPct / 100;
+    const comissaoR = valorImpostos * comissaoPct / 100;
+    const precoFinal = valorImpostos + ipiR + comissaoR;
+
+    const valorSemIPI = valorImpostos;
+    const valorComIPI = valorSemIPI + ipiR + comissaoR;
+    const valorFinal = valorComIPI;
+    const subtotalProduto = valorFinal * quantidade;
+
+    const margem = precoFinal > 0 ? ((precoFinal - ci) / precoFinal) * 100 : 0;
+    const abaixoDaMinima = margemMinima !== null && margem < margemMinima;
+
+    return {
+        ci, taxa: taxaPct, roi: roiPct, valorBase,
+        icms: icmsPct, icmsR, pis: pisPct, pisR, cofins: cofinsPct, cofinsR,
+        valorImpostos, ipi: ipiPct, ipiR,
+        comissao: comissaoPct, comissaoR,
+        precoFinal, valorSemIPI, valorComIPI, valorFinal,
+        quantidade, subtotalProduto,
+        margem, margemMinima, abaixoDaMinima
+    };
+}
+
+/**
+ * Resolve o CI (custo interno) de um item da Precificação por Cliente com a
+ * prioridade: valor digitado na LINHA (se > 0) > valor salvo no CATÁLOGO.
+ *
+ * Extraída depois de um bug real: o rateio de frete proporcional em
+ * `calcularPrecificacaoPorCliente` (app2.js) lia CI só do catálogo, então um
+ * item com CI apenas na linha (sem CI salvo no catálogo — uso legítimo,
+ * documentado como "altera apenas este cálculo") contribuía ZERO pro rateio.
+ * Com todos os itens nessa situação, a soma caía num fallback e o frete
+ * rateado saía ~100× maior que deveria. Ver git blame/changelog.
+ *
+ * @param {number} ciLinha - já convertido de string BRL pra número (NaN se ausente/inválido)
+ * @param {number|string|null|undefined} ciCatalogo - `precificacao[nome].ci`, cru
+ * @returns {number} 0 quando nem linha nem catálogo têm CI válido
+ */
+function resolverCIComPrioridade(ciLinha, ciCatalogo) {
+    if (!isNaN(ciLinha) && ciLinha > 0) return ciLinha;
+    return parseFloat(ciCatalogo) || 0;
+}
+
+/**
+ * Resolve um percentual (Taxa, ROI ou Comissão) de um item da Precificação
+ * por Cliente com a prioridade: LINHA (se for um número válido, mesmo 0) >
+ * CATÁLOGO (se explicitamente definido — não null/undefined/'') > PADRÃO
+ * global. Mesma lógica que estava duplicada à mão no rateio de frete
+ * proporcional (app2.js) — ver `resolverCIComPrioridade` pro contexto do bug
+ * que motivou a extração.
+ *
+ * @param {number} valorLinha - já convertido (parseFloat), NaN se ausente/inválido
+ * @param {number|string|null|undefined} valorCatalogo - cru, como salvo em precificacao[nome]
+ * @param {number} valorPadrao - padrão global (ou override) já resolvido pelo chamador
+ * @returns {number}
+ */
+function resolverPercentualComPrioridade(valorLinha, valorCatalogo, valorPadrao) {
+    if (!isNaN(valorLinha)) return valorLinha;
+    if (valorCatalogo !== null && valorCatalogo !== undefined && valorCatalogo !== '') {
+        return parseFloat(valorCatalogo);
+    }
+    return valorPadrao;
+}
+
+/**
  * Catálogo de tipos de movimentação IMBEL — cor, ícone, rótulo e se o tipo
  * aumenta ou diminui o estoque (`categoria`). Usado por getImbelTipo/
  * imbelTipoAumentaEstoque/calcularSaldosImbel e por toda a UI da tela de
@@ -497,6 +618,9 @@ const EstoqueCalculos = {
     calcularImbelDisponivel,
     resolverAliquotaICMS,
     calcularPrecoFinal,
+    calcularItemPrecificacaoCliente,
+    resolverCIComPrioridade,
+    resolverPercentualComPrioridade,
     IMBEL_TIPOS,
     getImbelTipo,
     imbelTipoAumentaEstoque,

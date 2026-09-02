@@ -18,8 +18,9 @@
     var PODAR_A_CADA_N_ESCRITAS = 20;
     var _contadorEscritasHistorico = 0;
 
+    // Delega pro acessor único (shared-state.js) — ver esse arquivo pro porquê.
     function getEstoque() {
-        return (typeof estoque !== 'undefined' && estoque) ? estoque : (window.estoque || null);
+        return window.NexusCore.getEstoque();
     }
 
     function getCrm() {

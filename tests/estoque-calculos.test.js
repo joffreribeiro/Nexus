@@ -347,6 +347,121 @@ describe('EstoqueCalculos.calcularPrecoFinal', () => {
   });
 });
 
+describe('EstoqueCalculos.calcularItemPrecificacaoCliente', () => {
+  it('retorna null quando ci é 0 ou ausente (sem CI, preço não calculável)', () => {
+    expect(EstoqueCalculos.calcularItemPrecificacaoCliente({ ci: 0 })).toBeNull();
+    expect(EstoqueCalculos.calcularItemPrecificacaoCliente({})).toBeNull();
+  });
+
+  it('calcula a sequência valorBase -> impostos -> IPI -> comissão -> precoFinal (caso de referência)', () => {
+    // ci=1000, taxa=20%, roi=30% -> valorBase = 1000*(1+0.20+0.30) = 1500
+    const r = EstoqueCalculos.calcularItemPrecificacaoCliente({
+      ci: 1000, taxaPct: 20, roiPct: 30, comissaoPct: 5,
+      pisPct: 1.65, cofinsPct: 7.6, ipiPct: 0, icmsPct: 18,
+      quantidade: 2
+    });
+    expect(r.valorBase).toBeCloseTo(1500, 6);
+    expect(r.icmsR).toBeCloseTo(1500 * 0.18, 6);
+    expect(r.pisR).toBeCloseTo(1500 * 0.0165, 6);
+    expect(r.cofinsR).toBeCloseTo(1500 * 0.076, 6);
+    const valorImpostosEsperado = 1500 + r.icmsR + r.pisR + r.cofinsR;
+    expect(r.valorImpostos).toBeCloseTo(valorImpostosEsperado, 6);
+    expect(r.ipiR).toBeCloseTo(0, 6); // ipiPct 0
+    expect(r.comissaoR).toBeCloseTo(valorImpostosEsperado * 0.05, 6);
+    const precoFinalEsperado = valorImpostosEsperado + r.ipiR + r.comissaoR;
+    expect(r.precoFinal).toBeCloseTo(precoFinalEsperado, 6);
+  });
+
+  it('diferente de calcularPrecoFinal: a comissão ENTRA no preço final', () => {
+    const semComissao = EstoqueCalculos.calcularItemPrecificacaoCliente({ ci: 100, taxaPct: 0, roiPct: 0, comissaoPct: 0, icmsPct: 0 });
+    const comComissaoAlta = EstoqueCalculos.calcularItemPrecificacaoCliente({ ci: 100, taxaPct: 0, roiPct: 0, comissaoPct: 50, icmsPct: 0 });
+    expect(comComissaoAlta.precoFinal).toBeGreaterThan(semComissao.precoFinal);
+    expect(comComissaoAlta.comissaoR).toBeGreaterThan(0);
+  });
+
+  it('subtotalProduto = precoFinal (=valorFinal, sem IPI aqui) × quantidade, sem frete', () => {
+    const r = EstoqueCalculos.calcularItemPrecificacaoCliente({
+      ci: 100, taxaPct: 0, roiPct: 0, comissaoPct: 0, icmsPct: 0, quantidade: 3
+    });
+    expect(r.valorFinal).toBeCloseTo(100, 6);
+    expect(r.subtotalProduto).toBeCloseTo(300, 6);
+  });
+
+  it('quantidade ausente, zero ou negativa cai para 1', () => {
+    const base = { ci: 100, taxaPct: 0, roiPct: 0, comissaoPct: 0, icmsPct: 0 };
+    expect(EstoqueCalculos.calcularItemPrecificacaoCliente(base).quantidade).toBe(1);
+    expect(EstoqueCalculos.calcularItemPrecificacaoCliente({ ...base, quantidade: 0 }).quantidade).toBe(1);
+    expect(EstoqueCalculos.calcularItemPrecificacaoCliente({ ...base, quantidade: -5 }).quantidade).toBe(1);
+  });
+
+  it('margem = (precoFinal - ci) / precoFinal — lucro sobre o preço, não sobre o custo', () => {
+    const r = EstoqueCalculos.calcularItemPrecificacaoCliente({ ci: 1000, taxaPct: 20, roiPct: 30, comissaoPct: 5, pisPct: 1.65, cofinsPct: 7.6, icmsPct: 18 });
+    expect(r.margem).toBeCloseTo((r.precoFinal - 1000) / r.precoFinal * 100, 6);
+  });
+
+  it('abaixoDaMinima só acusa quando margemMinima é informada e a margem real fica abaixo dela', () => {
+    const semMinima = EstoqueCalculos.calcularItemPrecificacaoCliente({ ci: 1000, taxaPct: 20, roiPct: 30, comissaoPct: 5, pisPct: 1.65, cofinsPct: 7.6, icmsPct: 18, margemMinima: null });
+    expect(semMinima.abaixoDaMinima).toBe(false);
+
+    const acimaDaMinima = EstoqueCalculos.calcularItemPrecificacaoCliente({ ci: 1000, taxaPct: 20, roiPct: 30, comissaoPct: 5, pisPct: 1.65, cofinsPct: 7.6, icmsPct: 18, margemMinima: 10 });
+    expect(acimaDaMinima.abaixoDaMinima).toBe(false);
+
+    const abaixoDaMinima = EstoqueCalculos.calcularItemPrecificacaoCliente({ ci: 1000, taxaPct: 20, roiPct: 30, comissaoPct: 5, pisPct: 1.65, cofinsPct: 7.6, icmsPct: 18, margemMinima: 90 });
+    expect(abaixoDaMinima.abaixoDaMinima).toBe(true);
+  });
+});
+
+// Regressão do bug do frete proporcional: o rateio lia CI/Taxa/ROI/Comissão só
+// do catálogo, nunca da linha individual — um item com CI só na linha
+// contribuía 0 pro rateio, e com todos os itens nessa situação o frete
+// rateado saía ~100× maior. As duas funções abaixo são a prioridade de
+// resolução (linha > catálogo > padrão) extraída do rateio corrigido em
+// app2.js — testam exatamente a causa do bug, sem precisar de DOM/jsdom.
+describe('EstoqueCalculos.resolverCIComPrioridade', () => {
+  it('usa o CI da linha quando ele é um número válido maior que zero', () => {
+    expect(EstoqueCalculos.resolverCIComPrioridade(1500, 999)).toBe(1500);
+    expect(EstoqueCalculos.resolverCIComPrioridade(1500, null)).toBe(1500);
+  });
+
+  it('cai pro CI do catálogo quando a linha não tem CI válido (NaN, 0 ou negativo)', () => {
+    expect(EstoqueCalculos.resolverCIComPrioridade(NaN, 800)).toBe(800);
+    expect(EstoqueCalculos.resolverCIComPrioridade(0, 800)).toBe(800);
+    expect(EstoqueCalculos.resolverCIComPrioridade(-10, 800)).toBe(800);
+  });
+
+  it('devolve 0 quando nem linha nem catálogo têm CI válido — é o caso que causava o bug', () => {
+    expect(EstoqueCalculos.resolverCIComPrioridade(NaN, null)).toBe(0);
+    expect(EstoqueCalculos.resolverCIComPrioridade(NaN, undefined)).toBe(0);
+    expect(EstoqueCalculos.resolverCIComPrioridade(0, 0)).toBe(0);
+  });
+
+  it('aceita CI do catálogo como string BRL crua (parseFloat, não parser BRL)', () => {
+    // O chamador em app2.js já resolve a string BRL antes de chegar aqui pro
+    // caso da linha; o valor de catálogo aqui é o número já salvo, não texto
+    // "1.500,00" — parseFloat('1500') funciona, parseFloat('1.500,00') não
+    // (é justamente por isso que o CI da linha precisa vir pré-convertido).
+    expect(EstoqueCalculos.resolverCIComPrioridade(NaN, '1500')).toBe(1500);
+  });
+});
+
+describe('EstoqueCalculos.resolverPercentualComPrioridade', () => {
+  it('usa o valor da linha quando é um número válido — inclusive 0', () => {
+    expect(EstoqueCalculos.resolverPercentualComPrioridade(15, 999, 20)).toBe(15);
+    expect(EstoqueCalculos.resolverPercentualComPrioridade(0, 999, 20)).toBe(0);
+  });
+
+  it('cai pro catálogo quando a linha é NaN e o catálogo está explicitamente definido', () => {
+    expect(EstoqueCalculos.resolverPercentualComPrioridade(NaN, 12, 20)).toBe(12);
+    expect(EstoqueCalculos.resolverPercentualComPrioridade(NaN, 0, 20)).toBe(0); // 0 é um valor explícito válido
+  });
+
+  it('cai pro padrão quando nem linha nem catálogo têm valor (catálogo null/undefined/vazio)', () => {
+    expect(EstoqueCalculos.resolverPercentualComPrioridade(NaN, null, 20)).toBe(20);
+    expect(EstoqueCalculos.resolverPercentualComPrioridade(NaN, undefined, 20)).toBe(20);
+    expect(EstoqueCalculos.resolverPercentualComPrioridade(NaN, '', 20)).toBe(20);
+  });
+});
+
 describe('EstoqueCalculos.getImbelTipo / imbelTipoAumentaEstoque', () => {
   it('resolve um tipo conhecido pelo código exato', () => {
     const t = EstoqueCalculos.getImbelTipo('VENDA');

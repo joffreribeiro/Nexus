@@ -1,0 +1,22 @@
+rules_version = '2';
+
+// firestore.emulator.rules — regras SÓ para o emulador local, nunca pra deploy.
+//
+// As regras de produção (firestore.rules) exigem autenticação real + custom
+// claim de admin — ótimo pra produção, mas exigiria também emular o Auth
+// (mais um serviço, mais setup) só pra testar se a divisão de módulos do
+// cloud-store.js escreve certo. Como o emulador roda isolado (nenhum dado
+// real, nenhuma exposição), abrir leitura/escrita aqui é seguro e testa
+// exatamente o que importa: o comportamento real do Firestore (limite de
+// 1 MiB por documento, .set() em paralelo, etc.), sem precisar resolver auth.
+//
+// Uso: firebase emulators:start --only firestore --project estoquefi
+//      (o firebase.json já aponta pra este arquivo — ver "firestore.rules")
+// NUNCA usar em "firebase deploy" — esse comando lê firestore.rules, não este.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

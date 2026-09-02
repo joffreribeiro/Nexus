@@ -928,6 +928,15 @@ try {
         // Instância do Firestore para uso nas funções abaixo
         try {
             window.firestoreDB = firebase.firestore();
+            // Emulador local (`firebase emulators:start --only firestore`, já
+            // configurado em firebase.json) — só liga em localhost E com o
+            // flag explícito ligado no localStorage, pra testar escrita real
+            // (ex.: a divisão de módulos do cloud-store.js) sem tocar nenhum
+            // dado de produção. Nunca ativa sozinho fora de localhost.
+            if (location.hostname === 'localhost' && localStorage.getItem('usarEmuladorFirestore') === '1') {
+                window.firestoreDB.useEmulator('localhost', 8080);
+                console.info('Firestore: usando o EMULADOR local (localhost:8080), não produção.');
+            }
             // Não tentar ler do cloud antes da autenticação para evitar erros de permissão
             updateFirestoreStatus(true, null, 'Cloud: aguardando login');
         } catch (e) {
@@ -2622,12 +2631,13 @@ async function salvarNoCloud() {
             const imbelDataToSave = (typeof loadImbel === 'function') ? loadImbel() : null;
             if (imbelDataToSave) estoque._imbelData = imbelDataToSave;
         } catch (e) { /* ignore */ }
-        // Grava só nos três documentos por módulo — app_data/estoque, /crm,
-        // /ponto (ver cloud-store.js). A escrita no legado app_data/latest foi
-        // removida: com tudo num documento só, o conjunto passou de 1 MiB e o
-        // Firestore recusava a gravação, fazendo o save inteiro falhar. Os
-        // campos que o legado replicava no topo (precificacao, tabelaICMS, ...)
-        // já vivem dentro de `estoque`, e carregarDoCloud lê de lá.
+        // Grava só nos documentos por módulo — app_data/estoque, /crm, /ponto,
+        // /auditoria, /processos, /vendas (ver cloud-store.js). A escrita no
+        // legado app_data/latest foi removida: com tudo num documento só, o
+        // conjunto passou de 1 MiB e o Firestore recusava a gravação, fazendo
+        // o save inteiro falhar. Os campos que o legado replicava no topo
+        // (precificacao, tabelaICMS, ...) já vivem dentro de `estoque`, e
+        // carregarDoCloud lê de lá.
         const docRef = window.firestoreDB.collection('app_data').doc(CloudStore.NOMES_MODULO.ESTOQUE);
         await CloudStore.salvarModulosNoCloud(window.firestoreDB, firebase, estoque);
         // ler o documento para obter o updatedAt do servidor
@@ -23283,27 +23293,53 @@ function calcularPrecificacaoPorCliente(opcoes = {}) {
     const freteModo = document.getElementById('precifFreteModo')?.value || 'proporcional';
     const nProdutos = produtosFiltrados.length || 1;
 
-    // Pré-passagem para rateio proporcional: soma o subtotal (precoFinal * qtd) de cada produto
+    // Pré-passagem para rateio proporcional: soma o subtotal (precoFinal × qtd)
+    // de cada produto. CORRIGIDO — a versão anterior lia CI/Taxa/ROI só do
+    // catálogo (precificacao[nome]), nunca da linha individual, e usava uma
+    // fórmula DIFERENTE da real (divisão em vez de multiplicação). Resultado:
+    // um item com CI só na linha (sem CI salvo no catálogo) contribuía ZERO
+    // pra soma; com todos os itens nessa situação, a soma caía no fallback
+    // "= 1" e o frete rateado saía ~100× maior que deveria. Agora resolve os
+    // insumos com a MESMA prioridade do cálculo principal (linha > catálogo >
+    // padrão) e usa a mesma função pura testada (EstoqueCalculos.
+    // calcularItemPrecificacaoCliente), eliminando a terceira cópia divergente
+    // da fórmula.
     let somaSubtotalProporcional = 0;
     if (freteGlobal > 0 && freteModo === 'proporcional') {
         produtosFiltrados.forEach(p => {
             const pPrec = precificacao[p.nome] || {};
             const pAliq = tabelaAliquotas[p.nome] || {};
-            const pTaxa  = parseFloat(pPrec.taxa)  ?? taxaFinal;
-            const pRoi   = parseFloat(pPrec.roi)   ?? roiFinal;
-            const pCi    = pPrec.ci != null ? parseCurrencyBRLToNumber(String(pPrec.ci)) : 0;
-            if (!pCi || pCi <= 0) return;
-            const pValBase = pCi / (1 - (pTaxa + pRoi) / 100);
-            const pIcms = parseFloat(pAliq.icms ?? (icmsTabela[uf]?.[tipoPessoa] ?? icmsTabela[uf]?.lojista ?? 0));
-            const pPis  = parseFloat(pAliq.pis ?? 0.65);
-            const pCof  = parseFloat(pAliq.cofins ?? 3);
-            const pIpi  = parseFloat(pAliq.ipi ?? 0);
-            const pValImp = pValBase + pValBase*pIcms/100 + pValBase*pPis/100 + pValBase*pCof/100;
-            const pIpiR   = pValImp * pIpi / 100;
-            const pPrecoFinal = pValImp + pIpiR;
             const pLinha = linhaPorNomeProduto.get(p.nome) || null;
+            const pNcm = p.ncm || detectarNCM(p.nome) || '—';
+
+            const ciLinha = pLinha ? parseCurrencyBRLToNumber(pLinha.querySelector('.precif-linha-ci')?.value) : NaN;
+            const pCi = EstoqueCalculos.resolverCIComPrioridade(ciLinha, pPrec.ci);
+            if (!pCi || pCi <= 0) return;
+
+            const taxaLinha = pLinha ? parseFloat(pLinha.querySelector('.precif-linha-taxa')?.value) : NaN;
+            const roiLinha  = pLinha ? parseFloat(pLinha.querySelector('.precif-linha-roi')?.value)   : NaN;
+            const comLinha  = pLinha ? parseFloat(pLinha.querySelector('.precif-linha-comissao')?.value) : NaN;
+            const pTaxa = EstoqueCalculos.resolverPercentualComPrioridade(taxaLinha, pPrec.taxa, taxaFinal);
+            const pRoi  = EstoqueCalculos.resolverPercentualComPrioridade(roiLinha, pPrec.roi, roiFinal);
+            const pCom  = EstoqueCalculos.resolverPercentualComPrioridade(comLinha, pPrec.comissao, comFinal);
+
+            const pFedImpostos = impostosEditaveis[pNcm] || {};
+            const pPisPadrao = parseFloat(pAliq.pis ?? pFedImpostos.pis ?? document.getElementById('pisPadrao')?.value) || 1.65;
+            const pCofinsPadrao = parseFloat(pAliq.cofins ?? pFedImpostos.cofins ?? document.getElementById('cofinsPadrao')?.value) || 7.6;
+            const pIpiPadrao = parseFloat(pAliq.ipi ?? pFedImpostos.ipi ?? 0) || 0;
+            const pIcmsPadrao = uf ? buscarAliquotaICMS(uf, tipoPessoa, p.nome) : (parseFloat(pAliq.icmsBase) || 0);
+
             const pQtd = parseInt(pLinha?.querySelector('.precif-linha-quant')?.value, 10) || 1;
-            somaSubtotalProporcional += pPrecoFinal * pQtd;
+
+            const pResultado = EstoqueCalculos.calcularItemPrecificacaoCliente({
+                ci: pCi, taxaPct: pTaxa, roiPct: pRoi, comissaoPct: pCom,
+                pisPct: resolverAliquota(p.nome, 'pis', pPisPadrao),
+                cofinsPct: resolverAliquota(p.nome, 'cofins', pCofinsPadrao),
+                ipiPct: resolverAliquota(p.nome, 'ipi', pIpiPadrao),
+                icmsPct: resolverAliquota(p.nome, 'icms', pIcmsPadrao),
+                quantidade: pQtd
+            });
+            if (pResultado) somaSubtotalProporcional += pResultado.subtotalProduto;
         });
         if (somaSubtotalProporcional <= 0) somaSubtotalProporcional = 1;
     }
@@ -23379,18 +23415,8 @@ function calcularPrecificacaoPorCliente(opcoes = {}) {
 
         const retidAtivo = !!retidPorProduto[produto.nome];
 
-        // valorBase = CI + (CI × Taxa%) + (CI × ROI%)  →  CI × (1 + Taxa% + ROI%)
-        const valorBase = ci * (1 + taxaProd/100 + roiProd/100);
-        const icmsR = valorBase * icmsEfetivo / 100;
-        const pisR = valorBase * pisEfetivo / 100;
-        const cofinsR = valorBase * cofinsEfetivo / 100;
-        const valorImpostos = valorBase + icmsR + pisR + cofinsR;
-        const ipiR = valorImpostos * ipiEfetivo / 100;
-        // comissão sobre valorImpostos (sem IPI) — incluída no preço final
-        const comissaoR = valorImpostos * comissaoProd / 100;
-        const precoFinal = valorImpostos + ipiR + comissaoR;
-
-        // Frete (linha individual) e Quantidade
+        // Frete (linha individual) e Quantidade — lidos antes da conta porque a
+        // quantidade entra na fórmula (subtotalProduto = precoFinal × quantidade).
         let freteLinhaVal = 0;
         let quantidade = 1;
         try {
@@ -23408,19 +23434,25 @@ function calcularPrecificacaoPorCliente(opcoes = {}) {
             }
         } catch (e) { freteLinhaVal = 0; quantidade = 1; }
 
-        const margem = precoFinal > 0 ? ((precoFinal - ci) / precoFinal) * 100 : 0;
         const margemMinima = parseFloat(precificacao[produto.nome]?.margemMinima) || null;
-        const abaixo = margemMinima !== null && margem < margemMinima;
+
+        // Matemática do item — extraída pra EstoqueCalculos.calcularItemPrecificacaoCliente
+        // (estoque-calculos.js): sem DOM, testável isoladamente com Vitest. Esta
+        // função só resolve os insumos (taxa/roi/impostos/comissão, já decididos
+        // acima) e lê o resultado.
+        const {
+            valorBase, icmsR, pisR, cofinsR, valorImpostos, ipiR, comissaoR, precoFinal,
+            valorSemIPI, valorComIPI, valorFinal: valorFinalCalc, subtotalProduto,
+            margem, abaixoDaMinima: abaixo
+        } = EstoqueCalculos.calcularItemPrecificacaoCliente({
+            ci, taxaPct: taxaProd, roiPct: roiProd, comissaoPct: comissaoProd,
+            pisPct: pisEfetivo, cofinsPct: cofinsEfetivo, ipiPct: ipiEfetivo, icmsPct: icmsEfetivo,
+            quantidade, margemMinima
+        });
         if (abaixo) abaixoCount++;
 
         totalFaturamento += precoFinal;
         produtosCalculados++;
-
-        // valores adicionais: valorSemIPI (valorImpostos), valorComIPI, valorFinal, valorTotal
-        const valorSemIPI = valorImpostos;
-        const valorComIPI = valorSemIPI + ipiR + comissaoR;
-        const valorFinalCalc = valorComIPI;
-        const subtotalProduto = valorFinalCalc * quantidade;
 
         // Frete global rateado por produto (complementa o frete individual da linha)
         let freteGlobalRateado = 0;

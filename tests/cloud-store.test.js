@@ -11,18 +11,20 @@ describe('CloudStore.dividirEstoqueEmModulos', () => {
     };
     const { estoqueCore, crm, ponto } = CloudStore.dividirEstoqueEmModulos(estoque);
     expect(estoqueCore.produtos).toEqual([{ id: 1, nome: 'X' }]);
-    expect(estoqueCore.registroVendas).toEqual([{ id: 'v1' }]);
+    expect(estoqueCore.registroVendas).toBeUndefined(); // registroVendas agora sai pro módulo `vendas`
     expect(estoqueCore.crm).toBeUndefined();
     expect(estoqueCore.ponto).toBeUndefined();
     expect(crm).toEqual({ negocios: [{ id: 'n1' }] });
     expect(ponto).toEqual({ registros: [{ data: '2026-01-01' }] });
   });
 
-  it('crm/ponto/auditoria ausentes viram null (não quebra em estoque sem esses módulos ainda)', () => {
-    const { crm, ponto, auditoria } = CloudStore.dividirEstoqueEmModulos({ produtos: [] });
+  it('crm/ponto/processos/auditoria/vendas ausentes viram null (não quebra em estoque sem esses módulos ainda)', () => {
+    const { crm, ponto, processos, auditoria, vendas } = CloudStore.dividirEstoqueEmModulos({ produtos: [] });
     expect(crm).toBeNull();
     expect(ponto).toBeNull();
+    expect(processos).toBeNull();
     expect(auditoria).toBeNull();
+    expect(vendas).toBeNull();
   });
 
   it('auditoriaVendas sai do estoqueCore e vira o envelope { registros } (array não pode ser raiz de documento)', () => {
@@ -34,14 +36,32 @@ describe('CloudStore.dividirEstoqueEmModulos', () => {
     expect(auditoria).toEqual({ registros: [{ id: 'a1', acao: 'EDIÇÃO' }] });
   });
 
+  it('processos sai do estoqueCore como sub-objeto isolado (mesmo padrão de crm/ponto)', () => {
+    const { estoqueCore, processos } = CloudStore.dividirEstoqueEmModulos({
+      produtos: [{ id: 1 }],
+      processos: { lista: [{ id: 'p1' }] }
+    });
+    expect(estoqueCore.processos).toBeUndefined();
+    expect(processos).toEqual({ lista: [{ id: 'p1' }] });
+  });
+
+  it('registroVendas sai do estoqueCore e vira o envelope { registros } (mesmo padrão de auditoriaVendas)', () => {
+    const { estoqueCore, vendas } = CloudStore.dividirEstoqueEmModulos({
+      produtos: [{ id: 1 }],
+      registroVendas: [{ id: 'v1', valorTotal: 500 }]
+    });
+    expect(estoqueCore.registroVendas).toBeUndefined();
+    expect(vendas).toEqual({ registros: [{ id: 'v1', valorTotal: 500 }] });
+  });
+
   it('estoque nulo ou não-objeto retorna estrutura vazia segura', () => {
-    const vazio = { estoqueCore: {}, crm: null, ponto: null, auditoria: null };
+    const vazio = { estoqueCore: {}, crm: null, ponto: null, auditoria: null, processos: null, vendas: null };
     expect(CloudStore.dividirEstoqueEmModulos(null)).toEqual(vazio);
     expect(CloudStore.dividirEstoqueEmModulos(undefined)).toEqual(vazio);
   });
 
   it('não muta o objeto estoque original', () => {
-    const estoque = { produtos: [], crm: { a: 1 }, ponto: { b: 2 } };
+    const estoque = { produtos: [], crm: { a: 1 }, ponto: { b: 2 }, processos: { c: 3 }, registroVendas: [{ d: 4 }] };
     const copia = JSON.parse(JSON.stringify(estoque));
     CloudStore.dividirEstoqueEmModulos(estoque);
     expect(estoque).toEqual(copia);
@@ -49,25 +69,31 @@ describe('CloudStore.dividirEstoqueEmModulos', () => {
 });
 
 describe('CloudStore.remontarEstoqueAPartirDeModulos', () => {
-  it('reconstrói o estoque completo a partir dos três módulos', () => {
+  it('reconstrói o estoque completo a partir dos módulos', () => {
     const modulos = {
-      estoqueCore: { produtos: [{ id: 1 }], registroVendas: [] },
+      estoqueCore: { produtos: [{ id: 1 }] },
       crm: { negocios: [{ id: 'n1' }] },
-      ponto: { registros: [{ data: '2026-01-01' }] }
+      ponto: { registros: [{ data: '2026-01-01' }] },
+      processos: { lista: [{ id: 'p1' }] },
+      vendas: { registros: [{ id: 'v1' }] }
     };
     const estoque = CloudStore.remontarEstoqueAPartirDeModulos(modulos);
     expect(estoque.produtos).toEqual([{ id: 1 }]);
     expect(estoque.crm).toEqual({ negocios: [{ id: 'n1' }] });
     expect(estoque.ponto).toEqual({ registros: [{ data: '2026-01-01' }] });
+    expect(estoque.processos).toEqual({ lista: [{ id: 'p1' }] });
+    expect(estoque.registroVendas).toEqual([{ id: 'v1' }]);
   });
 
-  it('crm/ponto null (documento ainda não existe) não vira chave no estoque remontado', () => {
+  it('crm/ponto/processos null (documento ainda não existe) não vira chave no estoque remontado', () => {
     const estoque = CloudStore.remontarEstoqueAPartirDeModulos({
-      estoqueCore: { produtos: [] }, crm: null, ponto: null, auditoria: null
+      estoqueCore: { produtos: [] }, crm: null, ponto: null, processos: null, auditoria: null, vendas: null
     });
     expect('crm' in estoque).toBe(false);
     expect('ponto' in estoque).toBe(false);
+    expect('processos' in estoque).toBe(false);
     expect('auditoriaVendas' in estoque).toBe(false);
+    expect('registroVendas' in estoque).toBe(false);
   });
 
   it('auditoria volta do envelope para estoque.auditoriaVendas', () => {
@@ -78,6 +104,14 @@ describe('CloudStore.remontarEstoqueAPartirDeModulos', () => {
     expect(estoque.auditoriaVendas).toEqual([{ id: 'a1' }]);
   });
 
+  it('vendas volta do envelope para estoque.registroVendas', () => {
+    const estoque = CloudStore.remontarEstoqueAPartirDeModulos({
+      estoqueCore: { produtos: [] },
+      vendas: { registros: [{ id: 'v1' }] }
+    });
+    expect(estoque.registroVendas).toEqual([{ id: 'v1' }]);
+  });
+
   it('auditoria dentro do estoqueCore vence a do documento próprio (versão antiga gravou depois)', () => {
     const estoque = CloudStore.remontarEstoqueAPartirDeModulos({
       estoqueCore: { produtos: [], auditoriaVendas: [{ id: 'gravado-pela-versao-antiga' }] },
@@ -86,12 +120,39 @@ describe('CloudStore.remontarEstoqueAPartirDeModulos', () => {
     expect(estoque.auditoriaVendas).toEqual([{ id: 'gravado-pela-versao-antiga' }]);
   });
 
-  it('base gravada antes da separação mantém a auditoria que veio dentro do estoqueCore', () => {
+  it('registroVendas dentro do estoqueCore vence o do documento próprio (mesma regra da auditoria — base gravada antes desta separação)', () => {
     const estoque = CloudStore.remontarEstoqueAPartirDeModulos({
-      estoqueCore: { produtos: [], auditoriaVendas: [{ id: 'antigo' }] },
-      auditoria: null
+      estoqueCore: { produtos: [], registroVendas: [{ id: 'gravado-pela-versao-antiga' }] },
+      vendas: { registros: [{ id: 'obsoleto' }] }
+    });
+    expect(estoque.registroVendas).toEqual([{ id: 'gravado-pela-versao-antiga' }]);
+  });
+
+  it('base gravada antes da separação mantém a auditoria/vendas que vieram dentro do estoqueCore', () => {
+    const estoque = CloudStore.remontarEstoqueAPartirDeModulos({
+      estoqueCore: { produtos: [], auditoriaVendas: [{ id: 'antigo' }], registroVendas: [{ id: 'antigo-v' }] },
+      auditoria: null,
+      vendas: null
     });
     expect(estoque.auditoriaVendas).toEqual([{ id: 'antigo' }]);
+    expect(estoque.registroVendas).toEqual([{ id: 'antigo-v' }]);
+  });
+
+  it('MIGRAÇÃO: doc antigo app_data/estoque com processos/registroVendas embutidos, docs novos ainda não existem — nada se perde no primeiro read pós-deploy', () => {
+    // Cenário exato do rollout: código novo lê um doc app_data/estoque
+    // gravado pelo código ANTERIOR a esta separação (processos e
+    // registroVendas ainda dentro do estoqueCore), e app_data/processos /
+    // app_data/vendas ainda não existem (nunca foram gravados) — viram null.
+    const estoque = CloudStore.remontarEstoqueAPartirDeModulos({
+      estoqueCore: {
+        produtos: [{ id: 1 }],
+        processos: { lista: [{ id: 'p-antigo' }] },
+        registroVendas: [{ id: 'v-antigo' }]
+      },
+      crm: null, ponto: null, processos: null, auditoria: null, vendas: null
+    });
+    expect(estoque.processos).toEqual({ lista: [{ id: 'p-antigo' }] });
+    expect(estoque.registroVendas).toEqual([{ id: 'v-antigo' }]);
   });
 
   it('modulos ausente ou parcial não lança — retorna o que der pra montar', () => {
@@ -106,6 +167,7 @@ describe('CloudStore.remontarEstoqueAPartirDeModulos', () => {
       clientes: [{ id: 'c1', nome: 'Cliente X' }],
       crm: { negocios: [{ id: 'n1', titulo: 'Negócio' }], funis: [] },
       ponto: { registros: [{ data: '2026-01-01', entrada: '08:00' }], acordos: [] },
+      processos: { lista: [{ id: 'p1', titulo: 'Processo' }] },
       auditoriaVendas: [{ id: 'a1', acao: 'EDIÇÃO', contrato: '123' }]
     };
     const modulos = CloudStore.dividirEstoqueEmModulos(original);
@@ -139,6 +201,24 @@ describe('CloudStore.verificarTamanhoDosModulos (teto de 1 MiB por documento)', 
     });
     expect(tamanhos.estoque).toBeLessThan(1024);
     expect(tamanhos.auditoria).toBeGreaterThan(400 * 1024);
+  });
+
+  it('processos grande não conta mais para o documento estoque (Fase 1b)', () => {
+    const tamanhos = CloudStore.tamanhosDosModulos({
+      produtos: [{ id: 1 }],
+      processos: { lista: 'z'.repeat(200 * 1024) }
+    });
+    expect(tamanhos.estoque).toBeLessThan(1024);
+    expect(tamanhos.processos).toBeGreaterThan(200 * 1024);
+  });
+
+  it('registroVendas grande não conta mais para o documento estoque (Fase 1b)', () => {
+    const tamanhos = CloudStore.tamanhosDosModulos({
+      produtos: [{ id: 1 }],
+      registroVendas: [{ detalhes: 'z'.repeat(400 * 1024) }]
+    });
+    expect(tamanhos.estoque).toBeLessThan(1024);
+    expect(tamanhos.vendas).toBeGreaterThan(400 * 1024);
   });
 
   it('módulo acima de 1 MiB lança apontando qual documento estourou', () => {

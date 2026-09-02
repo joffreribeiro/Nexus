@@ -11519,6 +11519,52 @@ function atualizarPrecoVenda() {
     atualizarTotalVendaDetalhada();
 }
 
+// Ao vender um conjunto (peça de reposição com `composicao`, ver
+// _tentarImportarReposicao), cada peça física que o compõe é consumida junto
+// — 1 und de cada por unidade do conjunto vendida. O conjunto em si não tem
+// estoque próprio (só preço/CI); quem carrega saldo são as peças. Gera itens
+// extras (valor R$ 0, já que quem foi faturado foi o conjunto) que entram no
+// MESMO registro de venda, então aparecem nos relatórios/dashboard por peça
+// normalmente. Peça sem cadastro próprio é criada na hora, sem PN/CI — ela
+// não precisa ter estoque cadastrado, só existe pra acumular esse consumo.
+function _expandirItensComComposicao(itensOriginais) {
+    const extras = [];
+    (itensOriginais || []).forEach(item => {
+        const produto = (estoque.produtos || []).find(p => p.id === item.produtoId);
+        const grupo = produto && Array.isArray(produto.composicao) ? produto.composicao : [];
+        grupo.forEach(componente => {
+            const nomeComp = (componente.nome || '').trim();
+            if (!nomeComp) return;
+            let prodComp = (estoque.produtos || []).find(p => (p.nome || '').trim().toUpperCase() === nomeComp.toUpperCase());
+            if (!prodComp) {
+                prodComp = {
+                    id: Date.now() + Math.floor(Math.random() * 1000000),
+                    nome: nomeComp,
+                    pn: '',
+                    ci: 0,
+                    estoqueConsolidado: 0,
+                    armamentos: Array.isArray(produto.armamentos) ? produto.armamentos.slice() : [],
+                    componente: produto.componente || '',
+                    distribuicao: {},
+                    vendas: {},
+                    criadoEm: new Date().toISOString(),
+                    criadoAutomaticamente: true
+                };
+                estoque.produtos.push(prodComp);
+            }
+            extras.push({
+                produtoId: prodComp.id,
+                produtoNome: prodComp.nome,
+                quantidade: item.quantidade,
+                valorUnitario: 0,
+                valorTotal: 0,
+                origemConjunto: produto.nome
+            });
+        });
+    });
+    return extras;
+}
+
 function validarEstoqueParaVenda(representante, itens, excluirVendaId) {
     const erros = [];
     (itens || []).forEach(it => {
@@ -11765,6 +11811,12 @@ function salvarVendaDetalhada(event) {
         return;
     }
 
+    // Peças de um conjunto vendido entram no MESMO registro (ver
+    // _expandirItensComComposicao), mas ficam fora da validação de estoque
+    // abaixo e fora de totalQtd/totalValor — elas não têm estoque próprio
+    // obrigatório e quem foi de fato faturado foi o conjunto.
+    const itensCompletos = itens.concat(_expandirItensComComposicao(itens));
+
     // Se estivermos editando, primeiro reverter os efeitos da venda anterior
     let vendaAnterior = null;
     let vendaAnteriorSnapshot = null;
@@ -11790,7 +11842,7 @@ function salvarVendaDetalhada(event) {
         };
 
         mostrarConfirmacaoEstoque(msg, () => {
-            finalizarSalvamentoVendaDetalhada({ contrato: contratoFinal, loja, representante, observacoes, itens, totalQtd, totalValor, isEditing, vendaAnterior, vendaAnteriorSnapshot, vendaEditandoIdLocal: vendaEditandoId });
+            finalizarSalvamentoVendaDetalhada({ contrato: contratoFinal, loja, representante, observacoes, itens: itensCompletos, totalQtd, totalValor, isEditing, vendaAnterior, vendaAnteriorSnapshot, vendaEditandoIdLocal: vendaEditandoId });
         }, cancelarCallback);
 
         return;
@@ -11828,7 +11880,7 @@ function salvarVendaDetalhada(event) {
     }
 
     // Se válido, finalizar imediatamente
-    finalizarSalvamentoVendaDetalhada({ contrato: contratoFinal, loja, representante, observacoes, itens, totalQtd, totalValor, isEditing, vendaAnterior, vendaAnteriorSnapshot, vendaEditandoIdLocal: vendaEditandoId });
+    finalizarSalvamentoVendaDetalhada({ contrato: contratoFinal, loja, representante, observacoes, itens: itensCompletos, totalQtd, totalValor, isEditing, vendaAnterior, vendaAnteriorSnapshot, vendaEditandoIdLocal: vendaEditandoId });
 }
 
 // ──────────────────────────────────────────────
@@ -20196,6 +20248,15 @@ function importarTabelaPrecoVendaExcel(event) {
                     armamento: armamento,
                     composicao: []
                 };
+                // A própria linha que abre o conjunto tem sua peça de interesse
+                // (colunas NOME/PEÇA de interesse). Quando ela é fisicamente
+                // diferente da peça de reposição (o kit vendido), é o 1º item
+                // consumido pelo conjunto — sem isso essa peça ficava de fora da
+                // composição (perda de dado na importação e na exportação, e
+                // impediria dar baixa nela quando o conjunto for vendido).
+                if (intNome && intNome.toUpperCase() !== repNome.toUpperCase()) {
+                    atual.composicao.push({ nome: intNome, peca: _limparCelula(_val(r, iPecaInt)) });
+                }
                 skus.push(atual);
                 continue;
             }
@@ -20333,9 +20394,97 @@ function importarTabelaPrecoVendaExcel(event) {
         return true;
     }
 
+    // Relatório de Custos Industriais do TOTVS (CS0204): apesar da extensão
+    // .xls, o arquivo é um HTML exportado com bug — só existe uma tag <tr> de
+    // abertura no documento inteiro, o resto das linhas fecha com </tr> sem
+    // reabrir. O SheetJS não entende esse HTML quebrado (lê tudo como uma
+    // única linha), então usamos o DOMParser do navegador, que aplica a regra
+    // do HTML5 de inserir <tr> implícito a cada <td> órfão e reconstrói as
+    // linhas corretamente. VALOR TOTAL (= MATERIAL + MOD + GGF, confirmado
+    // batendo a soma em várias linhas) é o Custo Industrial (CI) de cada PN.
+    function _tentarImportarCustoIndustrialTotvs(buffer) {
+        let texto;
+        try { texto = new TextDecoder('utf-8').decode(buffer); } catch (e) { return false; }
+        const inicio = texto.slice(0, 2000);
+        if (!/<table[\s>]/i.test(inicio) && !/text\/html/i.test(inicio)) return false;
+        if (!/RELAT[ÓO]RIO DE CUSTOS/i.test(texto) && !/custos? industria/i.test(texto)) return false;
+
+        const doc = new DOMParser().parseFromString(texto, 'text/html');
+        // Cabeçalho vem com <br> entre palavras ("VALOR<br>TOTAL") e textContent
+        // não insere espaço no lugar do <br>, então "VALOR TOTAL" chega como
+        // "VALORTOTAL" — compara sem espaço para não perder essas colunas.
+        const _semEspaco = s => _semAcento(s).replace(/\s+/g, '');
+        const linhas = Array.from(doc.querySelectorAll('table tr')).map(tr =>
+            Array.from(tr.querySelectorAll('td,th')).map(td => td.textContent.replace(/\s+/g, ' ').trim())
+        );
+
+        const iCab = linhas.findIndex(l =>
+            l.some(c => _semAcento(c) === 'PN') && l.some(c => _semEspaco(c).includes('VALORTOTAL'))
+        );
+        if (iCab < 0) {
+            mostrarNotificacao('Não foi possível localizar o cabeçalho (PN / VALOR TOTAL) no relatório de custos.', 'erro');
+            return true;
+        }
+        const cab   = linhas[iCab].map(_semEspaco);
+        const iPN   = cab.indexOf('PN');
+        const iDesc = cab.findIndex(c => c.startsWith('DESCRICAO'));
+        const iTotal = cab.findIndex(c => c.includes('VALORTOTAL'));
+        if (iPN < 0 || iTotal < 0) {
+            mostrarNotificacao('Colunas PN ou VALOR TOTAL não encontradas no relatório de custos.', 'erro');
+            return true;
+        }
+
+        let atualizados = 0, ignorados = 0;
+        const naoEncontrados = [];
+        for (let r = iCab + 1; r < linhas.length; r++) {
+            const linha = linhas[r];
+            if (!linha || linha.length < cab.length) { ignorados++; continue; }
+            const pn = (linha[iPN] || '').trim();
+            if (!pn) { ignorados++; continue; }
+            const nome = iDesc >= 0 ? (linha[iDesc] || '').trim() : '';
+            const ci = _parseNumBR(linha[iTotal]);
+            if (ci === null || ci <= 0) { ignorados++; continue; }
+
+            const produto = (estoque.produtos || []).find(p => p.pn && p.pn.trim().toUpperCase() === pn.toUpperCase());
+            if (!produto) { naoEncontrados.push({ pn, nome }); continue; }
+
+            produto.ci = ci;
+            if (!precificacao[produto.nome]) precificacao[produto.nome] = {};
+            precificacao[produto.nome].ci = ci;
+            precificacao[produto.nome].ciAtualizadoEm = new Date().toISOString();
+            try { registrarHistoricoCI(produto.nome, ci, 'Importado via Relatório de Custos Industriais (CS0204)'); } catch (e) { _catchSilencioso(e, 'importarCustoIndustrialTotvs'); }
+            atualizados++;
+        }
+
+        if (atualizados > 0) salvarDados();
+        renderizarTabelaPrecoVenda();
+        try { renderizarCadastroProdutos(); } catch (e) { _catchSilencioso(e, 'importarCustoIndustrialTotvs'); }
+
+        let html = `<div style="margin-bottom:14px"><div style="font-weight:700;color:#166534;margin-bottom:6px">✅ ${atualizados} produto(s) com CI atualizado</div></div>`;
+        if (naoEncontrados.length > 0) {
+            html += `<div style="margin-bottom:14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px">
+                <div style="font-weight:700;color:#92400e;margin-bottom:6px">⚠️ ${naoEncontrados.length} PN(s) do relatório não encontrados no cadastro (não criados automaticamente)</div>
+                <ul style="margin:0;padding-left:18px;font-size:0.85rem;color:#78350f;max-height:220px;overflow:auto">
+                    ${naoEncontrados.slice(0, 200).map(n => `<li>${_escapeHtml(n.pn)} — ${_escapeHtml(n.nome)}</li>`).join('')}
+                    ${naoEncontrados.length > 200 ? `<li>… e mais ${naoEncontrados.length - 200}</li>` : ''}
+                </ul>
+            </div>`;
+        }
+        const relEl = document.getElementById('importacaoRelatorioConteudo');
+        const modalRel = document.getElementById('modalImportacaoRelatorio');
+        if (relEl && modalRel) {
+            relEl.innerHTML = html;
+            modalRel.style.display = 'flex';
+        } else {
+            mostrarNotificacao(`CI atualizado: ${atualizados} produto(s). ${naoEncontrados.length} PN(s) não encontrados.`, atualizados > 0 ? 'success' : 'warning');
+        }
+        return true;
+    }
+
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
+            if (_tentarImportarCustoIndustrialTotvs(e.target.result)) return;
             const wb = XLSX.read(e.target.result, { type: 'array' });
             const ws = wb.Sheets[wb.SheetNames[0]];
 
@@ -20564,6 +20713,92 @@ function exportarProdutosCI() {
     a.click();
     URL.revokeObjectURL(url);
     mostrarNotificacao(`${produtos.length} produtos exportados!`, 'success');
+}
+
+// Exporta as peças de UM armamento no mesmo layout aceito pela importação
+// "peça de reposição" (ver _tentarImportarReposicao em importarTabelaPrecoVendaExcel):
+// NOME/PEÇA/NOME/PEÇA/PN/CI, com o conjunto (kit vendido junto) mesclado nas
+// colunas NOME/PEÇA de reposição — igual ao arquivo original, só que sem as
+// colunas de alíquota (Tx/ROI/ICMS/COFINS/PIS/IPI), que não fazem parte do
+// cadastro do produto e por isso não têm como ser reconstruídas aqui.
+function exportarPecaReposicaoPorArma() {
+    const armamentos = Array.from(new Set(
+        (estoque.produtos || []).flatMap(p => Array.isArray(p.armamentos) ? p.armamentos : [])
+    )).filter(Boolean).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+    if (!armamentos.length) {
+        mostrarNotificacao('Nenhum produto com armamento associado para exportar.', 'warning');
+        return;
+    }
+
+    const escolha = prompt(
+        `Exportar CI de qual armamento? Digite o nome exatamente como na lista:\n\n${armamentos.map(a => '• ' + a).join('\n')}`,
+        armamentos[0]
+    );
+    if (!escolha) return;
+    const armamento = armamentos.find(a => a.toUpperCase() === escolha.trim().toUpperCase());
+    if (!armamento) {
+        mostrarNotificacao(`Armamento "${escolha}" não encontrado na lista.`, 'erro');
+        return;
+    }
+
+    const produtos = (estoque.produtos || [])
+        .filter(p => !p.ehArmamentoPai && Array.isArray(p.armamentos) && p.armamentos.some(a => a.toUpperCase() === armamento.toUpperCase()))
+        .slice()
+        .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
+
+    if (!produtos.length) {
+        mostrarNotificacao(`Nenhuma peça encontrada para "${armamento}".`, 'warning');
+        return;
+    }
+
+    const linhas = [
+        [`Tabela de peças de reposição para ${armamento}`, '', '', '', '', ''],
+        ['PEÇA DE INTERESSE', '', 'PEÇA DE REPOSIÇÃO', '', '', ''],
+        ['NOME', 'PEÇA', 'NOME', 'PEÇA', 'PN', 'CI']
+    ];
+    const merges = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } },
+        { s: { r: 1, c: 2 }, e: { r: 1, c: 5 } }
+    ];
+
+    produtos.forEach(p => {
+        const ci = Number(precificacao[p.nome]?.ci ?? p.ci ?? 0);
+        const composicaoOriginal = Array.isArray(p.composicao) ? p.composicao : [];
+        const grupo = composicaoOriginal.slice();
+        const linhaInicial = linhas.length;
+
+        // O 1º item de `composicao` (quando existe) é a peça de interesse da
+        // própria linha que abre o conjunto (ver _tentarImportarReposicao) —
+        // usa ele na linha de cabeça e sobra só os filhos de verdade. Sem
+        // composição, a peça vendida avulsa é sua própria peça de interesse.
+        let nomeInt = p.nome, pecaInt = p.pecaRef || '';
+        if (grupo.length > 0) {
+            const cabeca = grupo.shift();
+            nomeInt = cabeca.nome || p.nome;
+            pecaInt = cabeca.peca || '';
+        }
+        linhas.push([nomeInt, pecaInt, p.nome, p.pecaRef || '', p.pn || '', ci > 0 ? ci : '']);
+        grupo.forEach(filho => {
+            linhas.push([filho.nome || '', filho.peca || '', '', '', '', '']);
+        });
+
+        const linhaFinal = linhas.length - 1;
+        if (composicaoOriginal.length > 0 && linhaFinal > linhaInicial) {
+            merges.push({ s: { r: linhaInicial, c: 2 }, e: { r: linhaFinal, c: 2 } });
+            merges.push({ s: { r: linhaInicial, c: 3 }, e: { r: linhaFinal, c: 3 } });
+        }
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(linhas);
+    ws['!merges'] = merges;
+    ws['!cols'] = [{ wch: 32 }, { wch: 10 }, { wch: 32 }, { wch: 10 }, { wch: 18 }, { wch: 12 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'CI');
+    const nomeArquivo = `CI_${armamento.replace(/[^\w]+/g, '_')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(wb, nomeArquivo);
+    mostrarNotificacao(`${produtos.length} peça(s) de "${armamento}" exportada(s).`, 'success');
 }
 
 function exportarTabelaPrecoVenda() {

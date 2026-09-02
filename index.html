@@ -285,6 +285,7 @@
                         <button id="btnFiltroSemCI" class="btn btn-outline btn-sm" onclick="toggleFiltroSemCI()" title="Mostrar apenas produtos sem CI definido">💲 Sem CI</button>
                         <span class="prod-result-count" id="prodResultCount"></span>
                         <button class="btn btn-outline btn-sm" onclick="exportarProdutosCI()">📤 Exportar Excel</button>
+                        <button class="btn btn-outline btn-sm" onclick="exportarPecaReposicaoPorArma()" title="Exporta as peças de um armamento no mesmo layout aceito pela importação (NOME/PEÇA/NOME/PEÇA/PN/CI, com conjuntos mesclados)">📤 Exportar CI (por arma)</button>
                         <button class="btn btn-outline btn-sm" onclick="document.getElementById('inputImportarProdutosCI').click()">📥 Importar Excel</button>
                         <input type="file" id="inputImportarProdutosCI" accept=".xlsx,.xls,.ods,.csv" style="display:none" onchange="importarTabelaPrecoVendaExcel(event)">
                         <button class="btn btn-primary" data-admin="true" onclick="abrirModalProduto()">
@@ -3231,8 +3232,8 @@
                         <div style="font-size:0.76rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.7px; margin:10px 0 8px;">Estoque</div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="estoqueTotal" id="labelEstoqueTotal">Quantidade Inicial (IMBEL) <span class="required">*</span></label>
-                                <input type="number" id="estoqueTotal" required min="0" placeholder="0">
+                                <label for="estoqueTotal" id="labelEstoqueTotal">Quantidade Inicial (IMBEL)</label>
+                                <input type="number" id="estoqueTotal" min="0" placeholder="0 (opcional)">
                             </div>
                         </div>
                         <div class="form-group" style="margin-top:6px">

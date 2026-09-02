@@ -4450,7 +4450,7 @@ function renderizarCadastroProdutos() {
         const icon = th.querySelector('.sort-icon');
         if (icon) icon.textContent = '↕';
     });
-    const colMap = { nome: 4, categoria: 1, pn: 2, nomeFabrica: 3, ci: 6, saldo: 8, atualizado: 9 };
+    const colMap = { nome: 6, categoria: 1, pn: 2, nomeFabrica: 4, ci: 7, saldo: 8, atualizado: 9 };
     const colIdx = colMap[_cadProdSort.col];
     if (colIdx !== undefined) {
         const ths = document.querySelectorAll('#tabelaCadastroProdutos thead th');
@@ -4497,7 +4497,6 @@ function renderizarCadastroProdutos() {
         const categoria = (categoriaPorProduto && categoriaPorProduto[nome]) || produto.categoria || '-';
         const ncm = produto.ncm || '-';
         const metricaImbel = obterMetricasImbelProduto(produto);
-        const imbelTexto = metricaImbel.estoqueTotal === 0 ? '-' : formatarNumero(metricaImbel.imbelDisp);
         const saldoConsolidado = metricaImbel.consolidadoSaldo;
         const saldoConsolidadoTexto = formatarNumero(saldoConsolidado);
         const saldoConsolidadoCor = saldoConsolidado > 0 ? '#2da44e' : '#cf222e';
@@ -4517,6 +4516,20 @@ function renderizarCadastroProdutos() {
             ? `<span class="badge-categoria" data-cat="${_escapeHtml(categoria)}">${_escapeHtml(categoria)}</span>`
             : '-';
 
+        // "Peça": número da peça de reposição (planilha) + indicadores de quando
+        // ela só é vendida dentro de um conjunto (kit) — ou porque ESTE produto
+        // é o próprio conjunto (tem `composicao`), ou porque foi criado só pra
+        // registrar consumo de estoque ao vender um conjunto (ver
+        // _expandirItensComComposicao) e nunca é vendido avulso.
+        const composicaoProduto = Array.isArray(produto.composicao) ? produto.composicao : [];
+        let pecaCell = produto.pecaRef ? _escapeHtml(produto.pecaRef) : '-';
+        if (composicaoProduto.length > 0) {
+            pecaCell += ` <span title="Vendido apenas como conjunto — inclui ${composicaoProduto.length} peça(s)" style="display:inline-block;background:#fef3c7;color:#92400e;border-radius:8px;padding:0 6px;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin-left:4px;white-space:nowrap">conjunto · ${composicaoProduto.length}</span>`;
+        }
+        if (produto.criadoAutomaticamente === true) {
+            pecaCell += ` <span title="Criada automaticamente ao vender um conjunto — não é vendida separadamente" style="display:inline-block;background:#fee2e2;color:#991b1b;border-radius:8px;padding:0 6px;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;margin-left:4px;white-space:nowrap">só no conjunto</span>`;
+        }
+
         const expandSlotId = 'expand-slot-' + Number(produto.id);
         const tr = document.createElement('tr');
         if (isPeca) {
@@ -4529,11 +4542,11 @@ function renderizarCadastroProdutos() {
             <td style="font-family:monospace;font-size:0.85rem;white-space:nowrap" title="${_escapeHtml(ncmDescricao)}">${_escapeHtml(ncmCodigo)}</td>
             <td>${categoriaBadge}</td>
             <td style="font-family:monospace;${isPeca ? 'color:#64748b;font-size:0.85rem' : ''}">${_escapeHtml(pn)}<span id="${expandSlotId}"></span></td>
+            <td style="font-family:monospace;font-size:0.85rem;white-space:nowrap">${pecaCell}</td>
             <td>${_escapeHtml(nomeFabrica)}</td>
             <td>${_escapeHtml(componente)}</td>
             <td style="text-align:left;font-weight:600;${isPeca ? 'padding-left:12px;color:#475569' : ''}">${isPeca ? '↳ ' : ''}${_escapeHtml(nome)}</td>
             <td>${ci > 0 ? formatarMoedaValor(ci) : '-'}</td>
-            <td>${imbelTexto}</td>
             <td class="${saldoConsolidadoClasse}" style="color:${saldoConsolidadoCor};font-weight:700;font-family:monospace">${saldoConsolidadoTexto}</td>
             <td>${atualizadoTxt}</td>
             <td style="text-align:center">${noEstoqueBadge}</td>

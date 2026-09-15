@@ -10787,7 +10787,7 @@ function atualizarSelectDistribuicaoProduto() {
 }
 
 // ========================================
-// ENTRADA DE ESTOQUE (IMBEL)
+// AJUSTE DE ESTOQUE (entrada ou saída manual de um produto)
 // ========================================
 
 function abrirModalEntradaEstoque() {
@@ -10795,7 +10795,8 @@ function abrirModalEntradaEstoque() {
     document.getElementById('modalEntradaEstoque').style.display = 'flex';
     document.getElementById('formEntradaEstoque').reset();
     document.getElementById('estoqueAtualIMBEL').value = '-';
-    
+    selecionarTipoAjusteEstoque('entrada');
+
     // Atualizar select de produtos
     const select = document.getElementById('produtoEntrada');
     select.innerHTML = '<option value="">Selecione um produto</option>';
@@ -10806,6 +10807,36 @@ function abrirModalEntradaEstoque() {
         option.textContent = produto.nome;
         select.appendChild(option);
     });
+}
+
+// Alterna o modal de Ajuste de Estoque entre aumentar (+) e diminuir (-)
+function selecionarTipoAjusteEstoque(tipo) {
+    const campo = document.getElementById('tipoAjusteEstoque');
+    if (campo) campo.value = tipo;
+
+    const btnEntrada = document.getElementById('btnAjusteEstoqueEntrada');
+    const btnSaida = document.getElementById('btnAjusteEstoqueSaida');
+    if (btnEntrada && btnSaida) {
+        const ativo = { background: '#16a34a', color: '#fff', fontWeight: '700' };
+        const inativo = { background: '#f1f5f9', color: '#64748b', fontWeight: '600' };
+        const alvoEntrada = tipo === 'entrada' ? ativo : inativo;
+        const alvoSaida = tipo === 'saida' ? { ...ativo, background: '#dc2626' } : inativo;
+        Object.assign(btnEntrada.style, alvoEntrada);
+        Object.assign(btnSaida.style, alvoSaida);
+    }
+
+    const titulo = document.getElementById('tituloAjusteEstoque');
+    const lblQtd = document.getElementById('lblQuantidadeAjusteEstoque');
+    const btnSalvar = document.getElementById('btnSalvarAjusteEstoque');
+    if (tipo === 'saida') {
+        if (titulo) titulo.textContent = 'Diminuir Estoque';
+        if (lblQtd) lblQtd.innerHTML = 'Quantidade a Remover <span class="required">*</span>';
+        if (btnSalvar) btnSalvar.innerHTML = '📤 Registrar Saída';
+    } else {
+        if (titulo) titulo.textContent = 'Aumentar Estoque';
+        if (lblQtd) lblQtd.innerHTML = 'Quantidade a Adicionar <span class="required">*</span>';
+        if (btnSalvar) btnSalvar.innerHTML = '📥 Registrar Entrada';
+    }
 }
 
 function abrirModalDevolucao() {
@@ -10862,42 +10893,59 @@ function mostrarEstoqueAtual() {
 function salvarEntradaEstoque(event) {
     if (!requireAdminOrNotify()) return;
     event.preventDefault();
-    
+
     const produtoId = parseInt(document.getElementById('produtoEntrada').value);
     const quantidade = parseInt(document.getElementById('quantidadeEntrada').value);
     const observacao = document.getElementById('observacaoEntrada').value.trim();
-    
+    const tipo = (document.getElementById('tipoAjusteEstoque')?.value || 'entrada');
+
     const produto = estoque.produtos.find(p => p.id === produtoId);
-    
+
     if (!produto) {
         mostrarNotificacao('Produto não encontrado!', 'error');
         return;
     }
-    
-    // Adicionar ao estoque da IMBEL
-    // Agora adicionamos ao `estoqueConsolidado` (cadastro do total disponível)
-    produto.estoqueConsolidado = (Number(produto.estoqueConsolidado) || 0) + quantidade;
+    if (!quantidade || quantidade <= 0) {
+        mostrarNotificacao('Informe uma quantidade válida.', 'error');
+        return;
+    }
+    if (!observacao) {
+        mostrarNotificacao('Informe o motivo do ajuste.', 'error');
+        return;
+    }
 
-    // Registrar entrada histórica para permitir edição/auditoria futura
+    const estoqueAntes = Number(produto.estoqueConsolidado) || 0;
+    const delta = tipo === 'saida' ? -quantidade : quantidade;
+    if (tipo === 'saida' && quantidade > estoqueAntes) {
+        mostrarNotificacao(`Estoque insuficiente para remover ${quantidade} un. de "${produto.nome}". Estoque atual: ${estoqueAntes} un.`, 'error');
+        return;
+    }
+
+    // Ajustar `estoqueConsolidado` (cadastro do total disponível)
+    produto.estoqueConsolidado = estoqueAntes + delta;
+
+    // Registrar movimento histórico para permitir edição/auditoria futura
     try {
         if (!Array.isArray(estoque.registroEntradas)) estoque.registroEntradas = [];
         estoque.registroEntradas.push({
             id: Date.now() + Math.floor(Math.random() * 1000),
             produtoId: produto.id,
             produtoNome: produto.nome,
-            quantidade: quantidade,
+            tipo,
+            quantidade: delta,
             data: (new Date()).toISOString().split('T')[0],
             observacoes: observacao
         });
     } catch (e) { /* ignore registro failure */ }
-    
+
     salvarDados();
     renderizarTabela();
     renderizarDashboard();
     fecharModal('modalEntradaEstoque');
-    
-    const msgObs = observacao ? ` (${observacao})` : '';
-    mostrarNotificacao(`Entrada registrada: +${quantidade} "${produto.nome}" no estoque IMBEL${msgObs}`, 'success');
+
+    const sinal = tipo === 'saida' ? '-' : '+';
+    const acao = tipo === 'saida' ? 'Saída registrada' : 'Entrada registrada';
+    mostrarNotificacao(`${acao}: ${sinal}${quantidade} "${produto.nome}" (${observacao})`, 'success');
 }
 
 // ========================================

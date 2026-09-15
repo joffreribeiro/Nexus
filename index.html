@@ -335,7 +335,7 @@
                 <!-- SUBNAV -->
                 <div class="est-subnav">
                     <button class="est-subnav-tab active"><span class="ico" data-icon="box"></span> Inventário de Produtos</button>
-                    <button class="est-subnav-tab" onclick="abrirModalEntradaEstoque && abrirModalEntradaEstoque()"><span class="ico" data-icon="download"></span> Entrada de Estoque</button>
+                    <button class="est-subnav-tab" onclick="abrirModalEntradaEstoque && abrirModalEntradaEstoque()"><span class="ico" data-icon="download"></span> Ajustar Estoque</button>
                     <button class="est-subnav-tab" onclick="trocarAba('relatorios')"><span class="ico" data-icon="trendingUp"></span> Relatórios</button>
                     <div class="est-subnav-right">
                         <span>ESTOQUE</span>&nbsp;/&nbsp;<b>Inventário Consolidado</b>
@@ -378,7 +378,7 @@
                         <button class="est-density-btn" title="Espaçado" onclick="_estSetDensity('cozy')">≣</button>
                     </div>
 
-                    <button class="est-bar-btn accent" onclick="abrirModalEntradaEstoque && abrirModalEntradaEstoque()"><span class="ico" data-icon="download"></span> Entrada Estoque</button>
+                    <button class="est-bar-btn accent" onclick="abrirModalEntradaEstoque && abrirModalEntradaEstoque()"><span class="ico" data-icon="download"></span> Ajustar Estoque</button>
                     <button class="est-bar-btn icon-only" title="Exportar" onclick="exportarEstoqueExcel && exportarEstoqueExcel()"><span class="ico" data-icon="chart"></span></button>
                     <button class="est-bar-btn icon-only" title="Imprimir" onclick="imprimirRelatorioAba('estoque')"><span class="ico" data-icon="printer"></span></button>
                     <button class="est-bar-btn icon-only" title="Atualizar" onclick="renderizarTabela()"><span class="ico" data-icon="refresh"></span></button>
@@ -3264,11 +3264,11 @@
             </div>
         </div>
 
-        <!-- Modal Entrada de Estoque -->
+        <!-- Modal Ajuste de Estoque -->
         <div id="modalEntradaEstoque" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2><span>📥</span> Entrada de Estoque (IMBEL)</h2>
+                    <h2><span>⚖️</span> <span id="tituloAjusteEstoque">Ajustar Estoque</span></h2>
                     <span class="close" aria-label="Fechar" onclick="fecharModal('modalEntradaEstoque')">&times;</span>
                 </div>
                 <form id="formEntradaEstoque" onsubmit="salvarEntradaEstoque(event)">
@@ -3280,21 +3280,35 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Estoque Atual na IMBEL</label>
+                            <label>Estoque Atual</label>
                             <input type="text" id="estoqueAtualIMBEL" readonly class="readonly-field" value="-">
                         </div>
                         <div class="form-group">
-                            <label for="quantidadeEntrada">Quantidade a Adicionar <span class="required">*</span></label>
+                            <label>Tipo de Ajuste <span class="required">*</span></label>
+                            <input type="hidden" id="tipoAjusteEstoque" value="entrada">
+                            <div style="display:flex;gap:0;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;height:38px">
+                                <button type="button" id="btnAjusteEstoqueEntrada" onclick="selecionarTipoAjusteEstoque('entrada')"
+                                        style="flex:1;border:none;background:#16a34a;color:#fff;font-weight:700;font-size:0.85rem;cursor:pointer">
+                                    + Aumentar
+                                </button>
+                                <button type="button" id="btnAjusteEstoqueSaida" onclick="selecionarTipoAjusteEstoque('saida')"
+                                        style="flex:1;border:none;background:#f1f5f9;color:#64748b;font-weight:600;font-size:0.85rem;cursor:pointer">
+                                    − Diminuir
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="quantidadeEntrada" id="lblQuantidadeAjusteEstoque">Quantidade a Adicionar <span class="required">*</span></label>
                             <input type="number" id="quantidadeEntrada" required min="1" placeholder="0">
                         </div>
                         <div class="form-group">
-                            <label for="observacaoEntrada">Observação</label>
-                            <input type="text" id="observacaoEntrada" placeholder="Ex: Lote 2026-001">
+                            <label for="observacaoEntrada">Motivo do Ajuste <span class="required">*</span></label>
+                            <input type="text" id="observacaoEntrada" required placeholder="Ex: Contagem de inventário, produto avariado, devolução de cliente...">
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline" onclick="fecharModal('modalEntradaEstoque')">Cancelar</button>
-                        <button type="submit" class="btn btn-warning">📥 Registrar Entrada</button>
+                        <button type="submit" class="btn btn-warning" id="btnSalvarAjusteEstoque">📥 Registrar Entrada</button>
                     </div>
                 </form>
             </div>
@@ -5049,7 +5063,7 @@
          salvarNoCloud/carregarDoCloud em app2.js. Carrega antes por coerência
          com estoque-calculos.js. -->
     <script src="cloud-store.js?v=6e814690"></script>
-    <script src="app2.js?v=932c9ee7"></script>
+    <script src="app2.js?v=6cd389ef"></script>
     <script src="icms-regras.js?v=4b4c0334"></script>
     <script src="shared-state.js?v=44203dad"></script>
 

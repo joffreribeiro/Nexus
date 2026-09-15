@@ -21078,6 +21078,37 @@ function criarNovaVersaoTabelaVenda() {
     renderizarTabelaPrecoVenda();
 }
 
+// Atualiza a Taxa%/ROI% (padrão e por NCM) da versão ATIVA, sem criar uma nova
+// versão no histórico — usado quando o ajuste é uma correção/afinação dos
+// parâmetros vigentes, não uma tabela de preço nova de fato.
+function salvarVersaoAtivaTabelaVenda() {
+    const ptv = estoque.parametrosTabelaVenda;
+    const versaoAtiva = ptv && (ptv.versoes || []).find(v => v.id === ptv.versaoAtiva);
+    if (!versaoAtiva) { mostrarNotificacao('Nenhuma versão ativa. Crie uma nova versão.', 'warning'); return; }
+
+    const taxaPadrao = parseFloat(document.getElementById('tvNovaTaxaPadrao')?.value);
+    const roiPadrao  = parseFloat(document.getElementById('tvNovaROIPadrao')?.value);
+
+    const params = {};
+    document.querySelectorAll('[data-tv-ncm]').forEach(inp => {
+        const ncm = inp.dataset.tvNcm;
+        const campo = inp.dataset.tvCampo;
+        const val = parseFloat(inp.value);
+        if (!isNaN(val) && val > 0) {
+            if (!params[ncm]) params[ncm] = {};
+            params[ncm][campo] = val;
+        }
+    });
+
+    versaoAtiva.taxaPadrao = isNaN(taxaPadrao) ? null : taxaPadrao;
+    versaoAtiva.roiPadrao  = isNaN(roiPadrao)  ? null : roiPadrao;
+    versaoAtiva.params = params;
+
+    salvarDados();
+    mostrarNotificacao(`Parâmetros de "${versaoAtiva.descricao}" atualizados.`, 'success');
+    renderizarTabelaPrecoVenda();
+}
+
 function ativarVersaoTabelaVenda(id) {
     if (!estoque.parametrosTabelaVenda) return;
     estoque.parametrosTabelaVenda.versaoAtiva = id;
@@ -21194,10 +21225,10 @@ function _renderizarPainelParametrosTabelaVenda() {
     }).join('');
 
     const secaoForm = `<div style="padding:14px 16px;border-bottom:1px solid #e2e8f0">
-        <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">Nova versão de parâmetros</div>
+        <div style="font-size:0.82rem;font-weight:700;color:#1e3a5f;margin-bottom:10px">${versaoAtiva ? 'Editar parâmetros' : 'Nova versão de parâmetros'}</div>
         <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px">
             <div>
-                <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:3px">Descrição</label>
+                <label style="font-size:0.75rem;font-weight:600;color:#374151;display:block;margin-bottom:3px">Descrição ${versaoAtiva ? '<span style="font-weight:400;color:#94a3b8">(só p/ nova versão)</span>' : ''}</label>
                 <input type="text" id="tvNovaDescricao" placeholder="Ex: Tabela mai/26"
                     style="width:180px;border:1px solid #c7d2fe;border-radius:6px;padding:6px 10px;font-size:0.85rem">
             </div>
@@ -21211,6 +21242,10 @@ function _renderizarPainelParametrosTabelaVenda() {
                 <input type="number" step="0.1" min="0" id="tvNovaROIPadrao" value="${roiPreench}" placeholder="Ex: 30"
                     style="width:100px;border:1px solid #c7d2fe;border-radius:6px;padding:6px 10px;font-size:0.85rem;text-align:right">
             </div>
+            ${versaoAtiva ? `<button onclick="salvarVersaoAtivaTabelaVenda()"
+                style="padding:7px 18px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:0.85rem;font-weight:700;cursor:pointer">
+                💾 Salvar na Versão Atual
+            </button>` : ''}
             <button onclick="criarNovaVersaoTabelaVenda()"
                 style="padding:7px 18px;background:#1e3a5f;color:#fff;border:none;border-radius:6px;font-size:0.85rem;font-weight:700;cursor:pointer">
                 Criar Nova Versão

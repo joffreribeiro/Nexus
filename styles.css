@@ -2518,6 +2518,11 @@ tr.total-row:hover {
 #tabelaRegistroVendas .row-contrato-resumo td {
     border-top: 2px solid #e2e8f0;
 }
+/* Produtos expandidos com a mesma fonte do produto único (.prod-nome-inline) */
+#tabelaRegistroVendas tr.row-contrato-detalhe td.col-produto-venda,
+#tabelaRegistroVendas tr.row-contrato-detalhe td.col-produto-venda .sub-prod-nome {
+    font-size: 12px !important;
+}
 .btn-contrato-docx {
     background: #1e3a5f;
     color: #fff !important;
@@ -2757,6 +2762,12 @@ tr.total-row:hover {
 #tabelaRegistroVendas .row-contrato-resumo td,
 #tabelaRegistroVendas .row-contrato-detalhe td {
     vertical-align: middle;
+}
+
+#tabelaRegistroVendas th.col-acoes,
+#tabelaRegistroVendas td.col-acoes {
+    min-width: 0;
+    width: 70px;
 }
 
 #tabelaRegistroVendas td.col-acoes {
@@ -3431,8 +3442,13 @@ tr.row-saldo-zero .geral-saldo {
 .col-sistema,
 .col-assinado,
 .col-enviado,
+.col-faturamento,
 .col-solicitacao {
     text-align: center;
+}
+
+.col-faturamento {
+    min-width: 140px;
 }
 
 .col-sistema {

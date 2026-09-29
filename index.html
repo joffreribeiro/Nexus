@@ -1630,6 +1630,16 @@
                         <option value="sim">Enviado: Sim</option>
                         <option value="nao">Enviado: Não</option>
                     </select>
+                    <select id="filtroVendasFaturamento" class="prod-filter-select" onchange="filtrarVendas()" title="Filtrar por Faturamento">
+                        <option value="">Faturamento: Todos</option>
+                        <option value="sim">Faturamento: Com data</option>
+                        <option value="nao">Faturamento: Sem data</option>
+                    </select>
+                    <div class="distrib-date-range" title="Período de Faturamento">
+                        <input type="date" id="filtroVendasFatInicio" class="prod-date-input" onchange="filtrarVendas()" title="Faturamento a partir de">
+                        <span class="date-sep">—</span>
+                        <input type="date" id="filtroVendasFatFim" class="prod-date-input" onchange="filtrarVendas()" title="Faturamento até">
+                    </div>
                     <select id="filtroVendasProgresso" class="prod-filter-select" onchange="filtrarVendas()" title="Filtrar por progresso de envio">
                         <option value="">Progresso: Todos</option>
                         <option value="completo">✅ Completo (3/3)</option>
@@ -1659,8 +1669,9 @@
                                     <th style="width:90px" class="col-sistema" title="Lançado no Sistema">Sistema</th>
                                     <th style="width:90px" class="col-assinado" title="Contrato Assinado">Assinado</th>
                                     <th style="width:90px" class="col-enviado" title="Contrato Enviado">Enviado</th>
+                                    <th style="width:140px" class="col-faturamento" title="Data de Faturamento">Faturamento</th>
                                     <th style="width:140px" class="col-solicitacao">Solicitação</th>
-                                    <th style="width:235px" class="col-acoes">Ações</th>
+                                    <th style="width:70px" class="col-acoes">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tabelaRegistroVendasBody"></tbody>
@@ -1669,7 +1680,7 @@
                                     <td colspan="4"><strong>TOTAL</strong></td>
                                     <td id="totalQtdVendas"><strong>0</strong></td>
                                     <td id="totalValorVendas"><strong>R$ 0,00</strong></td>
-                                    <td colspan="6"></td>
+                                    <td colspan="7"></td>
                                 </tr>
                             </tfoot>
                         </table>

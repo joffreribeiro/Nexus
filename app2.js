@@ -6546,14 +6546,15 @@ function imprimirVendas() {
         <table class="tabela-relatorio vendas-table" style="width:100%;border-collapse:collapse">
             <colgroup>
                 <col style="width:8%" />
-                <col style="width:18%" />
+                <col style="width:16%" />
                 <col style="width:10%" />
-                <col style="width:18%" />
+                <col style="width:16%" />
                 <col style="width:4%" />
                 <col style="width:10%" />
-                <col style="width:14%" />
                 <col style="width:12%" />
+                <col style="width:10%" />
                 <col style="width:6%" />
+                <col style="width:8%" />
             </colgroup>
             <thead>
                 <tr>
@@ -6566,6 +6567,7 @@ function imprimirVendas() {
                     <th class="numeric" style="padding:6px;border:1px solid #ddd;vertical-align:middle;text-align:center">VALOR TOTAL</th>
                     <th class="numeric" style="padding:6px;border:1px solid #ddd;vertical-align:middle;text-align:center">TOTAL CONTRATO (R$)</th>
                     <th style="padding:6px;border:1px solid #ddd;vertical-align:middle;text-align:center">DATA</th>
+                    <th style="padding:6px;border:1px solid #ddd;vertical-align:middle;text-align:center">FATURAMENTO</th>
                 </tr>
             </thead>
             <tbody>`;
@@ -6604,6 +6606,11 @@ function imprimirVendas() {
             }
 
             tabelaHtml += `<td style="padding:6px;border:1px solid #ddd;vertical-align:middle;text-align:center">${dataFmt}</td>`;
+            if (primeiraLinha) {
+                const envioFat = (estoque.controleEnvio || {})[r.contratoRaw] || (estoque.controleEnvio || {})[ck] || {};
+                const fatFmt = envioFat.faturamento ? formatDateToDDMMYYYY(envioFat.faturamento) : '';
+                tabelaHtml += `<td style="padding:6px;border:1px solid #ddd;vertical-align:middle;text-align:center"${rowspanAttr}>${fatFmt}</td>`;
+            }
             tabelaHtml += `</tr>`;
 
             primeiraLinha = false;
@@ -12044,7 +12051,13 @@ window.fecharMenuAcoes = fecharMenuAcoes;
 
 /** Conteúdo do menu "⋯" da linha de contrato em Vendas/Envio — ações raras/destrutivas. */
 function htmlMenuAcoesVenda(vendaId, contratoKey, contratoRefEnvio) {
+    const emailEnviadoEm = (estoque.controleEnvio?.[contratoRefEnvio]?.emailEnviadoEm) || '';
+    const emailLabel = emailEnviadoEm ? `✉️ Email de pedido (enviado em ${emailEnviadoEm})` : '✉️ Preparar email de pedido';
+    const emailStyle = emailEnviadoEm ? ' style="color:#15803d"' : '';
     return `
+        <button class="menu-acoes-item" onclick="fecharMenuAcoes(); abrirModalVendaDetalhada(${vendaId})">✎ Editar venda</button>
+        <button class="menu-acoes-item" onclick="fecharMenuAcoes(); gerarContratoVenda('${vendaId || contratoRefEnvio}')">📄 Gerar contrato .docx</button>
+        <button class="menu-acoes-item"${emailStyle} onclick="fecharMenuAcoes(); prepararEmailPorContrato('${contratoRefEnvio}')">${emailLabel}</button>
         <button class="menu-acoes-item" onclick="fecharMenuAcoes(); abrirHistoricoContrato('${contratoKey}')">🕘 Histórico do Contrato</button>
         <button class="menu-acoes-item" onclick="fecharMenuAcoes(); limparControleEnvio('${contratoRefEnvio}')">📭 Limpar dados de envio</button>
         <button class="menu-acoes-item menu-acoes-item-destrutivo" onclick="fecharMenuAcoes(); cancelarContrato('${contratoKey}')">✖ Cancelar contrato</button>
@@ -12072,6 +12085,9 @@ function renderizarRegistroVendas() {
     const filtroAssinado  = document.getElementById('filtroVendasAssinado')?.value  || '';
     const filtroEnviado   = document.getElementById('filtroVendasEnviado')?.value   || '';
     const filtroProgresso = document.getElementById('filtroVendasProgresso')?.value || '';
+    const filtroFaturamento = document.getElementById('filtroVendasFaturamento')?.value || '';
+    const filtroFatInicio = document.getElementById('filtroVendasFatInicio')?.value || '';
+    const filtroFatFim    = document.getElementById('filtroVendasFatFim')?.value || '';
 
     let vendasFiltradas = estoque.registroVendas || [];
 
@@ -12267,6 +12283,12 @@ function renderizarRegistroVendas() {
         if (filtroProgresso === 'parcial'  && (qtdConcluidos === 0 || qtdConcluidos === 3)) return;
         if (filtroProgresso === 'pendente' && qtdConcluidos !== 0) return;
 
+        const dataFat = envioData.faturamento || '';
+        if (filtroFaturamento === 'sim' && !dataFat) return;
+        if (filtroFaturamento === 'nao' && dataFat)  return;
+        if (filtroFatInicio && (!dataFat || dataFat < filtroFatInicio)) return;
+        if (filtroFatFim    && (!dataFat || dataFat > filtroFatFim))    return;
+
         totalQtd += totalQtdContrato;
         totalValor += totalContrato;
 
@@ -12299,7 +12321,7 @@ function renderizarRegistroVendas() {
               <td style="padding:10px;text-align:center">${totalUnidades}</td>
               <td colspan="2"></td>
               <td style="padding:10px;text-align:right;color:#7ee787;font-size:1rem">${fmtVal(totalFiltrado)}</td>
-              <td colspan="5"></td>
+              <td colspan="6"></td>
             </tr>`;
 
         const table = document.getElementById('tabelaRegistroVendas') || (tbody && tbody.closest && tbody.closest('table'));
@@ -12375,16 +12397,10 @@ function _renderGrupoVenda(dados) {
     if (contratoCancelado) {
         actionsHtml = '<span class="badge-cancelado">CANCELADO</span>';
     } else {
-        const emailEnviadoEm = (estoque.controleEnvio?.[primeira.contratoRaw || contratoKey]?.emailEnviadoEm) || '';
-        const emailBtnTitle = emailEnviadoEm ? `Email enviado em ${emailEnviadoEm}` : 'Preparar email de pedido';
-        const emailBtnStyle = emailEnviadoEm ? 'color:#15803d;border-color:#bbf7d0;background:#f0fdf4' : '';
-        // Ações frequentes ficam visíveis; as raras/destrutivas (histórico, cancelar,
-        // limpar envio, excluir) vão para o menu "⋯" — eram 7 ícones lado a lado.
+        // Todas as ações (editar, contrato, email, histórico, cancelar, limpar envio,
+        // excluir) ficam no menu "⋯" para manter a coluna estreita.
         const contratoRefEnvio = primeira.contratoRaw || contratoKey;
-        actionsHtml = `<button class="btn-action btn-edit" onclick="abrirModalVendaDetalhada(${primeira.vendaId})" title="Editar venda">✎</button>` +
-                      `<button class="btn-contrato-docx" onclick="gerarContratoVenda('${primeira.vendaId || primeira.contratoRaw}')" title="Gerar contrato .docx">📄</button>` +
-                      `<button class="btn-action" onclick="prepararEmailPorContrato('${contratoRefEnvio}')" title="${emailBtnTitle}" style="${emailBtnStyle}">✉️</button>` +
-                      `<button class="btn-action" onclick="toggleMenuAcoes(this, htmlMenuAcoesVenda(${primeira.vendaId}, '${contratoKey}', '${contratoRefEnvio}'))" title="Mais ações">⋯</button>`;
+        actionsHtml = `<button class="btn-action" onclick="toggleMenuAcoes(this, htmlMenuAcoesVenda(${primeira.vendaId}, '${contratoKey}', '${contratoRefEnvio}'))" title="Mais ações">⋯</button>`;
     }
 
     resumo.innerHTML = `
@@ -12413,6 +12429,9 @@ function _renderGrupoVenda(dados) {
         <td class="col-sistema">${statusBtn(sistemaMarcado, 'sistema')}</td>
         <td class="col-assinado">${statusBtn(assinadoMarcado, 'assinado')}</td>
         <td class="col-enviado">${statusBtn(enviadoMarcado, 'enviado')}</td>
+        <td class="col-faturamento">
+            <input type="date" class="campo-editavel" value="${envioData.faturamento || ''}" title="Data de faturamento" onchange="salvarControleEnvio('${primeira.contratoRaw || contratoKey}', 'faturamento', this.value)" ${contratoCancelado ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}>
+        </td>
         <td class="col-solicitacao">
             <input type="text" class="campo-editavel" value="${envioData.solicitacao || ''}" placeholder="Data ou obs." onchange="salvarControleEnvio('${primeira.contratoRaw || contratoKey}', 'solicitacao', this.value)" ${contratoCancelado ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}>
         </td>
@@ -12441,6 +12460,7 @@ function _renderGrupoVenda(dados) {
             <td class="col-sistema detalhe-vazio"></td>
             <td class="col-assinado detalhe-vazio"></td>
             <td class="col-enviado detalhe-vazio"></td>
+            <td class="col-faturamento detalhe-vazio"></td>
             <td class="col-solicitacao detalhe-vazio"></td>
             <td class="col-acoes">${detalheAcoesHtml}</td>
         `;
@@ -12550,8 +12570,9 @@ function abrirHistoricoContrato(contratoInformado = '') {
                 ${ok ? '✓' : '○'} ${c.label}
             </span>`;
         }).join('');
+        const faturamento = envioData.faturamento ? `<span style="font-size:0.8rem;color:var(--text-secondary);margin-left:8px">🧾 Faturamento: ${formatDateToDDMMYYYY(envioData.faturamento)}</span>` : '';
         const solicitacao = envioData.solicitacao ? `<span style="font-size:0.8rem;color:var(--text-secondary);margin-left:8px">📅 ${envioData.solicitacao}</span>` : '';
-        envioEl.innerHTML = `<span style="font-size:0.78rem;color:var(--text-secondary);margin-right:4px">ENVIO:</span>${statusHtml}${solicitacao}`;
+        envioEl.innerHTML = `<span style="font-size:0.78rem;color:var(--text-secondary);margin-right:4px">ENVIO:</span>${statusHtml}${faturamento}${solicitacao}`;
     }
 
     // --- Itens da venda ---
@@ -12618,6 +12639,9 @@ function limparFiltrosVendas() {
         'filtroVendasSistema',
         'filtroVendasAssinado',
         'filtroVendasEnviado',
+        'filtroVendasFaturamento',
+        'filtroVendasFatInicio',
+        'filtroVendasFatFim',
         'filtroVendasProgresso'
     ];
     fields.forEach(id => {
@@ -13267,7 +13291,11 @@ function exportarVendas() {
     const sep = ';';
     
     // Cabeçalho
-    let csv = `CONTRATO${sep}LOJA/CLIENTE${sep}REPRESENTANTE${sep}PRODUTO${sep}QUANTIDADE${sep}VALOR UNITÁRIO${sep}VALOR TOTAL${sep}OBSERVAÇÕES${sep}DATA\n`;
+    let csv = `CONTRATO${sep}LOJA/CLIENTE${sep}REPRESENTANTE${sep}PRODUTO${sep}QUANTIDADE${sep}VALOR UNITÁRIO${sep}VALOR TOTAL${sep}OBSERVAÇÕES${sep}DATA${sep}FATURAMENTO\n`;
+    const fatContrato = (venda) => {
+        const envio = (estoque.controleEnvio || {})[venda.contrato] || (estoque.controleEnvio || {})[normalizarContratoKey(venda.contrato)] || {};
+        return envio.faturamento ? formatDateToDDMMYYYY(envio.faturamento) : '';
+    };
     
     if (vendasOrdenadas.length > 0) {
         // Percorrer vendas; suportar vendas com múltiplos itens
@@ -13278,7 +13306,7 @@ function exportarVendas() {
                 venda.items.forEach(it => {
                     const valorUnit = typeof it.valorUnitario === 'number' ? it.valorUnitario : 0;
                     const valorTot = typeof it.valorTotal === 'number' ? it.valorTotal : (valorUnit * (it.quantidade || 0));
-                    csv += `${contratoExport}${sep}${venda.loja}${sep}${venda.representante}${sep}${it.produtoNome}${sep}${it.quantidade}${sep}${valorUnit.toFixed(2).replace('.', ',')}${sep}${valorTot.toFixed(2).replace('.', ',')}${sep}${venda.observacoes || ''}${sep}${data}\n`;
+                    csv += `${contratoExport}${sep}${venda.loja}${sep}${venda.representante}${sep}${it.produtoNome}${sep}${it.quantidade}${sep}${valorUnit.toFixed(2).replace('.', ',')}${sep}${valorTot.toFixed(2).replace('.', ',')}${sep}${venda.observacoes || ''}${sep}${data}${sep}${fatContrato(venda)}\n`;
                 });
             } else {
                 // venda no formato antigo
@@ -13286,7 +13314,7 @@ function exportarVendas() {
                 const quantidade = venda.quantidade || 0;
                 const valorUnit = (typeof venda.valorUnitario === 'number') ? venda.valorUnitario : 0;
                 const valorTot = (typeof venda.valorTotal === 'number') ? venda.valorTotal : 0;
-                csv += `${contratoExport}${sep}${venda.loja}${sep}${venda.representante}${sep}${produtoNome}${sep}${quantidade}${sep}${valorUnit.toFixed(2).replace('.', ',')}${sep}${valorTot.toFixed(2).replace('.', ',')}${sep}${venda.observacoes || ''}${sep}${data}\n`;
+                csv += `${contratoExport}${sep}${venda.loja}${sep}${venda.representante}${sep}${produtoNome}${sep}${quantidade}${sep}${valorUnit.toFixed(2).replace('.', ',')}${sep}${valorTot.toFixed(2).replace('.', ',')}${sep}${venda.observacoes || ''}${sep}${data}${sep}${fatContrato(venda)}\n`;
             }
         });
 
@@ -13299,9 +13327,9 @@ function exportarVendas() {
             if (Array.isArray(v.items) && v.items.length > 0) return sum + v.items.reduce((s, it) => s + (typeof it.valorTotal === 'number' ? it.valorTotal : ((it.valorUnitario||0) * (it.quantidade||0))), 0);
             return sum + (typeof v.valorTotal === 'number' ? v.valorTotal : 0);
         }, 0);
-        csv += `${sep}${sep}${sep}TOTAL${sep}${totalQtd}${sep}${sep}${totalValor.toFixed(2).replace('.', ',')}${sep}${sep}\n`;
+        csv += `${sep}${sep}${sep}TOTAL${sep}${totalQtd}${sep}${sep}${totalValor.toFixed(2).replace('.', ',')}${sep}${sep}${sep}\n`;
     }
-    
+
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -15414,6 +15442,7 @@ function exportarControleEnvio() {
             'SISTEMA': sistemaMarcado ? 'Sim' : 'Não',
             'ASSINADO': envio.assinado ? 'Sim' : 'Não',
             'ENVIADO': envio.enviado ? 'Sim' : 'Não',
+            'FATURAMENTO': envio.faturamento ? formatDateToDDMMYYYY(envio.faturamento) : '',
             'SOLICITAÇÃO': envio.solicitacao || ''
         };
     });
@@ -15463,6 +15492,7 @@ function importarControleEnvioArquivo(event) {
         const iAssinado  = idx('assinado');
         const iEnviado   = idx('enviado');
         const iSolic     = idx('solicitação') !== -1 ? idx('solicitação') : idx('solicitacao');
+        const iFatur     = idx('faturamento');
 
         if (iCtr === -1) {
             alert('Coluna "CTR" não encontrada. Use o arquivo exportado pelo sistema.');
@@ -15495,6 +15525,7 @@ function importarControleEnvioArquivo(event) {
                 sistema:     iSistema  !== -1 ? resolverCampo(cols[iSistema],  atual.sistema)  : (atual.sistema  || ''),
                 assinado:    iAssinado !== -1 ? resolverCampo(cols[iAssinado], atual.assinado) : (atual.assinado || ''),
                 enviado:     iEnviado  !== -1 ? resolverCampo(cols[iEnviado],  atual.enviado)  : (atual.enviado  || ''),
+                faturamento: iFatur    !== -1 ? (parseDateToYYYYMMDD(cols[iFatur]) || '')       : (atual.faturamento || ''),
                 solicitacao: iSolic    !== -1 ? (cols[iSolic] || atual.solicitacao || '')       : (atual.solicitacao || '')
             };
 
@@ -27277,6 +27308,9 @@ limparFiltrosVendas = function() {
         'filtroVendasSistema',
         'filtroVendasAssinado',
         'filtroVendasEnviado',
+        'filtroVendasFaturamento',
+        'filtroVendasFatInicio',
+        'filtroVendasFatFim',
         'filtroVendasProgresso'
     ].forEach(id => {
         const el = document.getElementById(id);

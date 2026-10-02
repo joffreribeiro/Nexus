@@ -15612,7 +15612,8 @@ function _nfContratosDoSistema() {
         if (v.cancelado) return;
         const key = normalizarContratoKey(v.contrato);
         if (!key) return;
-        const g = porContrato[key] || (porContrato[key] = { raw: v.contrato, loja: v.loja || '', valor: 0 });
+        const g = porContrato[key] || (porContrato[key] = { raw: v.contrato, raws: new Set(), loja: v.loja || '', valor: 0 });
+        g.raws.add(v.contrato);
         const itens = Array.isArray(v.items) && v.items.length ? v.items : [v];
         itens.forEach(it => {
             const qtd = Number(it.quantidade || 0);
@@ -15621,9 +15622,27 @@ function _nfContratosDoSistema() {
     });
     return Object.keys(porContrato).map(key => {
         const g = porContrato[key];
-        const chave = ce[g.raw] ? g.raw : (ce[key] ? key : g.raw);
-        return { chave, contratoKey: key, contratoRaw: g.raw, loja: g.loja, valor: Math.round(g.valor * 100) / 100, nfAtual: (ce[chave] || {}).nf || '', faturamentoAtual: (ce[chave] || {}).faturamento || '' };
+        // A tabela lê controleEnvio[contratoRaw] || controleEnvio[contratoKey], e o mesmo
+        // contrato pode aparecer com grafias diferentes ("130/2026", "130"): gravamos em todas.
+        const chaves = [...new Set([...g.raws, key])];
+        const comDado = (campo) => { const k = chaves.find(c => (ce[c] || {})[campo]); return k ? ce[k][campo] : ''; };
+        return { chave: g.raw, chaves, contratoKey: key, contratoRaw: g.raw, loja: g.loja, valor: Math.round(g.valor * 100) / 100, nfAtual: comDado('nf'), faturamentoAtual: comDado('faturamento') };
     });
+}
+
+// Importações anteriores podem ter deixado a NF só numa grafia do contrato; replica nas demais.
+function _nfPropagarNFsExistentes(contratos) {
+    const ce = estoque.controleEnvio || (estoque.controleEnvio = {});
+    let mudou = false;
+    contratos.forEach(c => {
+        if (!c.nfAtual) return;
+        c.chaves.forEach(k => {
+            if ((ce[k] || {}).nf === c.nfAtual) return;
+            ce[k] = { ...(ce[k] || {}), nf: c.nfAtual, faturamento: (ce[k] || {}).faturamento || c.faturamentoAtual || '' };
+            mudou = true;
+        });
+    });
+    if (mudou) { salvarDados(); try { renderizarRegistroVendas(); } catch (e) { _catchSilencioso(e, '_nfPropagarNFsExistentes'); } }
 }
 
 function importarNFsVendasArquivo(event) {
@@ -15644,9 +15663,9 @@ function importarNFsVendasArquivo(event) {
             return;
         }
         if (!notas) { alert('Colunas não encontradas. Esperado: Cliente, Nr NF, Dt Emissão, Valor R$.'); return; }
-        const r = EstoqueCalculos.casarNotasComContratos(
-            notas,
-            _nfContratosDoSistema().map(c => ({ ...c })));
+        const contratosSis = _nfContratosDoSistema();
+        _nfPropagarNFsExistentes(contratosSis);
+        const r = EstoqueCalculos.casarNotasComContratos(notas, contratosSis.map(c => ({ ...c })));
         _nfAbrirModalConciliacao(r, notas.length);
     };
     reader.readAsArrayBuffer(file);
@@ -15712,8 +15731,10 @@ function aplicarImportacaoNFs() {
     if (!estoque.controleEnvio) estoque.controleEnvio = {};
     marcados.forEach(i => {
         const c = window._nfCasados[i];
-        const atual = estoque.controleEnvio[c.contrato.chave] || {};
-        estoque.controleEnvio[c.contrato.chave] = { ...atual, nf: c.nota.nf, faturamento: c.nota.data || atual.faturamento || '' };
+        c.contrato.chaves.forEach(chave => {
+            const atual = estoque.controleEnvio[chave] || {};
+            estoque.controleEnvio[chave] = { ...atual, nf: c.nota.nf, faturamento: c.nota.data || atual.faturamento || '' };
+        });
     });
     salvarDados();
     document.getElementById('modalImportarNFs').style.display = 'none';

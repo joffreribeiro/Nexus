@@ -624,10 +624,20 @@ function tokensNomeCliente(nome) {
         .filter(t => t && !_STOPWORDS_NOME.has(t));
 }
 
+// true se as strings diferem em no máximo 1 inserção/remoção/troca de letra.
+function _distanciaAteUm(a, b) {
+    if (Math.abs(a.length - b.length) > 1) return false;
+    let i = 0;
+    while (i < a.length && i < b.length && a[i] === b[i]) i++;
+    if (a.length === b.length) return a.slice(i + 1) === b.slice(i + 1);
+    return a.length < b.length ? a.slice(i) === b.slice(i + 1) : a.slice(i + 1) === b.slice(i);
+}
+
 function _tokensCasam(a, b) {
     if (a === b) return true;
     const [curto, longo] = a.length <= b.length ? [a, b] : [b, a];
-    return curto.length >= 3 && longo.startsWith(curto);   // abreviação: "COMP" ~ "COMPANHIA"
+    if (curto.length >= 3 && longo.startsWith(curto)) return true;   // abreviação: "COMP" ~ "COMPANHIA"
+    return curto.length >= 5 && _distanciaAteUm(curto, longo);       // erro de digitação: "SANDO" ~ "SANDRO"
 }
 
 /** 0..1 — quanto o nome do sistema (possivelmente incompleto) cabe no nome da NF. */

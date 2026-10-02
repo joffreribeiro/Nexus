@@ -665,7 +665,7 @@ function similaridadeNomesCliente(nomeSistema, nomeNF) {
  * Contratos que já têm NF, e NFs já vinculadas a um contrato, ficam de fora.
  */
 function casarNotasComContratos(notas, contratos, opts) {
-    const o = Object.assign({ limiteNome: 0.5, toleranciaValor: 0.01 }, opts || {});
+    const o = Object.assign({ limiteNome: 0.5, limiteSugestao: 0.85, limiteAprox: 0.7, toleranciaRelativa: 0.05, toleranciaValor: 0.01 }, opts || {});
     const nfsJaVinculadas = new Set(contratos.filter(c => c.nfAtual).map(c => String(c.nfAtual).trim()));
     const notasLivres = notas.filter(n => !nfsJaVinculadas.has(String(n.nf).trim()));
     const contratosLivres = contratos.filter(c => !c.nfAtual);
@@ -673,7 +673,7 @@ function casarNotasComContratos(notas, contratos, opts) {
     const pares = [];
     notasLivres.forEach((nota, ni) => {
         contratosLivres.forEach((contrato, ci) => {
-            if (Math.abs((Number(nota.valor) || 0) - (Number(contrato.valor) || 0)) > o.toleranciaValor) return;
+            if (Math.round(Math.abs((Number(nota.valor) || 0) - (Number(contrato.valor) || 0)) * 100) > Math.round(o.toleranciaValor * 100)) return;   // em centavos: evita 0,0100000001 > 0,01
             const score = similaridadeNomesCliente(contrato.loja, nota.nome);
             if (score >= o.limiteNome) pares.push({ ni, ci, score });
         });
@@ -689,8 +689,48 @@ function casarNotasComContratos(notas, contratos, opts) {
         contratoUsado.add(p.ci);
         casados.push({ nota: notasLivres[p.ni], contrato: contratosLivres[p.ci], score: p.score });
     });
+    // Valor aproximado: diferença pequena (até toleranciaRelativa do valor da NF)
+    // com nome bem parecido — entra como casamento, marcado como aproximado.
+    const aprox = [];
+    notasLivres.forEach((nota, ni) => {
+        if (notaUsada.has(ni)) return;
+        contratosLivres.forEach((contrato, ci) => {
+            if (contratoUsado.has(ci)) return;
+            const dif = Math.abs((Number(nota.valor) || 0) - (Number(contrato.valor) || 0));
+            if (dif > Math.abs(Number(nota.valor) || 0) * o.toleranciaRelativa) return;
+            const score = similaridadeNomesCliente(contrato.loja, nota.nome);
+            if (score >= o.limiteAprox) aprox.push({ ni, ci, score, dif });
+        });
+    });
+    aprox.sort((x, y) => (x.dif - y.dif) || (y.score - x.score) || (x.ni - y.ni));
+    aprox.forEach(p => {
+        if (notaUsada.has(p.ni) || contratoUsado.has(p.ci)) return;
+        notaUsada.add(p.ni);
+        contratoUsado.add(p.ci);
+        casados.push({ nota: notasLivres[p.ni], contrato: contratosLivres[p.ci], score: p.score, valorAprox: true });
+    });
+    // Sugestões: nome praticamente igual mas valor bem diferente (frete, imposto,
+    // desconto...). Nunca são aplicadas sem conferência do usuário.
+    const sugestoes = [];
+    const cand = [];
+    notasLivres.forEach((nota, ni) => {
+        if (notaUsada.has(ni)) return;
+        contratosLivres.forEach((contrato, ci) => {
+            if (contratoUsado.has(ci)) return;
+            const score = similaridadeNomesCliente(contrato.loja, nota.nome);
+            if (score >= o.limiteSugestao) cand.push({ ni, ci, score, dif: Math.abs((Number(nota.valor) || 0) - (Number(contrato.valor) || 0)) });
+        });
+    });
+    cand.sort((x, y) => (y.score - x.score) || (x.dif - y.dif) || (x.ni - y.ni));
+    cand.forEach(p => {
+        if (notaUsada.has(p.ni) || contratoUsado.has(p.ci)) return;
+        notaUsada.add(p.ni);
+        contratoUsado.add(p.ci);
+        sugestoes.push({ nota: notasLivres[p.ni], contrato: contratosLivres[p.ci], score: p.score, valorDifere: true });
+    });
     return {
         casados,
+        sugestoes,
         notasSemPar: notasLivres.filter((_, i) => !notaUsada.has(i)),
         contratosSemNota: contratosLivres.filter((_, i) => !contratoUsado.has(i))
     };

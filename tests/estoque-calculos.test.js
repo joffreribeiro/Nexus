@@ -667,3 +667,39 @@ describe('EstoqueCalculos.casarNotasComContratos', () => {
     expect(r.casados.map(c => [c.nota.nf, c.contrato.chave])).toEqual([['2', 'b']]);
   });
 });
+
+describe('EstoqueCalculos.casarNotasComContratos — valor aproximado', () => {
+  const { casarNotasComContratos } = EstoqueCalculos;
+  const nota = { nf: '1', nome: '9 - ALICE NOGUEIRA LOBO RIBEIRO (Pessoas Físicas)', valor: 6430.42 };
+
+  it('casa quando a diferença de valor é pequena (<=5%) e marca como aproximado', () => {
+    const r = casarNotasComContratos([nota], [{ chave: 'a', loja: 'Alice Nogueira', valor: 6200 }]);
+    expect(r.casados).toHaveLength(1);
+    expect(r.casados[0].valorAprox).toBe(true);
+    expect(r.sugestoes).toHaveLength(0);
+  });
+
+  it('diferença grande vira só sugestão', () => {
+    const r = casarNotasComContratos([nota], [{ chave: 'a', loja: 'Alice Nogueira', valor: 3000 }]);
+    expect(r.casados).toHaveLength(0);
+    expect(r.sugestoes).toHaveLength(1);
+  });
+
+  it('valor exato tem prioridade sobre o aproximado', () => {
+    const r = casarNotasComContratos([nota], [
+      { chave: 'aprox', loja: 'Alice Nogueira', valor: 6430 },
+      { chave: 'exato', loja: 'Alice Nogueira', valor: 6430.42 }]);
+    expect(r.casados).toHaveLength(1);
+    expect(r.casados[0].contrato.chave).toBe('exato');
+  });
+});
+
+describe('EstoqueCalculos.casarNotasComContratos — centavo', () => {
+  it('diferença de 1 centavo é valor exato (sem erro de ponto flutuante)', () => {
+    const r = EstoqueCalculos.casarNotasComContratos(
+      [{ nf: '1', nome: '9 - ALICE NOGUEIRA LOBO RIBEIRO (PF)', valor: 6430.42 }],
+      [{ chave: 'a', loja: 'Alice Nogueira Lobo Ribeiro', valor: 6430.41 }]);
+    expect(r.casados).toHaveLength(1);
+    expect(r.casados[0].valorAprox).toBeUndefined();
+  });
+});

@@ -15672,21 +15672,22 @@ function importarNFsVendasArquivo(event) {
 }
 
 function _nfAbrirModalConciliacao(r, totalNotas) {
-    window._nfCasados = r.casados;
+    const todos = r.casados.concat(r.sugestoes || []);
+    window._nfCasados = todos;
     const fmtData = (d) => d ? formatDateToDDMMYYYY(d) : '-';
-    const linhas = r.casados.map((c, i) => {
+    const linhas = todos.map((c, i) => {
         const dup = c.contrato.faturamentoAtual && c.contrato.faturamentoAtual !== c.nota.data
             ? `<div style="font-size:0.72rem;color:#b45309">substitui ${fmtData(c.contrato.faturamentoAtual)}</div>` : '';
-        const duvida = c.score < 0.7;
+        const duvida = c.score < 0.7 || c.valorDifere;
         return `<tr>
             <td style="text-align:center"><input type="checkbox" class="nf-imp-chk" data-i="${i}" ${duvida ? '' : 'checked'}></td>
             <td>${_escapeHtml(formatarContratoDisplay(c.contrato.contratoRaw))}</td>
             <td>${_escapeHtml(c.contrato.loja)}</td>
             <td>${_escapeHtml(c.nota.nome.replace(/^\s*\d+\s*-\s*/, '').replace(/\s*\(.*\)\s*$/, ''))}</td>
-            <td style="text-align:right">${formatarMoedaValor(c.nota.valor)}</td>
+            <td style="text-align:right">${formatarMoedaValor(c.nota.valor)}${c.valorDifere || c.valorAprox ? `<div style="font-size:0.72rem;color:#b45309">sistema: ${formatarMoedaValor(c.contrato.valor)}</div>` : ''}</td>
             <td>${_escapeHtml(c.nota.nf)}</td>
             <td>${fmtData(c.nota.data)}${dup}</td>
-            <td style="text-align:center;${duvida ? 'color:#b45309;font-weight:600' : ''}">${Math.round(c.score * 100)}%${duvida ? ' revisar' : ''}</td>
+            <td style="text-align:center;${duvida ? 'color:#b45309;font-weight:600' : ''}">${Math.round(c.score * 100)}%${c.valorDifere ? ' valor difere' : (c.valorAprox ? ' valor aprox.' : (duvida ? ' revisar' : ''))}</td>
         </tr>`;
     }).join('');
     const semPar = r.notasSemPar.map(n => `<li>NF ${_escapeHtml(n.nf)} · ${_escapeHtml(n.nome.replace(/^\s*\d+\s*-\s*/, '').replace(/\s*\(.*\)\s*$/, ''))} · ${formatarMoedaValor(n.valor)} · ${fmtData(n.data)}</li>`).join('');
@@ -15707,7 +15708,7 @@ function _nfAbrirModalConciliacao(r, totalNotas) {
             </div>
             <div class="modal-body" style="overflow-y:auto">
                 <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:10px">
-                    ${totalNotas} NF(s) na planilha · <strong>${r.casados.length}</strong> casada(s) com contrato (nome aproximado + valor igual) ·
+                    ${totalNotas} NF(s) na planilha · <strong>${r.casados.length}</strong> casada(s) com contrato (nome aproximado + valor igual ou até 5% de diferença) · ${(r.sugestoes || []).length} sugestão(ões) por nome com valor diferente (desmarcadas) ·
                     ${r.notasSemPar.length} sem contrato correspondente. Casamentos com similaridade abaixo de 70% vêm desmarcados.
                     Ao aplicar, o nº da NF e a data de emissão (Faturamento) são gravados no contrato.
                 </p>
@@ -15719,7 +15720,7 @@ function _nfAbrirModalConciliacao(r, totalNotas) {
             </div>
             <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:8px;padding:12px 16px">
                 <button class="btn btn-outline" onclick="document.getElementById('modalImportarNFs').style.display='none'">Cancelar</button>
-                <button class="btn btn-primary" onclick="aplicarImportacaoNFs()" ${r.casados.length ? '' : 'disabled'}>Aplicar selecionados</button>
+                <button class="btn btn-primary" onclick="aplicarImportacaoNFs()" ${todos.length ? '' : 'disabled'}>Aplicar selecionados</button>
             </div>
         </div>`;
     modal.style.display = 'flex';

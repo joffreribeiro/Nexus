@@ -666,7 +666,8 @@ function similaridadeNomesCliente(nomeSistema, nomeNF) {
  */
 function casarNotasComContratos(notas, contratos, opts) {
     const o = Object.assign({ limiteNome: 0.5, limiteSugestao: 0.85, limiteAprox: 0.7, toleranciaRelativa: 0.05, toleranciaValor: 0.01 }, opts || {});
-    const nfsJaVinculadas = new Set(contratos.filter(c => c.nfAtual).map(c => String(c.nfAtual).trim()));
+    const nfsJaVinculadas = new Set();
+    contratos.forEach(c => { if (c.nfAtual) String(c.nfAtual).split(/[,;\s]+/).filter(Boolean).forEach(n => nfsJaVinculadas.add(n)); });
     const notasLivres = notas.filter(n => !nfsJaVinculadas.has(String(n.nf).trim()));
     const contratosLivres = contratos.filter(c => !c.nfAtual);
 
@@ -688,6 +689,41 @@ function casarNotasComContratos(notas, contratos, opts) {
         notaUsada.add(p.ni);
         contratoUsado.add(p.ci);
         casados.push({ nota: notasLivres[p.ni], contrato: contratosLivres[p.ci], score: p.score });
+    });
+    // Várias NFs do mesmo contrato: soma as NFs restantes emitidas na mesma data
+    // para o mesmo cliente e confere a soma com o valor do contrato (exato ou
+    // até toleranciaRelativa). O contrato recebe todos os números de NF.
+    const grupos = {};
+    notasLivres.forEach((nota, ni) => {
+        if (notaUsada.has(ni)) return;
+        const m = String(nota.nome || '').match(/^\s*(\d+)\s*-/);
+        const cli = m ? m[1] : tokensNomeCliente(nota.nome).join(' ');
+        const k = cli + '|' + (nota.data || '');
+        (grupos[k] || (grupos[k] = [])).push(ni);
+    });
+    const gruposCand = [];
+    Object.keys(grupos).forEach(k => {
+        const idx = grupos[k];
+        if (idx.length < 2) return;
+        const soma = Math.round(idx.reduce((t, ni) => t + (Number(notasLivres[ni].valor) || 0), 0) * 100) / 100;
+        contratosLivres.forEach((contrato, ci) => {
+            if (contratoUsado.has(ci)) return;
+            const dif = Math.abs(soma - (Number(contrato.valor) || 0));
+            if (Math.round(dif * 100) > Math.max(Math.round(o.toleranciaValor * 100), Math.round(soma * o.toleranciaRelativa * 100))) return;
+            const score = similaridadeNomesCliente(contrato.loja, notasLivres[idx[0]].nome);
+            if (score >= o.limiteAprox) gruposCand.push({ idx, ci, score, dif, soma });
+        });
+    });
+    gruposCand.sort((x, y) => (x.dif - y.dif) || (y.score - x.score));
+    gruposCand.forEach(p => {
+        if (contratoUsado.has(p.ci) || p.idx.some(ni => notaUsada.has(ni))) return;
+        p.idx.forEach(ni => notaUsada.add(ni));
+        contratoUsado.add(p.ci);
+        const origem = p.idx.map(ni => notasLivres[ni]);
+        casados.push({
+            nota: { nf: origem.map(n => n.nf).join(', '), nome: origem[0].nome, valor: p.soma, data: origem[0].data, natureza: origem[0].natureza },
+            contrato: contratosLivres[p.ci], score: p.score, qtdNotas: origem.length, valorAprox: p.dif > 0.015
+        });
     });
     // Valor aproximado: diferença pequena (até toleranciaRelativa do valor da NF)
     // com nome bem parecido — entra como casamento, marcado como aproximado.

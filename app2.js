@@ -15687,7 +15687,7 @@ function _nfAbrirModalConciliacao(r, totalNotas) {
             <td style="text-align:right">${formatarMoedaValor(c.nota.valor)}${c.valorDifere || c.valorAprox ? `<div style="font-size:0.72rem;color:#b45309">sistema: ${formatarMoedaValor(c.contrato.valor)}</div>` : ''}</td>
             <td>${_escapeHtml(c.nota.nf)}</td>
             <td>${fmtData(c.nota.data)}${dup}</td>
-            <td style="text-align:center;${duvida ? 'color:#b45309;font-weight:600' : ''}">${Math.round(c.score * 100)}%${c.valorDifere ? ' valor difere' : (c.valorAprox ? ' valor aprox.' : (duvida ? ' revisar' : ''))}</td>
+            <td style="text-align:center;${duvida ? 'color:#b45309;font-weight:600' : ''}">${Math.round(c.score * 100)}%${c.valorDifere ? ' valor difere' : (c.valorAprox ? ' valor aprox.' : (duvida ? ' revisar' : ''))}${c.qtdNotas ? `<div style="font-size:0.72rem;color:#0369a1">${c.qtdNotas} NFs somadas</div>` : ''}</td>
         </tr>`;
     }).join('');
     const semPar = r.notasSemPar.map(n => `<li>NF ${_escapeHtml(n.nf)} · ${_escapeHtml(n.nome.replace(/^\s*\d+\s*-\s*/, '').replace(/\s*\(.*\)\s*$/, ''))} · ${formatarMoedaValor(n.valor)} · ${fmtData(n.data)}</li>`).join('');

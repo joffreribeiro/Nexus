@@ -703,3 +703,28 @@ describe('EstoqueCalculos.casarNotasComContratos — centavo', () => {
     expect(r.casados[0].valorAprox).toBeUndefined();
   });
 });
+
+describe('EstoqueCalculos.casarNotasComContratos — várias NFs por contrato', () => {
+  const { casarNotasComContratos } = EstoqueCalculos;
+  const nome = '77 - ALICE NOGUEIRA LOBO RIBEIRO (Pessoas Físicas)';
+  const notas = [
+    { nf: '0054001', nome, valor: 4000, data: '2026-07-16' },
+    { nf: '0054002', nome, valor: 2430.42, data: '2026-07-16' },
+    { nf: '0054003', nome, valor: 4000, data: '2026-07-20' }   // outra data: não entra na soma
+  ];
+
+  it('soma NFs do mesmo cliente e data e confere com o contrato', () => {
+    const r = casarNotasComContratos(notas, [{ chave: 'a', loja: 'Alice Nogueira', valor: 6430.42 }]);
+    expect(r.casados).toHaveLength(1);
+    expect(r.casados[0].nota.nf).toBe('0054001, 0054002');
+    expect(r.casados[0].nota.valor).toBe(6430.42);
+    expect(r.casados[0].qtdNotas).toBe(2);
+    expect(r.notasSemPar.map(n => n.nf)).toEqual(['0054003']);
+  });
+
+  it('não reaproveita NFs de um contrato que já guarda várias NFs', () => {
+    const r = casarNotasComContratos(notas, [{ chave: 'a', loja: 'Alice', valor: 6430.42, nfAtual: '0054001, 0054002' }]);
+    expect(r.casados).toHaveLength(0);
+    expect(r.notasSemPar.map(n => n.nf)).toEqual(['0054003']);
+  });
+});

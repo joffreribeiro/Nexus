@@ -3443,8 +3443,13 @@ tr.row-saldo-zero .geral-saldo {
 .col-assinado,
 .col-enviado,
 .col-faturamento,
+.col-nf,
 .col-solicitacao {
     text-align: center;
+}
+
+.col-nf {
+    min-width: 90px;
 }
 
 .col-faturamento {

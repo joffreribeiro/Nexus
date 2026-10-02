@@ -12187,7 +12187,7 @@ function renderizarRegistroVendas() {
     if (linhasOrdenadas.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="12" class="empty-state">
+                <td colspan="13" class="empty-state">
                     <div class="empty-icon">${window.NexusIcons.clipboard}</div>
                     <div class="empty-text">Nenhuma venda registrada</div>
                     <div class="empty-hint">Clique em "Nova Venda" para adicionar o primeiro registro</div>
@@ -12429,6 +12429,9 @@ function _renderGrupoVenda(dados) {
         <td class="col-sistema">${statusBtn(sistemaMarcado, 'sistema')}</td>
         <td class="col-assinado">${statusBtn(assinadoMarcado, 'assinado')}</td>
         <td class="col-enviado">${statusBtn(enviadoMarcado, 'enviado')}</td>
+        <td class="col-nf">
+            <input type="text" class="campo-editavel" value="${envioData.nf || ''}" placeholder="Nº NF" title="Número da NF no sistema" onchange="salvarControleEnvio('${primeira.contratoRaw || contratoKey}', 'nf', this.value.trim())" ${contratoCancelado ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}>
+        </td>
         <td class="col-faturamento">
             <input type="date" class="campo-editavel" value="${envioData.faturamento || ''}" title="Data de faturamento" onchange="salvarControleEnvio('${primeira.contratoRaw || contratoKey}', 'faturamento', this.value)" ${contratoCancelado ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}>
         </td>
@@ -12460,6 +12463,7 @@ function _renderGrupoVenda(dados) {
             <td class="col-sistema detalhe-vazio"></td>
             <td class="col-assinado detalhe-vazio"></td>
             <td class="col-enviado detalhe-vazio"></td>
+            <td class="col-nf detalhe-vazio"></td>
             <td class="col-faturamento detalhe-vazio"></td>
             <td class="col-solicitacao detalhe-vazio"></td>
             <td class="col-acoes">${detalheAcoesHtml}</td>
@@ -15522,7 +15526,8 @@ function importarControleEnvioArquivo(event) {
             const atual = estoque.controleEnvio[contrato] || {};
 
             estoque.controleEnvio[contrato] = {
-                sistema:     iSistema  !== -1 ? resolverCampo(cols[iSistema],  atual.sistema)  : (atual.sistema  || ''),
+                ...atual, // preserva campos fora do CSV (nf, emailEnviadoEm...)
+                sistema:     iSistema !== -1 ? resolverCampo(cols[iSistema],  atual.sistema)  : (atual.sistema  || ''),
                 assinado:    iAssinado !== -1 ? resolverCampo(cols[iAssinado], atual.assinado) : (atual.assinado || ''),
                 enviado:     iEnviado  !== -1 ? resolverCampo(cols[iEnviado],  atual.enviado)  : (atual.enviado  || ''),
                 faturamento: iFatur    !== -1 ? (parseDateToYYYYMMDD(cols[iFatur]) || '')       : (atual.faturamento || ''),
@@ -15558,6 +15563,162 @@ function importarControleEnvioArquivo(event) {
         };
         reader.readAsText(file, 'UTF-8');
     }
+}
+
+// ---- Importação de NFs (planilha do ERP) -> aba Venda: preenche NF + Faturamento ----
+
+function _nfLerValorBR(v) {
+    if (typeof v === 'number') return v;
+    const s = String(v == null ? '' : v).replace(/R\$|\s/g, '');
+    if (!s) return NaN;
+    return s.includes(',') ? parseFloat(s.replace(/\./g, '').replace(',', '.')) : parseFloat(s);
+}
+
+function _nfLerData(v) {
+    if (v instanceof Date) {
+        const d = new Date(v.getTime() + 12 * 3600 * 1000); // evita virar o dia por fuso
+        return d.toISOString().slice(0, 10);
+    }
+    return parseDateToYYYYMMDD(v) || '';
+}
+
+function _nfNormCab(h) {
+    return String(h == null ? '' : h).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function _nfExtrairNotas(linhas) {
+    const iCab = linhas.findIndex(l => (l || []).some(c => _nfNormCab(c) === 'nr nf'));
+    if (iCab === -1) return null;
+    const cab = linhas[iCab].map(_nfNormCab);
+    const col = (nome) => cab.indexOf(nome);
+    const iCli = col('cliente'), iNf = col('nr nf'), iDt = col('dt emissao'), iVal = col('valor r');
+    if (iCli === -1 || iDt === -1 || iVal === -1) return null;
+    const iNat = col('nat operacao');
+    const notas = [];
+    linhas.slice(iCab + 1).forEach(l => {
+        if (!l) return;
+        const nf = String(l[iNf] == null ? '' : l[iNf]).trim();
+        const valor = _nfLerValorBR(l[iVal]);
+        if (!nf || isNaN(valor)) return;
+        notas.push({ nf, nome: String(l[iCli] || ''), valor, data: _nfLerData(l[iDt]), natureza: iNat === -1 ? '' : String(l[iNat] || '') });
+    });
+    return notas;
+}
+
+function _nfContratosDoSistema() {
+    const ce = estoque.controleEnvio || {};
+    const porContrato = {};
+    (estoque.registroVendas || []).forEach(v => {
+        if (v.cancelado) return;
+        const key = normalizarContratoKey(v.contrato);
+        if (!key) return;
+        const g = porContrato[key] || (porContrato[key] = { raw: v.contrato, loja: v.loja || '', valor: 0 });
+        const itens = Array.isArray(v.items) && v.items.length ? v.items : [v];
+        itens.forEach(it => {
+            const qtd = Number(it.quantidade || 0);
+            g.valor += Number(it.valorTotal || (Number(it.valorUnitario || 0) * qtd) || 0);
+        });
+    });
+    return Object.keys(porContrato).map(key => {
+        const g = porContrato[key];
+        const chave = ce[g.raw] ? g.raw : (ce[key] ? key : g.raw);
+        return { chave, contratoKey: key, contratoRaw: g.raw, loja: g.loja, valor: Math.round(g.valor * 100) / 100, nfAtual: (ce[chave] || {}).nf || '', faturamentoAtual: (ce[chave] || {}).faturamento || '' };
+    });
+}
+
+function importarNFsVendasArquivo(event) {
+    const file = event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+    if (typeof XLSX === 'undefined') { alert('Biblioteca XLSX não carregada.'); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        let notas;
+        try {
+            const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            notas = _nfExtrairNotas(XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' }));
+        } catch (err) {
+            _catchSilencioso(err, 'importarNFsVendasArquivo');
+            alert('Não foi possível ler o arquivo.');
+            return;
+        }
+        if (!notas) { alert('Colunas não encontradas. Esperado: Cliente, Nr NF, Dt Emissão, Valor R$.'); return; }
+        const r = EstoqueCalculos.casarNotasComContratos(
+            notas,
+            _nfContratosDoSistema().map(c => ({ ...c })));
+        _nfAbrirModalConciliacao(r, notas.length);
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function _nfAbrirModalConciliacao(r, totalNotas) {
+    window._nfCasados = r.casados;
+    const fmtData = (d) => d ? formatDateToDDMMYYYY(d) : '-';
+    const linhas = r.casados.map((c, i) => {
+        const dup = c.contrato.faturamentoAtual && c.contrato.faturamentoAtual !== c.nota.data
+            ? `<div style="font-size:0.72rem;color:#b45309">substitui ${fmtData(c.contrato.faturamentoAtual)}</div>` : '';
+        const duvida = c.score < 0.7;
+        return `<tr>
+            <td style="text-align:center"><input type="checkbox" class="nf-imp-chk" data-i="${i}" ${duvida ? '' : 'checked'}></td>
+            <td>${_escapeHtml(formatarContratoDisplay(c.contrato.contratoRaw))}</td>
+            <td>${_escapeHtml(c.contrato.loja)}</td>
+            <td>${_escapeHtml(c.nota.nome.replace(/^\s*\d+\s*-\s*/, '').replace(/\s*\(.*\)\s*$/, ''))}</td>
+            <td style="text-align:right">${formatarMoedaValor(c.nota.valor)}</td>
+            <td>${_escapeHtml(c.nota.nf)}</td>
+            <td>${fmtData(c.nota.data)}${dup}</td>
+            <td style="text-align:center;${duvida ? 'color:#b45309;font-weight:600' : ''}">${Math.round(c.score * 100)}%${duvida ? ' revisar' : ''}</td>
+        </tr>`;
+    }).join('');
+    const semPar = r.notasSemPar.map(n => `<li>NF ${_escapeHtml(n.nf)} · ${_escapeHtml(n.nome.replace(/^\s*\d+\s*-\s*/, '').replace(/\s*\(.*\)\s*$/, ''))} · ${formatarMoedaValor(n.valor)} · ${fmtData(n.data)}</li>`).join('');
+
+    let modal = document.getElementById('modalImportarNFs');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modalImportarNFs';
+        modal.className = 'modal';
+        modal.onclick = (ev) => { if (ev.target === modal) modal.style.display = 'none'; };
+        document.body.appendChild(modal);
+    }
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:1100px;max-height:88vh;display:flex;flex-direction:column">
+            <div class="modal-header">
+                <h2>📥 Importar NFs — conferência</h2>
+                <span class="close" aria-label="Fechar" onclick="document.getElementById('modalImportarNFs').style.display='none'">&times;</span>
+            </div>
+            <div class="modal-body" style="overflow-y:auto">
+                <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:10px">
+                    ${totalNotas} NF(s) na planilha · <strong>${r.casados.length}</strong> casada(s) com contrato (nome aproximado + valor igual) ·
+                    ${r.notasSemPar.length} sem contrato correspondente. Casamentos com similaridade abaixo de 70% vêm desmarcados.
+                    Ao aplicar, o nº da NF e a data de emissão (Faturamento) são gravados no contrato.
+                </p>
+                <table class="dashboard-table" style="width:100%">
+                    <thead><tr><th></th><th>Contrato</th><th>Cliente (sistema)</th><th>Cliente (NF)</th><th>Valor</th><th>NF</th><th>Emissão</th><th>Similaridade</th></tr></thead>
+                    <tbody>${linhas || '<tr><td colspan="8" style="text-align:center;padding:16px">Nenhum contrato casou.</td></tr>'}</tbody>
+                </table>
+                ${semPar ? `<details style="margin-top:12px"><summary style="cursor:pointer">NFs sem contrato correspondente (${r.notasSemPar.length})</summary><ul style="font-size:0.82rem;margin:8px 0 0 18px">${semPar}</ul></details>` : ''}
+            </div>
+            <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:8px;padding:12px 16px">
+                <button class="btn btn-outline" onclick="document.getElementById('modalImportarNFs').style.display='none'">Cancelar</button>
+                <button class="btn btn-primary" onclick="aplicarImportacaoNFs()" ${r.casados.length ? '' : 'disabled'}>Aplicar selecionados</button>
+            </div>
+        </div>`;
+    modal.style.display = 'flex';
+}
+
+function aplicarImportacaoNFs() {
+    const marcados = [...document.querySelectorAll('#modalImportarNFs .nf-imp-chk:checked')].map(el => Number(el.dataset.i));
+    if (!marcados.length) { alert('Nenhuma linha selecionada.'); return; }
+    if (!estoque.controleEnvio) estoque.controleEnvio = {};
+    marcados.forEach(i => {
+        const c = window._nfCasados[i];
+        const atual = estoque.controleEnvio[c.contrato.chave] || {};
+        estoque.controleEnvio[c.contrato.chave] = { ...atual, nf: c.nota.nf, faturamento: c.nota.data || atual.faturamento || '' };
+    });
+    salvarDados();
+    document.getElementById('modalImportarNFs').style.display = 'none';
+    try { renderizarRegistroVendas(); } catch (e) { _catchSilencioso(e, 'aplicarImportacaoNFs'); }
+    mostrarNotificacao(`${marcados.length} contrato(s) atualizados com NF e Faturamento`, 'success');
 }
 
 function gerarCSV(dados) {

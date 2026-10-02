@@ -608,6 +608,84 @@ function resolverAliquotaComBeneficio(ctx) {
     return Number(valorPadrao || 0);
 }
 
+/**
+ * Conciliação de NFs (planilha do ERP) com os contratos da aba Venda.
+ * O nome do cliente no sistema costuma estar incompleto/abreviado, então a
+ * comparação de nomes é aproximada (por tokens); o valor precisa ser o mesmo.
+ */
+const _STOPWORDS_NOME = new Set(['DE', 'DA', 'DO', 'DAS', 'DOS', 'E', 'LTDA', 'ME', 'EPP', 'EIRELI', 'SA', 'S', 'A', 'CIA', 'CNPJ']);
+
+function tokensNomeCliente(nome) {
+    let s = String(nome == null ? '' : nome);
+    s = s.replace(/^\s*\d+\s*-\s*/, '');       // "74393 - NOME" -> "NOME"
+    s = s.replace(/\s*\(.*\)\s*$/, '');         // categoria no fim: "(Pessoas Físicas (...))"
+    s = s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+    return s.replace(/[^A-Z0-9]+/g, ' ').trim().split(' ')
+        .filter(t => t && !_STOPWORDS_NOME.has(t));
+}
+
+function _tokensCasam(a, b) {
+    if (a === b) return true;
+    const [curto, longo] = a.length <= b.length ? [a, b] : [b, a];
+    return curto.length >= 3 && longo.startsWith(curto);   // abreviação: "COMP" ~ "COMPANHIA"
+}
+
+/** 0..1 — quanto o nome do sistema (possivelmente incompleto) cabe no nome da NF. */
+function similaridadeNomesCliente(nomeSistema, nomeNF) {
+    const a = tokensNomeCliente(nomeSistema);
+    const b = tokensNomeCliente(nomeNF);
+    if (!a.length || !b.length) return 0;
+    const usados = new Set();
+    let casados = 0;
+    a.forEach(ta => {
+        const j = b.findIndex((tb, i) => !usados.has(i) && _tokensCasam(ta, tb));
+        if (j !== -1) { usados.add(j); casados++; }
+    });
+    if (!casados) return 0;
+    const cont = casados / Math.min(a.length, b.length);
+    const jac = casados / Math.max(a.length, b.length);
+    return 0.7 * cont + 0.3 * jac;
+}
+
+/**
+ * notas:     [{ nf, nome, valor, data }]               (planilha)
+ * contratos: [{ chave, loja, valor, nfAtual }]         (sistema, sem cancelados)
+ * Casamento 1-para-1: valor igual (±toleranciaValor) e nome com similaridade
+ * >= limiteNome; os pares de maior similaridade são atribuídos primeiro.
+ * Contratos que já têm NF, e NFs já vinculadas a um contrato, ficam de fora.
+ */
+function casarNotasComContratos(notas, contratos, opts) {
+    const o = Object.assign({ limiteNome: 0.5, toleranciaValor: 0.01 }, opts || {});
+    const nfsJaVinculadas = new Set(contratos.filter(c => c.nfAtual).map(c => String(c.nfAtual).trim()));
+    const notasLivres = notas.filter(n => !nfsJaVinculadas.has(String(n.nf).trim()));
+    const contratosLivres = contratos.filter(c => !c.nfAtual);
+
+    const pares = [];
+    notasLivres.forEach((nota, ni) => {
+        contratosLivres.forEach((contrato, ci) => {
+            if (Math.abs((Number(nota.valor) || 0) - (Number(contrato.valor) || 0)) > o.toleranciaValor) return;
+            const score = similaridadeNomesCliente(contrato.loja, nota.nome);
+            if (score >= o.limiteNome) pares.push({ ni, ci, score });
+        });
+    });
+    pares.sort((x, y) => (y.score - x.score) || (x.ni - y.ni) || (x.ci - y.ci));
+
+    const notaUsada = new Set();
+    const contratoUsado = new Set();
+    const casados = [];
+    pares.forEach(p => {
+        if (notaUsada.has(p.ni) || contratoUsado.has(p.ci)) return;
+        notaUsada.add(p.ni);
+        contratoUsado.add(p.ci);
+        casados.push({ nota: notasLivres[p.ni], contrato: contratosLivres[p.ci], score: p.score });
+    });
+    return {
+        casados,
+        notasSemPar: notasLivres.filter((_, i) => !notaUsada.has(i)),
+        contratosSemNota: contratosLivres.filter((_, i) => !contratoUsado.has(i))
+    };
+}
+
 const EstoqueCalculos = {
     calcularStatusCusto,
     parseCurrencyBRLToNumber,
@@ -625,7 +703,10 @@ const EstoqueCalculos = {
     getImbelTipo,
     imbelTipoAumentaEstoque,
     calcularSaldosImbel,
-    resolverAliquotaComBeneficio
+    resolverAliquotaComBeneficio,
+    tokensNomeCliente,
+    similaridadeNomesCliente,
+    casarNotasComContratos
 };
 
 if (typeof window !== 'undefined') {

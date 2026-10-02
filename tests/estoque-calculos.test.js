@@ -630,3 +630,40 @@ describe('EstoqueCalculos.resolverAliquotaComBeneficio', () => {
     })).toBe(18);
   });
 });
+
+describe('EstoqueCalculos.casarNotasComContratos', () => {
+  const { similaridadeNomesCliente, casarNotasComContratos } = EstoqueCalculos;
+
+  it('ignora código, categoria entre parênteses, sufixos societários e acentos', () => {
+    const nf = '136 - CBC COMPANHIA BRASILEIRA DE CARTUCHOS (Empresas Nacionais (Lojistas))';
+    expect(similaridadeNomesCliente('CBC', nf)).toBeGreaterThanOrEqual(0.6);
+    expect(similaridadeNomesCliente('Cia Brasileira Cartuchos', nf)).toBeGreaterThanOrEqual(0.6);
+    expect(similaridadeNomesCliente('Jacques José Alves', '74393 - JACQUES JOSÉ ALVES JÚNIOR (Pessoas Físicas)')).toBeGreaterThanOrEqual(0.6);
+    expect(similaridadeNomesCliente('Nacional Armas', nf)).toBe(0);
+  });
+
+  it('exige valor igual e faz casamento 1-para-1', () => {
+    const notas = [
+      { nf: '0054809', nome: '66257 - PMMG-POLÍCIA MILITAR DO EST.DE M. GERAIS (Segurança Pública Estadual)', valor: 9490.48, data: '2026-02-12' },
+      { nf: '0054808', nome: '66257 - PMMG-POLÍCIA MILITAR DO EST.DE M. GERAIS (Segurança Pública Estadual)', valor: 9490.48, data: '2026-02-12' },
+      { nf: '0054815', nome: '136 - CBC COMPANHIA BRASILEIRA DE CARTUCHOS (Empresas Nacionais (Lojistas))', valor: 34874.3, data: '2026-02-20' }
+    ];
+    const contratos = [
+      { chave: '10', loja: 'PMMG Polícia Militar', valor: 9490.48 },
+      { chave: '11', loja: 'PMMG', valor: 9490.48 },
+      { chave: '12', loja: 'CBC', valor: 34874.31 },     // diferença de 1 centavo: tolerada
+      { chave: '13', loja: 'CBC', valor: 5000 }          // valor diferente: não casa
+    ];
+    const r = casarNotasComContratos(notas, contratos);
+    expect(r.casados).toHaveLength(3);
+    expect(new Set(r.casados.map(c => c.contrato.chave))).toEqual(new Set(['10', '11', '12']));
+    expect(r.contratosSemNota.map(c => c.chave)).toEqual(['13']);
+  });
+
+  it('não reaproveita contrato que já tem NF nem NF já vinculada', () => {
+    const notas = [{ nf: '1', nome: 'ACME LTDA', valor: 100 }, { nf: '2', nome: 'ACME LTDA', valor: 100 }];
+    const contratos = [{ chave: 'a', loja: 'ACME', valor: 100, nfAtual: '1' }, { chave: 'b', loja: 'ACME', valor: 100 }];
+    const r = casarNotasComContratos(notas, contratos);
+    expect(r.casados.map(c => [c.nota.nf, c.contrato.chave])).toEqual([['2', 'b']]);
+  });
+});
